@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { Inter } from 'next/font/google';
-import { Web3AuthProvider } from './../context/web3AuthContext'
+// import { Web3AuthProvider } from './../context/web3AuthContext'
+import { AuthProvider } from './../context/AuthContext'
+
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -33,7 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Web3AuthProvider>{children}</Web3AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
