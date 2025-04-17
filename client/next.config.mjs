@@ -26,6 +26,7 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    allowedDevOrigins: ['https://*.ngrok-free.app'],
   },
 }
 
