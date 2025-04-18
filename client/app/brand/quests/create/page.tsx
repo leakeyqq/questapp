@@ -19,7 +19,9 @@ export default function CreateQuestPage() {
 
   // Form state
   const [title, setTitle] = useState("")
-  const [category, setCategory] = useState("")
+  const [brand, setBrandName] = useState("")
+  const [rewardCriteria, setRewardCriteria] = useState("")
+  const [category, setCategory] = useState("Create video")
   const [description, setDescription] = useState("")
   const [longDescription, setLongDescription] = useState("")
   const [prizePool, setPrizePool] = useState("")
@@ -90,8 +92,26 @@ export default function CreateQuestPage() {
                     Provide the essential details about your quest
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent className="space-y-4">
+
+                <div className="space-y-2">
+                      <Label htmlFor="brand" className="text-brand-dark">
+                        Brand name <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="brand"
+                        placeholder="e.g.,Name of your brand/product"
+                        value={brand}
+                        onChange={(e) => setBrandName(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-800"
+                        required
+                      />
+                    </div>
+
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                     <div className="space-y-2">
                       <Label htmlFor="title" className="text-brand-dark">
                         Quest Title <span className="text-red-500">*</span>
@@ -108,7 +128,7 @@ export default function CreateQuestPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="category" className="text-brand-dark">
-                        Category <span className="text-red-500">*</span>
+                        Quest category <span className="text-red-500">*</span>
                       </Label>
                       <Select value={category} onValueChange={setCategory} required>
                         <SelectTrigger className="bg-white border-gray-300 text-gray-800">
@@ -116,15 +136,15 @@ export default function CreateQuestPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-200 text-gray-800">
                           <SelectItem value="Create video">Video Creation</SelectItem>
-                          <SelectItem value="Photo">Photo</SelectItem>
+                          {/* <SelectItem value="Photo">Photo</SelectItem>
                           <SelectItem value="Review">Review</SelectItem>
-                          <SelectItem value="Unboxing">Unboxing</SelectItem>
+                          <SelectItem value="Unboxing">Unboxing</SelectItem> */}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="description" className="text-brand-dark">
                       Short Description <span className="text-red-500">*</span>
                     </Label>
@@ -137,20 +157,23 @@ export default function CreateQuestPage() {
                       maxLength={150}
                       required
                     />
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <Label htmlFor="longDescription" className="text-brand-dark">
-                      Detailed Description
+                      Detailed Description - What you want the content creators to do.
                     </Label>
                     <Textarea
                       id="longDescription"
                       placeholder="Provide detailed instructions and expectations for creators"
-                      value={longDescription}
+                      // value={longDescription}
+                      value="Create a video showing your followers...."
+
                       onChange={(e) => setLongDescription(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
                     />
                   </div>
+
                 </CardContent>
               </Card>
 
@@ -165,11 +188,11 @@ export default function CreateQuestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="prizePool" className="text-brand-dark">
-                        Prize Pool (USDC) <span className="text-red-500">*</span>
+                        Prize Pool (USD)  - To be shared among the selected<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="prizePool"
-                        placeholder="e.g., 100"
+                        placeholder="e.g., 100 USD"
                         value={prizePool}
                         onChange={(e) => setPrizePool(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
@@ -181,7 +204,7 @@ export default function CreateQuestPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="deadline" className="text-brand-dark">
-                        Deadline <span className="text-red-500">*</span>
+                        Deadline - Quest ends on.<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="deadline"
@@ -197,11 +220,11 @@ export default function CreateQuestPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="minFollowers" className="text-brand-dark">
-                      Minimum Followers
+                      Minimum Followers - Eligibility criteria for content creators
                     </Label>
                     <Input
                       id="minFollowers"
-                      placeholder="e.g., 1000"
+                      placeholder="e.g., 100 followers"
                       value={minFollowers}
                       onChange={(e) => setMinFollowers(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800"
@@ -211,6 +234,20 @@ export default function CreateQuestPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="rewardriteria" className="text-brand-dark">
+                      Reward criteria - How the winners will be picked
+                    </Label>
+                    <Input
+                      id="rewardCriteria"
+                      placeholder="e.g., The best 10 videos"
+                      value={minFollowers}
+                      onChange={(e) => setRewardCriteria(e.target.value)}
+                      className="bg-white border-gray-300 text-gray-800"
+                      min="0"
+                    />
+                  </div>
+
+                  {/* <div className="space-y-2">
                     <Label htmlFor="requirements" className="text-brand-dark">
                       Requirements
                     </Label>
@@ -222,7 +259,7 @@ export default function CreateQuestPage() {
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
                     />
                     <p className="text-xs text-gray-500">Enter each requirement on a new line</p>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
 
