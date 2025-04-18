@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 
 export default function CreateQuestPage() {
   const router = useRouter()
@@ -29,6 +30,22 @@ export default function CreateQuestPage() {
   const [minFollowers, setMinFollowers] = useState("")
   const [requirements, setRequirements] = useState("")
   const [imageUrl, setImageUrl] = useState("")
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setImageUrl(url);
+      console.log("Uploaded image URL:", url);
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
+    setUploading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -271,18 +288,18 @@ export default function CreateQuestPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="imageUrl" className="text-brand-dark">
-                      Cover Image URL
+                      Cover Image
                     </Label>
                     <Input
                       id="imageUrl"
                       placeholder="https://example.com/image.jpg"
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
-                      className="bg-white border-gray-300 text-gray-800"
+                      className="bg-white border-gray-300 text-gray-800 hidden"
                     />
                   </div>
 
-                  {imageUrl && (
+                  {/* {imageUrl && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 mb-2">Preview:</p>
                       <div
@@ -290,19 +307,42 @@ export default function CreateQuestPage() {
                         style={{ backgroundImage: `url(${imageUrl})` }}
                       ></div>
                     </div>
-                  )}
+                  )} */}
 
                   <div className="bg-brand-light p-4 rounded-lg border border-dashed border-gray-300 text-center">
-                    <p className="text-gray-600 mb-2">Or upload an image</p>
-                    <Button
+                    {/* <p className="text-gray-600 mb-2">Upload image</p> */}
+                    {/* <Button
                       type="button"
                       variant="outline"
                       className="border-brand-purple text-brand-purple hover:bg-brand-purple/10"
                     >
                       Upload Image
-                    </Button>
+                    </Button> */}
+        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        {uploading && <p className="text-lg text-gray-500">Uploading...wait patiently!</p>}
+
+        {imageUrl && (
+        <div className="mt-2 space-y-2">
+            <img src={imageUrl} alt="Preview" className="w-40 rounded shadow" />
+            {/* <p className="text-sm text-gray-600 break-all">
+            <strong>Image URL:</strong>{" "}
+            <a
+                href={imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+            >
+                {imageUrl}
+            </a>
+            </p> */}
+        </div>
+        )}
+
+
                     <p className="text-xs text-gray-500 mt-2">Recommended size: 1200 x 800px, Max 5MB</p>
                   </div>
+
+
                 </CardContent>
               </Card>
 
