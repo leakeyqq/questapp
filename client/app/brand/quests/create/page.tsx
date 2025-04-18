@@ -23,12 +23,12 @@ export default function CreateQuestPage() {
   const [brand, setBrandName] = useState("")
   const [rewardCriteria, setRewardCriteria] = useState("")
   const [category, setCategory] = useState("Create video")
-  const [description, setDescription] = useState("")
+  // const [description, setDescription] = useState("")
   const [longDescription, setLongDescription] = useState("")
   const [prizePool, setPrizePool] = useState("")
   const [deadline, setDeadline] = useState("")
   const [minFollowers, setMinFollowers] = useState("")
-  const [requirements, setRequirements] = useState("")
+  // const [requirements, setRequirements] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const [uploading, setUploading] = useState(false);
 
@@ -48,31 +48,62 @@ export default function CreateQuestPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Validate form
-    if (!title || !category || !description || !prizePool || !deadline) {
+    e.preventDefault();
+  
+    if (!title || !brand || !rewardCriteria || !category || !longDescription || !prizePool || !deadline || !imageUrl) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-
-    setIsSubmitting(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    toast({
-      title: "Quest created!",
-      description: "Your quest has been created successfully.",
-    })
-
-    setIsSubmitting(false)
-    router.push("/brand/dashboard")
-  }
+  
+    setIsSubmitting(true);
+  
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // send cookies for auth
+        body: JSON.stringify({
+          title,
+          brand,
+          rewardCriteria,
+          category,
+          longDescription,
+          prizePool,
+          deadline,
+          minFollowers,
+          imageUrl,
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+  
+      toast({
+        title: "Quest created!",
+        description: "Your quest has been created successfully.",
+      });
+  
+      router.push("/brand/dashboard");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to create quest.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -182,9 +213,8 @@ export default function CreateQuestPage() {
                     </Label>
                     <Textarea
                       id="longDescription"
-                      placeholder="Provide detailed instructions and expectations for creators"
-                      // value={longDescription}
-                      value="Create a video showing your followers...."
+                      placeholder="Create a video showing your followers...."
+                      value={longDescription}
 
                       onChange={(e) => setLongDescription(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
@@ -230,6 +260,7 @@ export default function CreateQuestPage() {
                         onChange={(e) => setDeadline(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
                         min={new Date().toISOString().split("T")[0]}
+                        max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
                         required
                       />
                     </div>
@@ -241,7 +272,7 @@ export default function CreateQuestPage() {
                     </Label>
                     <Input
                       id="minFollowers"
-                      placeholder="e.g., 100 followers"
+                      placeholder="Optional"
                       value={minFollowers}
                       onChange={(e) => setMinFollowers(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800"
@@ -249,7 +280,7 @@ export default function CreateQuestPage() {
                       min="0"
                     />
                   </div>
-
+{/* 
                   <div className="space-y-2">
                     <Label htmlFor="rewardriteria" className="text-brand-dark">
                       Reward criteria - How the winners will be picked
@@ -257,10 +288,26 @@ export default function CreateQuestPage() {
                     <Input
                       id="rewardCriteria"
                       placeholder="e.g., The best 10 videos"
-                      value={minFollowers}
+                      value={rewardCriteria}
                       onChange={(e) => setRewardCriteria(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800"
                       min="0"
+                    />
+                  </div> */}
+
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rewardriteria" className="text-brand-dark">
+                      Reward criteria - How the winners will be picked
+                    </Label>
+                    <Textarea
+                      id="rewardriteria"
+                      placeholder="e.g., The best 10 videos"
+                      // value={longDescription}
+                      value={rewardCriteria}
+                      required
+                      onChange={(e) => setRewardCriteria(e.target.value)}
+                      className="bg-white border-gray-300 text-gray-800 resize-none h-30"
                     />
                   </div>
 
@@ -296,6 +343,7 @@ export default function CreateQuestPage() {
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 hidden"
+                      
                     />
                   </div>
 
@@ -311,14 +359,14 @@ export default function CreateQuestPage() {
 
                   <div className="bg-brand-light p-4 rounded-lg border border-dashed border-gray-300 text-center">
                     {/* <p className="text-gray-600 mb-2">Upload image</p> */}
-                    {/* <Button
+                     {/* <Button
                       type="button"
                       variant="outline"
                       className="border-brand-purple text-brand-purple hover:bg-brand-purple/10"
                     >
                       Upload Image
-                    </Button> */}
-        <input type="file" accept="image/*" onChange={handleImageUpload} />
+                    </Button>  */}
+        <input type="file" required accept="image/*" onChange={handleImageUpload} />
         {uploading && <p className="text-lg text-gray-500">Uploading...wait patiently!</p>}
 
         {imageUrl && (

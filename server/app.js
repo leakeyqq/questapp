@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser"
 dotenv.config()
 
 import authRoutes from "./routes/authRoutes.js"
+import questRoutes from "./routes/questRoutes.js"
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ mongoose.connect(process.env.MONGODB_URI).then(() => console.log("MongoDB connec
   .catch(err => console.error("MongoDB error:", err));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/quest", questRoutes)
 
 
 const PORT = process.env.SERVER_PORT

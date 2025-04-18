@@ -29,15 +29,15 @@ const questSchema = new mongoose.Schema({
         {
             submittedByAddress: {
                 type: String,
-                required: true
+                required: false
             },
             socialPlatformName: {
                 type: String,
-                required: true
+                required: false
             },
             videoLink: {
                 type: String,
-                required: true
+                required: false
             },
             comments: {
                 type: String,
@@ -64,7 +64,7 @@ const questSchema = new mongoose.Schema({
     },
     visibleOnline: {
         type: Boolean,
-        default: false
+        default: true
     },
     endsOn: {
         type: Date,
