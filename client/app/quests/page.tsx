@@ -1,11 +1,40 @@
+"use client"
+import { useEffect, useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import QuestCard from "@/components/quest-card"
+import QuestCardV2 from "@/components/quest-card-v2"
 import { quests } from "@/lib/data"
 
 export default function QuestsPage() {
+  const [quests, setQuests] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchQuests = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/allQuests`, {
+          credentials: "include"
+        })
+        // const res = await fetch("http://localhost:5000/api/quest/allQuests")
+
+        const data = await res.json()
+        setQuests(data.allQuests)
+      } catch (error) {
+        console.error("Failed to fetch quests:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchQuests()
+  }, [])
+
+
   return (
+    
     <div className="min-h-screen bg-brand-light">
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8 text-brand-dark">Discover quests</h1>
@@ -52,11 +81,22 @@ export default function QuestsPage() {
 
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quests.map((quest) => (
             <QuestCard key={quest.id} quest={quest} />
           ))}
+        </div> */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <p>Loading quests...</p>
+          ) : quests.length > 0 ? (
+            quests.map((quest: any) => <QuestCardV2 key={quest._id} quest={quest} />)
+          ) : (
+            <p>No quests found.</p>
+          )}
         </div>
+
       </div>
     </div>
   )

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 
 export default function CreateQuestPage() {
   const router = useRouter()
@@ -19,41 +20,90 @@ export default function CreateQuestPage() {
 
   // Form state
   const [title, setTitle] = useState("")
-  const [category, setCategory] = useState("")
-  const [description, setDescription] = useState("")
+  const [brand, setBrandName] = useState("")
+  const [rewardCriteria, setRewardCriteria] = useState("")
+  const [category, setCategory] = useState("Create video")
+  // const [description, setDescription] = useState("")
   const [longDescription, setLongDescription] = useState("")
   const [prizePool, setPrizePool] = useState("")
   const [deadline, setDeadline] = useState("")
   const [minFollowers, setMinFollowers] = useState("")
-  const [requirements, setRequirements] = useState("")
+  // const [requirements, setRequirements] = useState("")
   const [imageUrl, setImageUrl] = useState("")
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setImageUrl(url);
+      console.log("Uploaded image URL:", url);
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
+    setUploading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Validate form
-    if (!title || !category || !description || !prizePool || !deadline) {
+    e.preventDefault();
+  
+    if (!title || !brand || !rewardCriteria || !category || !longDescription || !prizePool || !deadline || !imageUrl) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-
-    setIsSubmitting(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    toast({
-      title: "Quest created!",
-      description: "Your quest has been created successfully.",
-    })
-
-    setIsSubmitting(false)
-    router.push("/brand/dashboard")
-  }
+  
+    setIsSubmitting(true);
+  
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // send cookies for auth
+        body: JSON.stringify({
+          title,
+          brand,
+          rewardCriteria,
+          category,
+          longDescription,
+          prizePool,
+          deadline,
+          minFollowers,
+          imageUrl,
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+  
+      toast({
+        title: "Quest created!",
+        description: "Your quest has been created successfully.",
+      });
+  
+      router.push("/brand/dashboard");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to create quest.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -90,8 +140,26 @@ export default function CreateQuestPage() {
                     Provide the essential details about your quest
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent className="space-y-4">
+
+                <div className="space-y-2">
+                      <Label htmlFor="brand" className="text-brand-dark">
+                        Brand name <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="brand"
+                        placeholder="e.g.,Name of your brand/product"
+                        value={brand}
+                        onChange={(e) => setBrandName(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-800"
+                        required
+                      />
+                    </div>
+
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                     <div className="space-y-2">
                       <Label htmlFor="title" className="text-brand-dark">
                         Quest Title <span className="text-red-500">*</span>
@@ -108,7 +176,7 @@ export default function CreateQuestPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="category" className="text-brand-dark">
-                        Category <span className="text-red-500">*</span>
+                        Quest category <span className="text-red-500">*</span>
                       </Label>
                       <Select value={category} onValueChange={setCategory} required>
                         <SelectTrigger className="bg-white border-gray-300 text-gray-800">
@@ -116,15 +184,15 @@ export default function CreateQuestPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-200 text-gray-800">
                           <SelectItem value="Create video">Video Creation</SelectItem>
-                          <SelectItem value="Photo">Photo</SelectItem>
+                          {/* <SelectItem value="Photo">Photo</SelectItem>
                           <SelectItem value="Review">Review</SelectItem>
-                          <SelectItem value="Unboxing">Unboxing</SelectItem>
+                          <SelectItem value="Unboxing">Unboxing</SelectItem> */}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="description" className="text-brand-dark">
                       Short Description <span className="text-red-500">*</span>
                     </Label>
@@ -137,20 +205,22 @@ export default function CreateQuestPage() {
                       maxLength={150}
                       required
                     />
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <Label htmlFor="longDescription" className="text-brand-dark">
-                      Detailed Description
+                      Detailed Description - What you want the content creators to do.
                     </Label>
                     <Textarea
                       id="longDescription"
-                      placeholder="Provide detailed instructions and expectations for creators"
+                      placeholder="Create a video showing your followers...."
                       value={longDescription}
+
                       onChange={(e) => setLongDescription(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
                     />
                   </div>
+
                 </CardContent>
               </Card>
 
@@ -165,11 +235,11 @@ export default function CreateQuestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="prizePool" className="text-brand-dark">
-                        Prize Pool (USDC) <span className="text-red-500">*</span>
+                        Prize Pool (USD)  - To be shared among the selected<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="prizePool"
-                        placeholder="e.g., 100"
+                        placeholder="e.g., 100 USD"
                         value={prizePool}
                         onChange={(e) => setPrizePool(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
@@ -181,7 +251,7 @@ export default function CreateQuestPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="deadline" className="text-brand-dark">
-                        Deadline <span className="text-red-500">*</span>
+                        Deadline - Quest ends on.<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="deadline"
@@ -190,6 +260,7 @@ export default function CreateQuestPage() {
                         onChange={(e) => setDeadline(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
                         min={new Date().toISOString().split("T")[0]}
+                        max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
                         required
                       />
                     </div>
@@ -197,11 +268,11 @@ export default function CreateQuestPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="minFollowers" className="text-brand-dark">
-                      Minimum Followers
+                      Minimum Followers - Eligibility criteria for content creators
                     </Label>
                     <Input
                       id="minFollowers"
-                      placeholder="e.g., 1000"
+                      placeholder="Optional"
                       value={minFollowers}
                       onChange={(e) => setMinFollowers(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800"
@@ -209,8 +280,38 @@ export default function CreateQuestPage() {
                       min="0"
                     />
                   </div>
+{/* 
+                  <div className="space-y-2">
+                    <Label htmlFor="rewardriteria" className="text-brand-dark">
+                      Reward criteria - How the winners will be picked
+                    </Label>
+                    <Input
+                      id="rewardCriteria"
+                      placeholder="e.g., The best 10 videos"
+                      value={rewardCriteria}
+                      onChange={(e) => setRewardCriteria(e.target.value)}
+                      className="bg-white border-gray-300 text-gray-800"
+                      min="0"
+                    />
+                  </div> */}
+
 
                   <div className="space-y-2">
+                    <Label htmlFor="rewardriteria" className="text-brand-dark">
+                      Reward criteria - How the winners will be picked
+                    </Label>
+                    <Textarea
+                      id="rewardriteria"
+                      placeholder="e.g., The best 10 videos"
+                      // value={longDescription}
+                      value={rewardCriteria}
+                      required
+                      onChange={(e) => setRewardCriteria(e.target.value)}
+                      className="bg-white border-gray-300 text-gray-800 resize-none h-30"
+                    />
+                  </div>
+
+                  {/* <div className="space-y-2">
                     <Label htmlFor="requirements" className="text-brand-dark">
                       Requirements
                     </Label>
@@ -222,7 +323,7 @@ export default function CreateQuestPage() {
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
                     />
                     <p className="text-xs text-gray-500">Enter each requirement on a new line</p>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
 
@@ -234,18 +335,19 @@ export default function CreateQuestPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="imageUrl" className="text-brand-dark">
-                      Cover Image URL
+                      Cover Image
                     </Label>
                     <Input
                       id="imageUrl"
                       placeholder="https://example.com/image.jpg"
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
-                      className="bg-white border-gray-300 text-gray-800"
+                      className="bg-white border-gray-300 text-gray-800 hidden"
+                      
                     />
                   </div>
 
-                  {imageUrl && (
+                  {/* {imageUrl && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 mb-2">Preview:</p>
                       <div
@@ -253,19 +355,42 @@ export default function CreateQuestPage() {
                         style={{ backgroundImage: `url(${imageUrl})` }}
                       ></div>
                     </div>
-                  )}
+                  )} */}
 
                   <div className="bg-brand-light p-4 rounded-lg border border-dashed border-gray-300 text-center">
-                    <p className="text-gray-600 mb-2">Or upload an image</p>
-                    <Button
+                    {/* <p className="text-gray-600 mb-2">Upload image</p> */}
+                     {/* <Button
                       type="button"
                       variant="outline"
                       className="border-brand-purple text-brand-purple hover:bg-brand-purple/10"
                     >
                       Upload Image
-                    </Button>
+                    </Button>  */}
+        <input type="file" required accept="image/*" onChange={handleImageUpload} />
+        {uploading && <p className="text-lg text-gray-500">Uploading...wait patiently!</p>}
+
+        {imageUrl && (
+        <div className="mt-2 space-y-2">
+            <img src={imageUrl} alt="Preview" className="w-40 rounded shadow" />
+            {/* <p className="text-sm text-gray-600 break-all">
+            <strong>Image URL:</strong>{" "}
+            <a
+                href={imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+            >
+                {imageUrl}
+            </a>
+            </p> */}
+        </div>
+        )}
+
+
                     <p className="text-xs text-gray-500 mt-2">Recommended size: 1200 x 800px, Max 5MB</p>
                   </div>
+
+
                 </CardContent>
               </Card>
 

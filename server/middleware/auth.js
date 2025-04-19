@@ -12,6 +12,7 @@ export const requireAuth = (req, res, next) => {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
+     req.userWalletAddress = payload.address; // ✅ assign wallet addre
     next();
   } catch {
     return res.status(401).json({ error: "Invalid or expired token" });
