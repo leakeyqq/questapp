@@ -25,8 +25,7 @@ app.use(cors({
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5000",
-      "https://1e9a-102-217-172-54.ngrok-free.app",
-      "https://87d4-102-217-172-54.ngrok-free.app"
+      "https://quest-local-client.vercel.app"
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
@@ -58,5 +57,5 @@ app.use("*", (req, res) => {
 });
 
 
-const PORT = process.env.SERVER_PORT
+const PORT = process.env.SERVER_PORT || 5001
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
