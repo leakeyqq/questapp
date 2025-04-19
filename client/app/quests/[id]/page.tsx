@@ -1,26 +1,60 @@
+"use client"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SubmissionForm from "@/components/submission-form"
 import { quests } from "@/lib/data"
-import { notFound } from "next/navigation"
+import type { Quest } from "@/lib/types"
+import { notFound, useParams, useRouter  } from "next/navigation"
+import { useEffect, useState } from "react"
 
-interface QuestPageProps {
-  params: {
-    id: string
+// interface QuestPageProps {
+//   params: {
+//     id: string
+//   }
+// }
+
+export default function QuestPage() {
+  const { id } = useParams() as { id: string } // 👈 Get dynamic route param
+  const [quest, setQuest] = useState<Quest | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(()=>{
+    const fetchQuest = async () => {
+      try{
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/getSingleQuest/${id}`,  {
+          credentials: "include"
+        })
+        if (res.status == 404) throw new Error("Quest not found")
+        if (res.status != 200) throw new Error("An error occured!")
+  
+          
+        const data = await res.json()
+        setQuest(data.quest)
+      }catch (error) {
+        console.error("Error fetching quest:", error)
+        // router.push("/404") // or use notFound() if in server context
+      } finally {
+        setLoading(false)
+      }
+
+    }
+    fetchQuest()
+  }, [id])
+
+  // const quest = quests.find((q) => q.id === id)
+  if (loading) {
+    return <div>Loading quest...</div>
   }
-}
-
-export default function QuestPage({ params }: QuestPageProps) {
-  const quest = quests.find((q) => q.id === params.id)
-
+  
   if (!quest) {
     notFound()
   }
 
-  const percentComplete = Math.min(100, Math.round((quest.submissions / quest.maxParticipants) * 100))
 
-  const daysLeft = Math.ceil((new Date(quest.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  // const percentComplete = Math.min(100, Math.round((quest.submissions / quest.maxParticipants) * 100))
+
+  const daysLeft = Math.ceil((new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
   // Assign a color based on the quest category
   const getCategoryColor = (category: string) => {
@@ -61,13 +95,13 @@ export default function QuestPage({ params }: QuestPageProps) {
             <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6 shadow-lg">
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${quest.imageUrl})` }}
+                style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-4 left-4">
-                <Badge className={`mb-2 ${getCategoryColor(quest.category)}`}>{quest.category}</Badge>
+                <Badge className="bg-brand-purple text-white">Create video</Badge>
                 <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
-                <p className="text-white/80">by {quest.brand}</p>
+                <p className="text-white/80">by {quest.brandName}</p>
               </div>
             </div>
 
@@ -78,18 +112,18 @@ export default function QuestPage({ params }: QuestPageProps) {
               </TabsList>
               <TabsContent value="details" className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Details</h2>
-                <p className="text-gray-700 mb-4">{quest.description}</p>
-                <p className="text-gray-700">{quest.longDescription}</p>
+                {/* <p className="text-gray-700 mb-4">{quest.description}</p> */}
+                <p className="text-gray-700">{quest.description}</p>
 
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
-                  <p className="text-gray-700 mb-4">Prizes will be given to the best 4 videos</p>
+                  <p className="text-gray-700 mb-4">{quest.rewardCriteria}</p>
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Prize Pool</p>
-                    <p className="text-xl font-bold text-brand-purple">{quest.prizePool}</p>
+                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
@@ -97,11 +131,11 @@ export default function QuestPage({ params }: QuestPageProps) {
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Current participants</p>
-                    <p className="text-xl font-bold text-brand-dark">{quest.submissions}</p>
+                    <p className="text-xl font-bold text-brand-dark">{quest.submissions.length}</p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Min follower count</p>
-                    <p className="text-xl font-bold text-brand-dark">{quest.minFollowers.toLocaleString()}</p>
+                    <p className="text-xl font-bold text-brand-dark">{quest.minFollowerCount.toLocaleString()}</p>
                   </div>
                 </div>
               </TabsContent>
@@ -111,7 +145,7 @@ export default function QuestPage({ params }: QuestPageProps) {
                 className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md"
               >
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Recent Submissions</h2>
-                {quest.recentSubmissions && quest.recentSubmissions.length > 0 ? (
+                {/* {quest.recentSubmissions && quest.recentSubmissions.length > 0 ? (
                   <div className="space-y-4">
                     {quest.recentSubmissions.map((submission, index) => (
                       <div key={index} className="flex items-start gap-4 p-4 bg-brand-light rounded-lg">
@@ -155,7 +189,7 @@ export default function QuestPage({ params }: QuestPageProps) {
                   <div className="text-center py-8 text-gray-500">
                     <p>No submissions yet. Be the first to complete this quest!</p>
                   </div>
-                )}
+                )} */}
               </TabsContent>
             </Tabs>
           </div>
@@ -169,7 +203,7 @@ export default function QuestPage({ params }: QuestPageProps) {
                   <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Prize Pool:</span>
-                      <span className="text-xl font-bold text-brand-purple">{quest.prizePool}</span>
+                      <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">Distributed among all selected submissions</div>
                   </div>
@@ -180,12 +214,12 @@ export default function QuestPage({ params }: QuestPageProps) {
                       <span className="font-bold text-brand-dark">{daysLeft} days</span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
-                      Deadline: {new Date(quest.deadline).toLocaleDateString()}
+                      Deadline: {new Date(quest.endsOn).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
 
-                <SubmissionForm questId={quest.id} />
+                <SubmissionForm questId={quest._id} />
               </div>
             </div>
           </div>

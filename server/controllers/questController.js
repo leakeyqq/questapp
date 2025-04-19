@@ -75,6 +75,7 @@ export const handleQuestCreation = async(req, res)=>{
         const quest = new Quest({
             createdByAddress: req.userWalletAddress,
             title: req.body.title,
+            brandName: req.body.brand,
             brandImageUrl: req.body.imageUrl,
             description: req.body.longDescription,
             rewardCriteria: req.body.rewardCriteria,
@@ -90,3 +91,27 @@ export const handleQuestCreation = async(req, res)=>{
       }
 }
 
+export const getAllQuests = async(req, res)=>{
+  try{
+    const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
+    return res.status(200).json({allQuests})
+  }catch(e){
+    return res.status(500).json({"error": e.message})
+  }
+}
+
+export const getSingleQuest = async(req, res)=>{
+  console.log('asked for a single quest')
+  try{
+    const quest = await Quest.findById(req.params.questID).lean().exec()
+    console.log('quest ', quest)
+
+    if(quest){
+      return res.status(200).json({quest})
+    }else{
+      return res.status(404)
+    }
+  }catch(e){
+    return res.status(500).json({"error": e.message})
+  }
+}

@@ -5,6 +5,10 @@ const questSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    brandName: {
+        type: String,
+        required: true
+    },
     title: {
         type: String,
         required: true
