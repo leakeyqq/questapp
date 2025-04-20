@@ -93,7 +93,9 @@ export const handleQuestCreation = async(req, res)=>{
 
 export const getAllQuests = async(req, res)=>{
   try{
-    const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
+    
+    // const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
+    const allQuests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1 }).lean().exec()
     return res.status(200).json({allQuests})
   }catch(e){
     return res.status(500).json({"error": e.message})
