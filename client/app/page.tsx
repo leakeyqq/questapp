@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import QuestCard from "@/components/quest-card"
 import { quests } from "@/lib/data"
+import  ThreeQuests  from "@/components/three-display-quests"
 
 export default function Home() {
   return (
@@ -50,11 +51,13 @@ export default function Home() {
               View all →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          <ThreeQuests/>
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quests.slice(0, 3).map((quest) => (
               <QuestCard key={quest.id} quest={quest} />
             ))}
-          </div>
+          </div> */}
         </section>
 
         <section className="mb-16">
