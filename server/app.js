@@ -25,7 +25,9 @@ app.use(cors({
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5000",
-      "https://quest-local-client.vercel.app"
+      "https://quest-local-client.vercel.app",
+      "https://www.questpanda.xyz",
+      "https://questpanda.xyz"
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
