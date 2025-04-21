@@ -93,14 +93,22 @@ export default function TestPage(){
 
         <div className="flex flex-col justify-center items-center">
             <ConnectWalletButton/>
-            {!address && (
+
+            {!address ? (
+            <div className="h1">Please install Metamask and connect.</div>
+            ) : (
+            <div className="h1">There you go... a canvas for your next Minipay project!</div>
+            )}
+
+            {/* {!address && (
                 <div className="h1">Please install Metamask and connect.</div>
             )}
+
             {address && (
                 <div className="h1">
                     There you go... a canvas for your next Minipay project!
                 </div>
-            )}
+            )} */}
 
             <a
                 href="https://faucet.celo.org/alfajores"

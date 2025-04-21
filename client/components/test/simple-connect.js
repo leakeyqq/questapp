@@ -1,49 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 
-let hasConnectedMiniPay = false; // Prevent multiple initializations
+let hasConnectedMiniPay = false;
 
 export default function ConnectWalletButton() {
   const [hideButton, setHideButton] = useState(false);
-  const [noProvider, setNoProvider] = useState(false);
-  const { connect } = useConnect();
+  const [mounted, setMounted] = useState(false); // 👈 Track client mount
+
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
 
+  // 🧠 Find Web3Auth connector
+  const web3authConnector = connectors.find((c) => c.id === "web3auth");
+
+  useEffect(() => {
+    setMounted(true); // ✅ Now it's safe to render client-only logic
+  }, []);
 
 
-    // Check for MiniPay and auto-connect
-    useEffect(() => {
-      if (typeof window !== "undefined") {
-        if (window.ethereum?.isMiniPay && !hasConnectedMiniPay) {
-          hasConnectedMiniPay = true; // Mark as connected once
-          setHideButton(true);
-          connect({ connector: injected({ target: "metaMask" }) });
-          console.log("MiniPay detected. Auto-connecting...");
-        } 
-        // else if (!window.ethereum) {
-        //   setNoProvider(true); // No wallet like MetaMask, MiniPay, etc.
-        // }
+  // 🚀 Auto-connect MiniPay if detected
+  useEffect(() => {
+    if (mounted && typeof window !== "undefined") {
+      if (window.ethereum?.isMiniPay && !hasConnectedMiniPay) {
+        hasConnectedMiniPay = true;
+        setHideButton(true);
+        connect({ connector: injected({ target: "metaMask" }) });
+        console.log("MiniPay detected. Auto-connecting...");
       }
-    }, [connect]);
-  
+    }
+  }, [connect]);
 
-  
-  // Handle backend login when connected
+  // 🔐 Backend auth after connecting
   useEffect(() => {
     if (isConnected && address) {
       const login = async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ address }),
-            credentials: "include",
-          });
-
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ address }),
+              credentials: "include",
+            }
+          );
           const data = await res.json();
           if (data.success) {
             console.log("Login successful:", data);
@@ -59,41 +63,40 @@ export default function ConnectWalletButton() {
     }
   }, [isConnected, address]);
 
-
-  if (hideButton) return null;
-
-  if (noProvider) {
+  if (!mounted || hideButton) {
     return (
-      <div className="p-4 border rounded bg-yellow-50 text-yellow-800">
-        {/* <div>No wallet provider detected.<br />
-        Please use MiniPay, MetaMask, or connect via WalletConnect.
-        </div> */}
-        <div className="mt-2">
-          <ConnectButton
-            // accountStatus="avatar"
-            showBalance={{ smallScreen: false, largeScreen: false }}
-      
-          />
-        </div>
+      <div className="flex justify-center items-center h-12">
+        <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
-  
-  return (
-    // <button
-    //   onClick={handleConnect}
-    //   className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
-    // >
-    //   Connect Wallet
-    // </button>
 
-                      <ConnectButton
-                        showBalance={{
-                          smallScreen: false,
-                          largeScreen: false,
-                        }}
-                      />
+  // 🙈 Hide if MiniPay auto-connected
+  if (hideButton) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {/* ✅ Web3Auth Connect Button */}
+      {web3authConnector && !isConnected && (
+        <button
+          onClick={() => connect({ connector: web3authConnector })}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+        >
+          Connect with Web3Auth
+        </button>
+      )}
+
+      {/* 🔌 Disconnect Button */}
+      {isConnected && (
+        <button
+          onClick={() => disconnect()}
+          className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition"
+        >
+          Disconnect
+        </button>
+      )}
+    </div>
   );
 }
 
-export {ConnectWalletButton};
+export { ConnectWalletButton };
