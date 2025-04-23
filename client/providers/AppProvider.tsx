@@ -1,6 +1,8 @@
 'use client';
 
 import '@rainbow-me/rainbowkit/styles.css';
+import { getWeb3AuthConnector } from '../lib/web3AuthConnector'; // adjust path if needed
+
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -28,8 +30,15 @@ const connectors = connectorsForWallets(
   }
 );
 
+// Add Web3Auth manually after RainbowKit connectors
+const allConnectors = [
+  ...connectors,
+  getWeb3AuthConnector([celo, celoAlfajores])
+];
+
+
 const config = createConfig({
-  connectors,
+  connectors: allConnectors,
   chains: [celo, celoAlfajores],
   transports: {
     [celo.id]: http(),

@@ -8,84 +8,54 @@ import {
     getContract,
     http,
     parseEther,
-    stringToHex,
+    stringToHex
 } from "viem";
 import { celoAlfajores, celo } from "viem/chains";
+import { useAccount, useWalletClient } from "wagmi";
 
 const publicClient = createPublicClient({
-    chain: celoAlfajores,
+    chain: celo,
     transport: http(),
 });
 
-// const cUSDTokenAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"; // Testnet
-const cUSDTokenAddress = "0x765DE816845861e75A25fCA122bb6898B8B1282a"
-const MINIPAY_NFT_CONTRACT = "0xE8F4699baba6C86DA9729b1B0a1DA1Bd4136eFeF"; // Testnet
+const cUSDTokenAddress = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
+const MINIPAY_NFT_CONTRACT = "0xE8F4699baba6C86DA9729b1B0a1DA1Bd4136eFeF";
 
 export const useWeb3 = () => {
     const [address, setAddress] = useState<string | null>(null);
+    const { data: walletClient } = useWalletClient();
+    const { address: wagmiAddress } = useAccount();
 
     const getUserAddress = async () => {
+        if (wagmiAddress) {
+            setAddress(wagmiAddress);
+            return wagmiAddress;
+        }
+        
         if (typeof window !== "undefined" && window.ethereum) {
-            let walletClient = createWalletClient({
+            const client = createWalletClient({
                 transport: custom(window.ethereum),
-                chain: celoAlfajores,
+                chain: celo,
             });
-
-            let [address] = await walletClient.getAddresses();
-            setAddress(address);
+            const [addr] = await client.getAddresses();
+            setAddress(addr);
+            return addr;
         }
-    };
-
-    const _sendCUSD = async (to: string, amount: string) => {
-        try{
-            console.log('I want to call send CUSD')
-            let walletClient = createWalletClient({
-                transport: custom(window.ethereum),
-                chain: celoAlfajores,
-            });
-    
-            let [address] = await walletClient.getAddresses();
-    
-            const amountInWei = parseEther(amount);
-    
-            const tx = await walletClient.writeContract({
-                address: cUSDTokenAddress,
-                abi: StableTokenABI.abi,
-                functionName: "transfer",
-                account: address,
-                args: [to, amountInWei],
-            });
-    
-            let receipt = await publicClient.waitForTransactionReceipt({
-                hash: tx,
-            });
-    
-            return receipt;
-        }catch(e){
-            console.log(e)
-            throw e
-        }
-
+        return null;
     };
 
     const sendCUSD = async (to: string, amount: string) => {
         try {
+            if (!walletClient) throw new Error("Wallet not connected");
+    
             console.log('🟡 Preparing to send CUSD:', amount, 'to', to);
-    
-            let walletClient = createWalletClient({
-                transport: custom(window.ethereum),
-                chain: celo,
-            });
-    
-            let [address] = await walletClient.getAddresses();
-    
             const amountInWei = parseEther(amount);
     
             const tx = await walletClient.writeContract({
                 address: cUSDTokenAddress,
                 abi: StableTokenABI.abi,
                 functionName: "transfer",
-                account: address,
+                account: walletClient.account.address,
                 args: [to, amountInWei],
             });
     
@@ -99,7 +69,6 @@ export const useWeb3 = () => {
             console.log('✅ Transaction confirmed!', receipt);
             alert('Transaction successful!');
             return receipt;
-    
         } catch (e: any) {
             console.error('❌ Error sending CUSD:', e);
             alert(`Error sending CUSD: ${e?.message || e}`);
@@ -107,26 +76,16 @@ export const useWeb3 = () => {
         }
     };
     
-
-    
-
     const mintMinipayNFT = async () => {
-        console.log('I want to call mint nft')
-
-        let walletClient = createWalletClient({
-            transport: custom(window.ethereum),
-            chain: celoAlfajores,
-        });
-
-        let [address] = await walletClient.getAddresses();
+        if (!walletClient) throw new Error("Wallet not connected");
 
         const tx = await walletClient.writeContract({
             address: MINIPAY_NFT_CONTRACT,
             abi: MinipayNFTABI.abi,
             functionName: "safeMint",
-            account: address,
+            account: walletClient.account.address,
             args: [
-                address,
+                walletClient.account.address,
                 "https://cdn-production-opera-website.operacdn.com/staticfiles/assets/images/sections/2023/hero-top/products/minipay/minipay__desktop@2x.a17626ddb042.webp",
             ],
         });
@@ -139,10 +98,7 @@ export const useWeb3 = () => {
     };
 
     const getNFTs = async () => {
-        let walletClient = createWalletClient({
-            transport: custom(window.ethereum),
-            chain: celoAlfajores,
-        });
+        if (!walletClient) throw new Error("Wallet not connected");
 
         const minipayNFTContract = getContract({
             abi: MinipayNFTABI.abi,
@@ -150,9 +106,8 @@ export const useWeb3 = () => {
             client: publicClient,
         });
 
-        const [address] = await walletClient.getAddresses();
         const nfts: any = await minipayNFTContract.read.getNFTsByAddress([
-            address,
+            walletClient.account.address,
         ]);
 
         let tokenURIs: string[] = [];
@@ -167,15 +122,10 @@ export const useWeb3 = () => {
     };
 
     const signTransaction = async () => {
-        let walletClient = createWalletClient({
-            transport: custom(window.ethereum),
-            chain: celoAlfajores,
-        });
-
-        let [address] = await walletClient.getAddresses();
+        if (!walletClient) throw new Error("Wallet not connected");
 
         const res = await walletClient.signMessage({
-            account: address,
+            account: walletClient.account.address,
             message: stringToHex("Hello from Celo Composer MiniPay Template!"),
         });
 
@@ -183,7 +133,7 @@ export const useWeb3 = () => {
     };
 
     return {
-        address,
+        address: walletClient?.account.address || address,
         getUserAddress,
         sendCUSD,
         mintMinipayNFT,

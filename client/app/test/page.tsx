@@ -46,7 +46,7 @@ export default function TestPage(){
             // setSigningLoading(true);
             try {
                 console.log('sending cusd ', address)
-                const tx = await sendCUSD("0x0E7e222972C7847C0B7B445BB0e23F14CAB71889", amountToSend);
+                const tx = await sendCUSD("0x83c84E6d3a9A7483d4fbBDfaffF17C4c5002A4C1", amountToSend);
                 setTx(tx);
                 console.log('Tx is ', tx)
             } catch (error) {
@@ -93,14 +93,22 @@ export default function TestPage(){
 
         <div className="flex flex-col justify-center items-center">
             <ConnectWalletButton/>
-            {!address && (
+
+            {!address ? (
+            <div className="h1">Please install Metamask and connect.</div>
+            ) : (
+            <div className="h1">There you go... a canvas for your next Minipay project!</div>
+            )}
+
+            {/* {!address && (
                 <div className="h1">Please install Metamask and connect.</div>
             )}
+
             {address && (
                 <div className="h1">
                     There you go... a canvas for your next Minipay project!
                 </div>
-            )}
+            )} */}
 
             <a
                 href="https://faucet.celo.org/alfajores"
@@ -121,7 +129,7 @@ export default function TestPage(){
                         <p className="font-bold mt-4">
                             Tx Completed:{" "}
                             <a
-                                href={`https://alfajores.celoscan.io/tx/${tx.transactionHash}`}
+                                href={`https://celoscan.io/${tx.transactionHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 underline"

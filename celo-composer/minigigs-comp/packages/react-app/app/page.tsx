@@ -46,7 +46,7 @@ export default function Home() {
             // setSigningLoading(true);
             try {
                 console.log('sending cusd ', address)
-                const tx = await sendCUSD("0x0E7e222972C7847C0B7B445BB0e23F14CAB71889", amountToSend);
+                const tx = await sendCUSD("0x83c84E6d3a9A7483d4fbBDfaffF17C4c5002A4C1", amountToSend);
                 setTx(tx);
                 console.log('Tx is ', tx)
             } catch (error) {

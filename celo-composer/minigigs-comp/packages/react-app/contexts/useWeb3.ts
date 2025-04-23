@@ -28,7 +28,7 @@ export const useWeb3 = () => {
         if (typeof window !== "undefined" && window.ethereum) {
             let walletClient = createWalletClient({
                 transport: custom(window.ethereum),
-                chain: celoAlfajores,
+                chain: celo,
             });
 
             let [address] = await walletClient.getAddresses();
@@ -41,7 +41,7 @@ export const useWeb3 = () => {
             console.log('I want to call send CUSD')
             let walletClient = createWalletClient({
                 transport: custom(window.ethereum),
-                chain: celoAlfajores,
+                chain: celo,
             });
     
             let [address] = await walletClient.getAddresses();
