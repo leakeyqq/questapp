@@ -129,7 +129,7 @@ export default function TestPage(){
                         <p className="font-bold mt-4">
                             Tx Completed:{" "}
                             <a
-                                href={`https://alfajores.celoscan.io/tx/${tx.transactionHash}`}
+                                href={`https://celoscan.io/${tx.transactionHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 underline"

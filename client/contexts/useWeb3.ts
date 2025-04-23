@@ -14,7 +14,7 @@ import { celoAlfajores, celo } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 
 const publicClient = createPublicClient({
-    chain: celoAlfajores,
+    chain: celo,
     transport: http(),
 });
 
@@ -35,37 +35,13 @@ export const useWeb3 = () => {
         if (typeof window !== "undefined" && window.ethereum) {
             const client = createWalletClient({
                 transport: custom(window.ethereum),
-                chain: celoAlfajores,
+                chain: celo,
             });
             const [addr] = await client.getAddresses();
             setAddress(addr);
             return addr;
         }
         return null;
-    };
-
-    const _sendCUSD = async (to: string, amount: string) => {
-        try {
-            if (!walletClient) throw new Error("Wallet not connected");
-            
-            const amountInWei = parseEther(amount);
-            const tx = await walletClient.writeContract({
-                address: cUSDTokenAddress,
-                abi: StableTokenABI.abi,
-                functionName: "transfer",
-                account: walletClient.account.address,
-                args: [to, amountInWei],
-            });
-    
-            let receipt = await publicClient.waitForTransactionReceipt({
-                hash: tx,
-            });
-    
-            return receipt;
-        } catch(e) {
-            console.log(e);
-            throw e;
-        }
     };
 
     const sendCUSD = async (to: string, amount: string) => {

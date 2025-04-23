@@ -17,6 +17,7 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
     tickerName: chains[0].nativeCurrency?.name,
     ticker: chains[0].nativeCurrency?.symbol,
     blockExplorerUrl: chains[0].blockExplorers?.default.url[0] as string,
+    logo: "https://cryptologos.cc/logos/celo-celo-logo.png",
   };
 
   const privateKeyProvider = new EthereumPrivateKeyProvider({ config: { chainConfig } });
