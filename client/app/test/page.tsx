@@ -12,15 +12,15 @@ export default function TestPage(){
         address,
         getUserAddress,
         sendCUSD,
-        mintMinipayNFT,
-        getNFTs,
+        // mintMinipayNFT,
+        // getNFTs,
         signTransaction,
     } = useWeb3();
 
     const [cUSDLoading, setCUSDLoading] = useState(false);
-    const [nftLoading, setNFTLoading] = useState(false);
+    // const [nftLoading, setNFTLoading] = useState(false);
     const [signingLoading, setSigningLoading] = useState(false);
-    const [userOwnedNFTs, setUserOwnedNFTs] = useState<string[]>([]);
+    // const [userOwnedNFTs, setUserOwnedNFTs] = useState<string[]>([]);
     const [tx, setTx] = useState<any>(undefined);
     const [amountToSend, setAmountToSend] = useState<string>("0.1");
     const [messageSigned, setMessageSigned] = useState<boolean>(false); // State to track if a message was signed
@@ -30,15 +30,15 @@ export default function TestPage(){
         getUserAddress();
     }, []);
 
-    useEffect(() => {
-        const getData = async () => {
-            const tokenURIs = await getNFTs();
-            setUserOwnedNFTs(tokenURIs);
-        };
-        if (address) {
-            getData();
-        }
-    }, [address]);
+    // useEffect(() => {
+    //     const getData = async () => {
+    //         const tokenURIs = await getNFTs();
+    //         setUserOwnedNFTs(tokenURIs);
+    //     };
+    //     if (address) {
+    //         getData();
+    //     }
+    // }, [address]);
 
     async function sendingCUSD() {
         // if (address) {
@@ -73,19 +73,19 @@ export default function TestPage(){
     }
 
 
-    async function mintNFT() {
-        setNFTLoading(true);
-        try {
-            const tx = await mintMinipayNFT();
-            const tokenURIs = await getNFTs();
-            setUserOwnedNFTs(tokenURIs);
-            setTx(tx);
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setNFTLoading(false);
-        }
-    }
+    // async function mintNFT() {
+    //     setNFTLoading(true);
+    //     try {
+    //         const tx = await mintMinipayNFT();
+    //         const tokenURIs = await getNFTs();
+    //         setUserOwnedNFTs(tokenURIs);
+    //         setTx(tx);
+    //     } catch (error) {
+    //         console.log(error);
+    //     } finally {
+    //         setNFTLoading(false);
+    //     }
+    // }
 
 
     return (
@@ -129,7 +129,7 @@ export default function TestPage(){
                         <p className="font-bold mt-4">
                             Tx Completed:{" "}
                             <a
-                                href={`https://celoscan.io/${tx.transactionHash}`}
+                                href={`https://celoscan.io/tx/${tx.transactionHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 underline"
@@ -171,7 +171,7 @@ export default function TestPage(){
                         </div>
                     )}
 
-                    <div className="w-full px-3 mt-5">
+                    {/* <div className="w-full px-3 mt-5">
                         <Button
                             className="bg-sky-500 text-sky-50"
                             loading={nftLoading}
@@ -179,9 +179,9 @@ export default function TestPage(){
                             title="Mint Minipay NFT"
                             widthFull
                         />
-                    </div>
+                    </div> */}
 
-                    {userOwnedNFTs.length > 0 ? (
+                    {/* {userOwnedNFTs.length > 0 ? (
                         <div className="flex flex-col items-center justify-center w-full mt-7">
                             <p className="font-bold">My NFTs</p>
                             <div className="w-full grid grid-cols-2 gap-3 mt-3 px-2">
@@ -203,7 +203,7 @@ export default function TestPage(){
                         </div>
                     ) : (
                         <div className="mt-5">You do not have any NFTs yet</div>
-                    )}
+                    )} */}
 
                 </>
             )}
