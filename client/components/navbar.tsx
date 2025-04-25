@@ -34,6 +34,18 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-1">
+
+          <Link
+              href="/"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                isActive("/")
+                  ? "text-brand-purple bg-brand-light"
+                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
+              }`}
+            >
+              Home
+            </Link>
+
             <Link
               href="/quests"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -44,6 +56,9 @@ export default function Navbar() {
             >
               Quests
             </Link>
+
+
+            
             <Link
               href="/dashboard"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -64,6 +79,18 @@ export default function Navbar() {
             >
               Leaderboard
             </Link>
+
+            <Link
+              href="/brand"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                isActive("/brand")
+                  ? "text-fuchsia-700 bg-brand-light"
+                  : "text-fuchsia-700 hover:text-fuchsia-700 hover:bg-brand-light/50"
+              }`}
+            >
+              Am a brand
+            </Link>
+
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -140,6 +167,18 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
+          <Link
+              href="/"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/")
+                  ? "text-brand-purple bg-brand-light"
+                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </Link>
+
             <Link
               href="/quests"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
@@ -162,6 +201,7 @@ export default function Navbar() {
             >
               Dashboard
             </Link>
+
             <Link
               href="/leaderboard"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
@@ -173,7 +213,20 @@ export default function Navbar() {
             >
               Leaderboard
             </Link>
-            <div className="pt-4 pb-3 border-t border-gray-200">
+
+            <Link
+              href="/brand"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/brand")
+                  ? "text-fuchsia-700 bg-brand-light"
+                  : "text-fuchsia-700 hover:text-brand-purple hover:bg-brand-light/50"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Am a brand
+            </Link>
+
+            {/* <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-brand-light flex items-center justify-center text-brand-purple">
@@ -207,7 +260,7 @@ export default function Navbar() {
                   Sign out
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       )}
