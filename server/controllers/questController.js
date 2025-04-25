@@ -117,3 +117,12 @@ export const getSingleQuest = async(req, res)=>{
     return res.status(500).json({"error": e.message})
   }
 }
+
+export const get3questsOnly = async(req, res)=>{
+  try {
+    const _3quests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1 }).limit(3).lean().exec()
+    return res.status(200).json({_3quests})
+  } catch (error) {
+    return res.status(500).json({"error": error.message})
+  }
+}
