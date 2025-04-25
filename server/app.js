@@ -8,6 +8,7 @@ dotenv.config()
 
 import authRoutes from "./routes/authRoutes.js"
 import questRoutes from "./routes/questRoutes.js"
+import feesRoutes from "./routes/feesRouter.js"
 
 const app = express();
 app.use(express.json());
@@ -27,7 +28,8 @@ app.use(cors({
       "http://localhost:5000",
       "https://quest-local-client.vercel.app",
       "https://www.questpanda.xyz",
-      "https://questpanda.xyz"
+      "https://questpanda.xyz",
+      "https://api.questpanda.xyz"
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
@@ -50,6 +52,7 @@ app.get("/ping", (req, res) => {
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/quest", questRoutes)
+app.use('/api/fees', feesRoutes)
 
 app.use("*", (req, res) => {
   console.log(`[${req.method}] Unhandled request to: ${req.originalUrl}`);

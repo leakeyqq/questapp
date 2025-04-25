@@ -7,7 +7,7 @@ import { injected } from "wagmi/connectors";
 let hasConnectedMiniPay = false;
 
 export default function ConnectWalletButton() {
-  const [hideButton, setHideButton] = useState(false);
+  // const [hideButton, setHideButton] = useState(false);
   const [mounted, setMounted] = useState(false); // 👈 Track client mount
 
   const { connect, connectors } = useConnect();
@@ -27,7 +27,7 @@ export default function ConnectWalletButton() {
     if (mounted && typeof window !== "undefined") {
       if (window.ethereum?.isMiniPay && !hasConnectedMiniPay) {
         hasConnectedMiniPay = true;
-        setHideButton(true);
+        // setHideButton(true);
         connect({ connector: injected({ target: "metaMask" }) });
         console.log("MiniPay detected. Auto-connecting...");
       }
@@ -63,16 +63,20 @@ export default function ConnectWalletButton() {
     }
   }, [isConnected, address]);
 
-  if (!mounted || hideButton) {
-    return (
-      <div className="flex justify-center items-center h-12">
-        <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // if (!mounted || hideButton) {
+  //   return (
+  //     <div className="flex justify-center items-center h-12">
+  //       <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+  //     </div>
+  //   );
+  // }
 
-  // 🙈 Hide if MiniPay auto-connected
-  if (hideButton) return null;
+  // // 🙈 Hide if MiniPay auto-connected
+  // if (hideButton) return null;
+
+  if (!mounted || (typeof window !== "undefined" && window.ethereum?.isMiniPay)) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center gap-4">
