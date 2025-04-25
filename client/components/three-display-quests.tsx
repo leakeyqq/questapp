@@ -9,13 +9,13 @@ export default function ThreeQuests(){
     useEffect(() => {
         const fetchQuests = async () => {
           try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/allQuests/`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest//get3QuestsOnly/`, {
               credentials: "include"
             })
             // const res = await fetch("http://localhost:5000/api/quest/allQuests")
     
             const data = await res.json()
-            setQuests(data.allQuests)
+            setQuests(data._3quests)
           } catch (error) {
             console.error("Failed to fetch quests:", error)
           } finally {
