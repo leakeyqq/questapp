@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { usePathname } from "next/navigation"
+import ConnectWalletButton from "./test/simple-connect"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -91,10 +92,19 @@ export default function Navbar() {
               Am a brand
             </Link>
 
+            {/* <div className="items-center space-x-4">
+              <ConnectWalletButton />
+           </div> */}
+
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <DropdownMenu>
+          <div className="items-center space-x-4">
+            {/* User Dropdown or Auth Button */}
+              <ConnectWalletButton />
+           </div>
+           
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 bg-brand-light text-brand-purple">
                   <span className="sr-only">User menu</span>
@@ -117,7 +127,7 @@ export default function Navbar() {
                 <DropdownMenuSeparator className="bg-gray-200" />
                 <DropdownMenuItem className="hover:bg-brand-light hover:text-brand-purple">Sign out</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
 
           <div className="md:hidden">
@@ -226,6 +236,11 @@ export default function Navbar() {
               Am a brand
             </Link>
 
+            <div className="items-center space-x-4">
+            {/* User Dropdown or Auth Button */}
+              <ConnectWalletButton />
+           </div>
+
             {/* <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
@@ -261,6 +276,12 @@ export default function Navbar() {
                 </button>
               </div>
             </div> */}
+
+
+
+
+
+
           </div>
         </div>
       )}

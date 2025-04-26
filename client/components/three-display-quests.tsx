@@ -9,7 +9,7 @@ export default function ThreeQuests(){
     useEffect(() => {
         const fetchQuests = async () => {
           try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest//get3QuestsOnly/`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/get3QuestsOnly`, {
               credentials: "include"
             })
             // const res = await fetch("http://localhost:5000/api/quest/allQuests")
