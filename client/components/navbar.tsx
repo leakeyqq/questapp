@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { usePathname } from "next/navigation"
+import ConnectWalletButton from "./test/simple-connect"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -64,10 +65,31 @@ export default function Navbar() {
             >
               Leaderboard
             </Link>
+
+            <Link
+              href="/brand"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                isActive("/brand")
+                  ? "text-fuchsia-700 bg-brand-light"
+                  : "text-fuchsia-700 hover:text-fuchsia-700 hover:bg-brand-light/50"
+              }`}
+            >
+              Am a brand
+            </Link>
+
+            {/* <div className="items-center space-x-4">
+              <ConnectWalletButton />
+           </div> */}
+
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <DropdownMenu>
+          <div className="items-center space-x-4">
+            {/* User Dropdown or Auth Button */}
+              <ConnectWalletButton />
+           </div>
+           
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 bg-brand-light text-brand-purple">
                   <span className="sr-only">User menu</span>
@@ -90,7 +112,7 @@ export default function Navbar() {
                 <DropdownMenuSeparator className="bg-gray-200" />
                 <DropdownMenuItem className="hover:bg-brand-light hover:text-brand-purple">Sign out</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
 
           <div className="md:hidden">
@@ -173,7 +195,25 @@ export default function Navbar() {
             >
               Leaderboard
             </Link>
-            <div className="pt-4 pb-3 border-t border-gray-200">
+
+            <Link
+              href="/brand"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/brand")
+                  ? "text-fuchsia-700 bg-brand-light"
+                  : "text-fuchsia-700 hover:text-brand-purple hover:bg-brand-light/50"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Am a brand
+            </Link>
+
+            <div className="items-center space-x-4">
+            {/* User Dropdown or Auth Button */}
+              <ConnectWalletButton />
+           </div>
+
+            {/* <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-brand-light flex items-center justify-center text-brand-purple">
@@ -207,7 +247,13 @@ export default function Navbar() {
                   Sign out
                 </button>
               </div>
-            </div>
+            </div> */}
+
+
+
+
+
+
           </div>
         </div>
       )}

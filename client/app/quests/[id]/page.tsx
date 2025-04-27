@@ -1,4 +1,4 @@
-"use client"
+// "use client"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -7,6 +7,17 @@ import { quests } from "@/lib/data"
 import type { Quest } from "@/lib/types"
 import { notFound, useParams, useRouter  } from "next/navigation"
 import { useEffect, useState } from "react"
+import { getSingleQuest } from "@/lib/quest";
+
+
+import { generateMetadata } from "./../[id]/generateMetadata";
+export { generateMetadata };
+
+
+interface PageProps {
+  params: { id: string };
+}
+
 
 // interface QuestPageProps {
 //   params: {
@@ -14,38 +25,48 @@ import { useEffect, useState } from "react"
 //   }
 // }
 
-export default function QuestPage() {
-  const { id } = useParams() as { id: string } // 👈 Get dynamic route param
-  const [quest, setQuest] = useState<Quest | null>(null)
-  const [loading, setLoading] = useState(true)
+export default async function QuestPage({ 
+  params 
+}: { 
+  params: { id: string } 
+}) {
+  const awaitedParams = await params; // Properly await params first
 
-  useEffect(()=>{
-    const fetchQuest = async () => {
-      try{
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/getSingleQuest/${id}`,  {
-          credentials: "include"
-        })
-        if (res.status == 404) throw new Error("Quest not found")
-        if (res.status != 200) throw new Error("An error occured!")
+  const quest = await getSingleQuest(awaitedParams.id);
+
+  if (!quest) notFound();
+  
+  // const { id } = useParams() as { id: string } // 👈 Get dynamic route param
+  // const [quest, setQuest] = useState<Quest | null>(null)
+  // const [loading, setLoading] = useState(true)
+
+  // useEffect(()=>{
+  //   const fetchQuest = async () => {
+  //     try{
+  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/getSingleQuest/${id}`,  {
+  //         credentials: "include"
+  //       })
+  //       if (res.status == 404) throw new Error("Quest not found")
+  //       if (res.status != 200) throw new Error("An error occured!")
   
           
-        const data = await res.json()
-        setQuest(data.quest)
-      }catch (error) {
-        console.error("Error fetching quest:", error)
-        // router.push("/404") // or use notFound() if in server context
-      } finally {
-        setLoading(false)
-      }
+  //       const data = await res.json()
+  //       setQuest(data.quest)
+  //     }catch (error) {
+  //       console.error("Error fetching quest:", error)
+  //       // router.push("/404") // or use notFound() if in server context
+  //     } finally {
+  //       setLoading(false)
+  //     }
 
-    }
-    fetchQuest()
-  }, [id])
+  //   }
+  //   fetchQuest()
+  // }, [id])
 
   // const quest = quests.find((q) => q.id === id)
-  if (loading) {
-    return <div>Loading quest...</div>
-  }
+  // if (loading) {
+  //   return <div>Loading quest...</div>
+  // }
   
   if (!quest) {
     notFound()
@@ -66,6 +87,8 @@ export default function QuestPage() {
     }
     return colors[category as keyof typeof colors] || "bg-brand-yellow text-brand-dark"
   }
+
+  // console.log('on page file, quest is ', quest)
 
   return (
     <div className="min-h-screen bg-brand-light">

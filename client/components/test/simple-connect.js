@@ -84,9 +84,9 @@ export default function ConnectWalletButton() {
       {web3authConnector && !isConnected && (
         <button
           onClick={() => connect({ connector: web3authConnector })}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+          className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition"
         >
-          Connect with Web3Auth
+          Sign in
         </button>
       )}
 
@@ -94,9 +94,9 @@ export default function ConnectWalletButton() {
       {isConnected && (
         <button
           onClick={() => disconnect()}
-          className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition"
+          className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
         >
-          Disconnect
+          Log Out
         </button>
       )}
     </div>

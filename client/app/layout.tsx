@@ -3,16 +3,34 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AppProvider } from '@/providers/AppProvider';
+import { Metadata } from "next";
 
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "QuestPanda - Create videos, post and earn",
-  description: "A social media platform for content creators to complete quests and earn USD",
-    generator: 'v0.dev'
+export const metadata: Metadata = {
+  title: "QuestPanda - Create content and earn",
+  description: "Connecting brands that need digital marketing with content creators",
+  openGraph: {
+    title: "QuestPanda - Create content and earn",
+    description: "Connecting brands that need digital marketing with content creators",
+    images: [
+      {
+        url: "/dancing-panda.webp", // Or full URL like https://yourdomain.com/your-image.jpg
+        width: 1200,
+        height: 630,
+        alt: "QuestPanda Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QuestPanda - Create content and earn",
+    description: "Connecting brands that need digital marketing with content creators",
+    images: ["/dancing-panda.webp"], // again can be full URL
+  },
 }
 
 export default function RootLayout({
