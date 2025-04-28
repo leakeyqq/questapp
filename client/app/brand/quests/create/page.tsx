@@ -21,7 +21,7 @@ export default function CreateQuestPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
 
 
@@ -76,7 +76,28 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
       }
 
       
-      try {
+    try {
+      const userAddress = await getUserAddress();
+      if (!userAddress) {
+        alert("Please sign in first!");
+        return;
+      }
+  
+        // Show confirmation dialog for depositing funds
+       const confirmDeposit = confirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
+
+       if(!confirmDeposit){
+        return
+       }
+      
+           // First check balance
+    const balanceCheck = await checkCUSDBalance(prizePool);
+    
+    if (!balanceCheck.hasEnough) {
+      alert(`Insufficient funds! You have a balance of  ${balanceCheck.balance} cUSD. You need ${balanceCheck.required} cUSD. Please top up first!!`);
+      return;
+    }
+
       // Convert prizePool to cUSD (assuming prizePool is in USD 1:1)
       const txReceipt = await sendCUSD(platformEscrowAddress, prizePool);
       

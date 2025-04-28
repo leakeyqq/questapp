@@ -95,6 +95,42 @@ export const useWeb3 = () => {
     };
     
 
+    const checkCUSDBalance = async (requiredAmount: string): Promise<{
+        hasEnough: boolean;
+        balance: string;
+        required: string;
+      }> => {
+        try {
+          if (!walletClient) throw new Error("Wallet not connected");
+      
+          // Get user address
+          const userAddress = walletClient.account.address;
+      
+          // Create contract instance
+          const cUSDContract = getContract({
+            address: cUSDTokenAddress,
+            abi: StableTokenABI.abi,
+            client: publicClient,
+          });
+      
+          // Get balance in wei (smallest unit)
+          const balanceInWei = await cUSDContract.read.balanceOf([userAddress]);
+          const balance = Number(balanceInWei) / 10**18; // Convert to cUSD (18 decimals)
+          
+          // Convert required amount to number
+          const required = Number(requiredAmount);
+      
+          return {
+            hasEnough: balance >= required,
+            balance: balance.toFixed(2),
+            required: required.toFixed(2),
+          };
+          
+        } catch (e: any) {
+          console.error('❌ Error checking cUSD balance:', e);
+          throw new Error(`Failed to check balance: ${e?.message || e}`);
+        }
+      };
 
     const signTransaction = async () => {
         if (!walletClient) throw new Error("Wallet not connected");
@@ -114,5 +150,6 @@ export const useWeb3 = () => {
         // mintMinipayNFT,
         // getNFTs,
         signTransaction,
+        checkCUSDBalance
     };
 };
