@@ -8,6 +8,7 @@ import type { Quest } from "@/lib/types"
 import { notFound, useParams, useRouter  } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getSingleQuest } from "@/lib/quest";
+import LinkifyText from '@/components/LinkifyText';
 
 
 import { generateMetadata } from "./../[id]/generateMetadata";
@@ -17,7 +18,6 @@ export { generateMetadata };
 interface PageProps {
   params: { id: string };
 }
-
 
 // interface QuestPageProps {
 //   params: {
@@ -35,7 +35,7 @@ export default async function QuestPage({
   const quest = await getSingleQuest(awaitedParams.id);
 
   if (!quest) notFound();
-  
+
   // const { id } = useParams() as { id: string } // 👈 Get dynamic route param
   // const [quest, setQuest] = useState<Quest | null>(null)
   // const [loading, setLoading] = useState(true)
@@ -135,8 +135,10 @@ export default async function QuestPage({
               </TabsList>
               <TabsContent value="details" className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Details</h2>
-                {/* <p className="text-gray-700 mb-4">{quest.description}</p> */}
-                <p className="text-gray-700">{quest.description}</p>
+                {/* <p className="text-gray-700 text-sm md:text-lg">{quest.description}</p> */}
+                <p className="text-gray-700 text-sm md:text-lg">
+                  <LinkifyText text={quest.description} />
+                </p>
 
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
