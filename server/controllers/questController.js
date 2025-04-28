@@ -31,7 +31,7 @@ export const validate_createQuest = [
       .trim()
       .notEmpty()
       .withMessage("Detailed description is required")
-      .isLength({ min: 20 })
+      // .isLength({ min: 20 })
       .withMessage("Detailed description must be at least 20 characters long"),
   
     check("prizePool")

@@ -94,7 +94,50 @@ export const useWeb3 = () => {
         }
     };
     
+    // const mintMinipayNFT = async () => {
+    //     if (!walletClient) throw new Error("Wallet not connected");
 
+    //     const tx = await walletClient.writeContract({
+    //         address: MINIPAY_NFT_CONTRACT,
+    //         abi: MinipayNFTABI.abi,
+    //         functionName: "safeMint",
+    //         account: walletClient.account.address,
+    //         args: [
+    //             walletClient.account.address,
+    //             "https://cdn-production-opera-website.operacdn.com/staticfiles/assets/images/sections/2023/hero-top/products/minipay/minipay__desktop@2x.a17626ddb042.webp",
+    //         ],
+    //     });
+
+    //     const receipt = await publicClient.waitForTransactionReceipt({
+    //         hash: tx,
+    //     });
+
+    //     return receipt;
+    // };
+
+    // const getNFTs = async () => {
+    //     if (!walletClient) throw new Error("Wallet not connected");
+
+    //     const minipayNFTContract = getContract({
+    //         abi: MinipayNFTABI.abi,
+    //         address: MINIPAY_NFT_CONTRACT,
+    //         client: publicClient,
+    //     });
+
+    //     const nfts: any = await minipayNFTContract.read.getNFTsByAddress([
+    //         walletClient.account.address,
+    //     ]);
+
+    //     let tokenURIs: string[] = [];
+
+    //     for (let i = 0; i < nfts.length; i++) {
+    //         const tokenURI: string = (await minipayNFTContract.read.tokenURI([
+    //             nfts[i],
+    //         ])) as string;
+    //         tokenURIs.push(tokenURI);
+    //     }
+    //     return tokenURIs;
+    // };
 
     const signTransaction = async () => {
         if (!walletClient) throw new Error("Wallet not connected");
