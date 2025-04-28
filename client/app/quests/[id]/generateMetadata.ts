@@ -16,15 +16,15 @@ export async function generateMetadata({
   // console.log('file:generate metadata the found quest is ', quest)
 
   return {
-    title: quest.title,
+    title: `${quest.title} - $${quest.prizePoolUsd} prize`,
     description: quest.description,
     openGraph: {
-      title: quest.title,
+      title: `${quest.title} - $${quest.prizePoolUsd} prize`,
       description: quest.description,
       images: quest.brandImageUrl ? [quest.brandImageUrl] : [],
     },
     twitter: {
-      title: quest.title,
+      title: `${quest.title} - $${quest.prizePoolUsd} prize`,
       description: quest.description,
       images: quest.brandImageUrl ? [quest.brandImageUrl] : [],
       card: "summary_large_image",

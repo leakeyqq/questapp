@@ -13,10 +13,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
+import { useWeb3 } from "@/contexts/useWeb3"
+
 
 export default function CreateQuestPage() {
+  
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Inside your CreateQuestPage component
+const { sendCUSD } = useWeb3();
+const [paymentProcessing, setPaymentProcessing] = useState(false);
+
 
   // Form state
   const [title, setTitle] = useState("")
@@ -47,7 +54,7 @@ export default function CreateQuestPage() {
     setUploading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
     e.preventDefault();
   
     if (!title || !brand || !rewardCriteria || !category || !longDescription || !prizePool || !deadline || !imageUrl) {
@@ -58,48 +65,78 @@ export default function CreateQuestPage() {
       });
       return;
     }
-  
-    setIsSubmitting(true);
-  
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // send cookies for auth
-        body: JSON.stringify({
-          title,
-          brand,
-          rewardCriteria,
-          category,
-          longDescription,
-          prizePool,
-          deadline,
-          minFollowers,
-          imageUrl,
-        }),
-      });
-  
-      const data = await res.json();
-  
-      if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
+    try{
+      // First handle payment
+      setPaymentProcessing(true);
+
+      // Determine recipient address (this should be your platform's escrow address)
+      const platformEscrowAddress = process.env.NEXT_PUBLIC_PLATFORM_ESCROW_ADDRESS;
+      if (!platformEscrowAddress) {
+        throw new Error("Platform escrow address not configured");
       }
-  
-      toast({
-        title: "Quest created!",
-        description: "Your quest has been created successfully.",
-      });
-  
-      router.push("/brand/dashboard");
-    } catch (err: any) {
+
+      
+      try {
+      // Convert prizePool to cUSD (assuming prizePool is in USD 1:1)
+      const txReceipt = await sendCUSD(platformEscrowAddress, prizePool);
+      
+      // If payment succeeds, proceed with quest creation
+      setIsSubmitting(true);
+
+
+      setIsSubmitting(true);
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // send cookies for auth
+          body: JSON.stringify({
+            title,
+            brand,
+            rewardCriteria,
+            category,
+            longDescription,
+            prizePool,
+            deadline,
+            minFollowers,
+            imageUrl,
+          }),
+        });
+    
+        const data = await res.json();
+    
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+    
+        toast({
+          title: "Quest created!",
+          description: "Your quest has been created successfully.",
+        });
+    
+        router.push("/brand/dashboard");
+      } catch (paymentError: any) {
+        // Specific handling for insufficient funds
+        if (paymentError.message.includes("insufficient funds") ){
+          toast({
+            title: "Insufficient Funds",
+            description: "You don't have enough cUSD for this transaction",
+            variant: "destructive",
+          });
+        } else {
+          throw paymentError; // Re-throw other errors
+        }
+      }
+  } catch (err: any) {
       toast({
         title: "Error",
         description: err.message || "Failed to create quest.",
         variant: "destructive",
       });
     } finally {
+      setPaymentProcessing(false);
       setIsSubmitting(false);
     }
   };
@@ -131,7 +168,7 @@ export default function CreateQuestPage() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-brand-dark">Create New Quest</h1>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handlePaymentAndSubmit }>
             <div className="space-y-6">
               <Card className="bg-white border-gray-200 shadow-sm">
                 <CardHeader>
@@ -244,7 +281,7 @@ export default function CreateQuestPage() {
                         onChange={(e) => setPrizePool(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
                         type="number"
-                        min="1"
+                        // min="1"
                         required
                       />
                     </div>
@@ -406,10 +443,24 @@ export default function CreateQuestPage() {
                 <Button
                   type="submit"
                   className="bg-brand-purple hover:bg-brand-purple/90 text-white"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || paymentProcessing}
                 >
-                  {isSubmitting ? "Creating..." : "Create Quest"}
+                  {/* {isSubmitting ? "Creating..." : "Create Quest"} */}
+                      {paymentProcessing ? "Processing payment..." : 
+                       isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>
+
+                  {/* // Add this loading state component */}
+                {/* {paymentProcessing && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg max-w-md text-center">
+                      <p className="text-lg font-medium mb-4">Processing payment...</p>
+                      <p className="text-sm text-gray-600">
+                        Please confirm the transaction in your wallet
+                      </p>
+                    </div>
+                  </div>
+                )} */}
               </div>
             </div>
           </form>

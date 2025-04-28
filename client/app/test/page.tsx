@@ -18,9 +18,7 @@ export default function TestPage(){
     } = useWeb3();
 
     const [cUSDLoading, setCUSDLoading] = useState(false);
-    // const [nftLoading, setNFTLoading] = useState(false);
     const [signingLoading, setSigningLoading] = useState(false);
-    // const [userOwnedNFTs, setUserOwnedNFTs] = useState<string[]>([]);
     const [tx, setTx] = useState<any>(undefined);
     const [amountToSend, setAmountToSend] = useState<string>("0.1");
     const [messageSigned, setMessageSigned] = useState<boolean>(false); // State to track if a message was signed
@@ -30,20 +28,9 @@ export default function TestPage(){
         getUserAddress();
     }, []);
 
-    // useEffect(() => {
-    //     const getData = async () => {
-    //         const tokenURIs = await getNFTs();
-    //         setUserOwnedNFTs(tokenURIs);
-    //     };
-    //     if (address) {
-    //         getData();
-    //     }
-    // }, [address]);
 
     async function sendingCUSD() {
-        // if (address) {
             setCUSDLoading(true);
-            // setSigningLoading(true);
             try {
                 console.log('sending cusd ', address)
                 const tx = await sendCUSD("0x83c84E6d3a9A7483d4fbBDfaffF17C4c5002A4C1", amountToSend);
