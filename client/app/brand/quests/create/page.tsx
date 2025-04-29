@@ -318,7 +318,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                         onChange={(e) => setDeadline(e.target.value)}
                         className="bg-white border-gray-300 text-gray-800"
                         min={new Date().toISOString().split("T")[0]}
-                        max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
+                        max={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
                         required
                       />
                     </div>
@@ -466,7 +466,6 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                   className="bg-brand-purple hover:bg-brand-purple/90 text-white"
                   disabled={isSubmitting || paymentProcessing}
                 >
-                  {/* {isSubmitting ? "Creating..." : "Create Quest"} */}
                       {paymentProcessing ? "Processing payment..." : 
                        isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>

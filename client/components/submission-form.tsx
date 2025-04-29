@@ -17,10 +17,15 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [platform, setPlatform] = useState("")
   const [contentUrl, setContentUrl] = useState("")
-  const [comment, setComment] = useState("")
+  // const [comment, setComment] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!platform) {
+      alert("You did not select the social media platform where you posted the video!")
+      return;
+    }
 
     if (!platform || !contentUrl) {
       toast({
@@ -44,7 +49,7 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
     setIsSubmitting(false)
     setPlatform("")
     setContentUrl("")
-    setComment("")
+    // setComment("")
   }
 
   return (
@@ -78,11 +83,11 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
               placeholder="https://"
               value={contentUrl}
               onChange={(e) => setContentUrl(e.target.value)}
-              className="bg-white border-gray-300 text-gray-800"
+              className="bg-white border-gray-300 text-gray-800" required
             />
           </div>
 
-          <div>
+          {/* <div>
             <label htmlFor="comment" className="block text-sm text-gray-600 mb-1">
               Comment (optional)
             </label>
@@ -93,7 +98,7 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
               onChange={(e) => setComment(e.target.value)}
               className="bg-white border-gray-300 text-gray-800 resize-none h-20"
             />
-          </div>
+          </div> */}
 
           <Button
             type="submit"
