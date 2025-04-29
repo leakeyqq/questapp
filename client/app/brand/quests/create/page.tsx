@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import {useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,17 @@ import { toast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { useWeb3 } from "@/contexts/useWeb3"
 
+let hasConnectedMiniPay = false;
 
 export default function CreateQuestPage() {
+    // 🚀 Auto-connect MiniPay if detected
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        if (window.ethereum?.isMiniPay && !hasConnectedMiniPay) {
+          hasConnectedMiniPay = true;
+        }
+      }
+    }, []);
   
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,6 +47,8 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   // const [requirements, setRequirements] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const [uploading, setUploading] = useState(false);
+
+  const [balanceError, setBalanceError] = useState<{ hasError: boolean;message: string; balance: string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,9 +103,15 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
       
            // First check balance
     const balanceCheck = await checkCUSDBalance(prizePool);
-    
+
     if (!balanceCheck.hasEnough) {
-      alert(`Insufficient funds! You have a balance of  ${balanceCheck.balance} cUSD. You need ${balanceCheck.required} cUSD. Please top up first!!`);
+      setBalanceError({
+        hasError: true,
+        message: "Insufficient balance to create this quest",
+        balance: balanceCheck.balance,
+        required: balanceCheck.required,
+      });
+      setPaymentProcessing(false);
       return;
     }
 
@@ -356,7 +373,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
 
                   <div className="space-y-2">
                     <Label htmlFor="rewardriteria" className="text-brand-dark">
-                      Reward criteria - How the winners will be picked
+                      Reward criteria - How the winners will be picked and rewarded
                     </Label>
                     <Textarea
                       id="rewardriteria"
@@ -451,6 +468,50 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
 
                 </CardContent>
               </Card>
+
+              {balanceError.hasError && (
+                <div className="w-full bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-red-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">
+                        {balanceError.message} You have {balanceError.balance} cUSD but need {balanceError.required} cUSD.
+
+
+                        {hasConnectedMiniPay ? (
+                          <Link 
+                          href="https://minipay.opera.com/add_cash" 
+                          className="ml-2 font-medium text-red-700 underline hover:text-red-600"
+                        >
+                          Click here to top up
+                        </Link>
+                      ) : (
+                          <Link 
+                          href="#" 
+                          className="ml-2 font-medium text-red-700 underline hover:text-red-600"
+                        >
+                          Click here to top up
+                        </Link>
+                      )}
+                        
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-4">
                 <Button
