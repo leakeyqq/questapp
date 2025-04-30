@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { useWeb3 } from "@/contexts/useWeb3"
+
 
 interface SubmissionFormProps {
   questId: string
@@ -18,6 +20,8 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
   const [platform, setPlatform] = useState("")
   const [contentUrl, setContentUrl] = useState("")
   // const [comment, setComment] = useState("")
+
+  const {getUserAddress } = useWeb3();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,17 +43,50 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
     setIsSubmitting(true)
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    // await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    toast({
-      title: "Submission received!",
-      description: "Your quest submission is being reviewed.",
-    })
+    // toast({
+    //   title: "Submission received!",
+    //   description: "Your quest submission is being reviewed.",
+    // })
 
-    setIsSubmitting(false)
-    setPlatform("")
-    setContentUrl("")
-    // setComment("")
+    try{
+      const userAddress = await getUserAddress();
+      if (!userAddress) {
+        alert("Please sign in first! Then we can proceed..😀");
+        return;
+      }
+
+      const confirmSubmission = confirm('Please be aware that you can only submit once for a single quest. Do you wish to proceed?🙂 ')
+      if(!confirmSubmission) return 
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/submitQuest/${questId}`,{
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // send cookies for auth
+        body: JSON.stringify({
+          platform,
+          contentUrl
+        }),
+      })
+  
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error.msg || "Something went wrong");
+      }
+      alert("Quest was submitted successfully! Best of luck in getting rewarded😎");
+
+      setPlatform("")
+      setContentUrl("")
+    }catch(e: any){
+      alert(e)
+    }finally{
+      setIsSubmitting(false)
+    }
+
   }
 
   return (

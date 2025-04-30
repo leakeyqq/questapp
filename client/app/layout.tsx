@@ -11,6 +11,10 @@ import Footer from "@/components/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  icons: {
+    icon: '/favicon.ico', // Path must start with /
+    shortcut: '/favicon.ico',
+  },
   title: "QuestPanda - Create content and earn",
   description: "Connecting brands that need digital marketing with content creators",
   openGraph: {

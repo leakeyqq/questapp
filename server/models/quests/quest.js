@@ -58,8 +58,15 @@ const questSchema = new mongoose.Schema({
             submissionRead: {
                 type: Boolean,
                 default: false
+            },
+            submittedAtTime: {
+                type: Date,
+                required: false
+            },
+            rewardedAtTime:{
+                type: Date,
+                required: false
             }
-
         }
     ],
     minFollowerCount: {
