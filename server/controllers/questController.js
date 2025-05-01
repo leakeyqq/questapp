@@ -149,6 +149,21 @@ export const submitQuestByCreator = async(req, res)=>{
   try {
     const questID = req.params.questID
     const walletID = req.userWalletAddress
+
+    // Check if user has already submitted to this quest
+    const existingQuest = await Quest.findOne({
+      _id: questID,
+      'submissions.submittedByAddress': walletID
+    });
+
+    if (existingQuest) {
+      return res.status(400).json({ 
+        error: { 
+          msg: "Oops..You cannot submit a single quest twice😪" 
+        } 
+      });
+    }
+    
   
     const updatedQuest = await submitQuest(walletID, questID, req.body.platform, req.body.contentUrl)
     return res.status(200).json({updatedQuest})
