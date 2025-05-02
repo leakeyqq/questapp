@@ -10,6 +10,8 @@ import { useEffect, useState } from "react"
 import { getSingleQuest } from "@/lib/quest";
 import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
 
 
 import { generateMetadata } from "./../[id]/generateMetadata";
@@ -208,7 +210,7 @@ export default async function QuestPage({
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Prize Pool</p>
-                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</p>
+                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
@@ -244,7 +246,7 @@ export default async function QuestPage({
 
                             <p className="text-gray-500 text-sm">{formatDateString(submission.submittedAtTime)}</p>
                           </div>
-                          <p className="text-gray-700 mt-1">Reward earned <span className="font-bold text-brand-purple">{submission.rewardAmountUsd} USD</span></p>
+                          <p className="text-gray-700 mt-1">Reward earned <span className="font-bold text-brand-purple">{submission.rewardAmountUsd} <CurrencyDisplay/></span></p>
                           
                           <div className="relative inline-flex items-center">
                           <a
@@ -253,7 +255,7 @@ export default async function QuestPage({
                             rel="noopener noreferrer"
                             className="mt-2 inline-flex items-center text-brand-purple hover:text-brand-pink text-sm"
                           >
-                            <p className="pe-2">See video...</p>
+                            <p className="pe-2">Watch video...</p>
                             <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
                             {submission.socialPlatformName}
                             <svg
@@ -299,7 +301,7 @@ export default async function QuestPage({
                   <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Prize Pool:</span>
-                      <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</span>
+                      <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">Distributed among all selected submissions</div>
                   </div>

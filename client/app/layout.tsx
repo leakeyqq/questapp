@@ -8,6 +8,8 @@ import { Metadata } from "next";
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 
+import {CurrencyProvider} from "../contexts/CurrencyContext"
+
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -47,10 +49,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <AppProvider>
           {/* <ThemeProvider attribute="class" defaultTheme="dark"> */}
+          <CurrencyProvider>
             <Navbar />
             <main>{children}</main>
             <Footer />
           {/* </ThemeProvider> */}
+          </CurrencyProvider>
         </AppProvider>
       </body>
     </html>

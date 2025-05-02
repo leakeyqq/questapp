@@ -4,6 +4,7 @@ import QuestCard from "@/components/quest-card"
 import { quests } from "@/lib/data"
 import  ThreeQuests  from "@/components/three-display-quests"
 
+import CurrencyDisplay from '@/components/CurrencyDisplay';
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-brand-light to-white bg-dotted-pattern">
