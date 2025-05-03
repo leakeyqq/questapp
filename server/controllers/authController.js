@@ -8,25 +8,25 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "7d"; // or whatever you want
 
 export const login = async (req, res) => {
-  console.log('User trying to log in')
+  // console.log('User trying to log in')
   const { address } = req.body;
 
   if (!address) {
-    console.log('no address')
+    // console.log('no address')
     return res.status(400).json({ error: "Wallet address is required" });
   }
 
   try{
     let user = await User.findOne({walletAddress: address})
-    console.log('user is ', user)
+    // console.log('user is ', user)
 
     if(!user){
-      console.log('no user found, creating a user now')
+      // console.log('no user found, creating a user now')
       user = await User.create({walletAddress: address})
     }else{
-      console.log('user was found in db')
+      // console.log('user was found in db')
     }
-    console.log('user data is on db')
+    // console.log('user data is on db')
   }catch(e){
     return res.status(500).json({error: e.message})
   }
