@@ -21,34 +21,39 @@ Designed with elegance and power in mind, the app provides a beautiful pink-them
 
 ## 💖 Features
 
-- 🌷 **Elegant Quest Dashboard** – Organize and launch your quests in style  
+- 🌷 **Elegant Quest Dashboard** – Organize and launch your quests in style as a brand 
 - 🐼 **Seamless User Experience** – Smooth, mobile-friendly, and visually delightful  
-- 🎁 **Reward System** – Motivate and reward participants with ease  
-- 🌐 **Web3 Ready** – On-chain verification and wallet support  
+- 🎁 **Reward System** – Motivate and reward content creators with ease  
+- 🌐 **Web3 Ready** – Minipay wallet support  
 - 🛡️ **Secure and Scalable** – Built with modern best practices  
 
+## How it works 
+### For brands
+
+- A business/brand signs up on QuestPanda.
+- The business creates a marketing campaign on the app. We call it a quest.
+- The business deposits cUSD into the prize pool. 
+- The prize pool is what content creators will be competing for and the best videos will get rewards from the prize pool.
+
+### For Content creators 
+
+- Content creators sign up on the platform.
+- They can view quests posted by different brands.
+- They can participate in a quest by creating and posting the promotional video on social media.
+- After they complete the quest they can earn rewards in cUSD if they have been selected as the best videos.
+
+
+
 ---
 
-## 📸 Screenshots
+## 🚀 Minipay integration
 
-> Add screenshots here  
-> _Tip: Use pink-themed UI frames or badges to keep your branding consistent._
+### Brands
 
----
+- Brands can create and post quests on our miniapp on Minipay wallet
+- Brands can deposits cUSD into the prize pool and pay with their Minipay wallet.
 
-## 🚀 Getting Started
+### Content creators
 
-### Prerequisites
-
-- Node.js
-- npm or yarn
-- MongoDB / PostgreSQL (based on your setup)
-- Wallet (e.g., MetaMask) for Web3 integration
-
-### Installation
-
-```bash
-git clone https://github.com/yourusername/questpanda.git
-cd questpanda
-npm install
-npm run dev
+- They can view quests directly from on Miniapp on Minipay wallet.
+- When content creators are paid they receive the cUSD directly into their Minipay wallet.
