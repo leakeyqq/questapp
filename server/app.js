@@ -9,6 +9,7 @@ dotenv.config()
 import authRoutes from "./routes/authRoutes.js"
 import questRoutes from "./routes/questRoutes.js"
 import feesRoutes from "./routes/feesRouter.js"
+import brandRoutes from "./routes/brandRoutes.js"
 
 const app = express();
 app.use(express.json());
@@ -22,7 +23,6 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: (origin, callback) => {
-    console.log('Origin is ', origin)
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5000",
@@ -33,7 +33,6 @@ app.use(cors({
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
-      // console.log('Has been allowed by CORS')
       callback(null, true);
     } else {
       console.log('Not allowed by CORS')
@@ -53,6 +52,7 @@ app.get("/ping", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/quest", questRoutes)
 app.use('/api/fees', feesRoutes)
+app.use('/api/brand', brandRoutes)
 
 app.use("*", (req, res) => {
   console.log(`[${req.method}] Unhandled request to: ${req.originalUrl}`);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StableTokenABI from "./cusd-abi.json";
 // import MinipayNFTABI from "./minipay-nft.json";
 import {
@@ -25,6 +25,17 @@ export const useWeb3 = () => {
     const [address, setAddress] = useState<string | null>(null);
     const { data: walletClient } = useWalletClient();
     const { address: wagmiAddress } = useAccount();
+    const [isWalletReady, setIsWalletReady] = useState(false);
+
+
+    // Track wallet client readiness
+    useEffect(() => {
+        if (walletClient) {
+            setIsWalletReady(true);
+        } else {
+            setIsWalletReady(false);
+        }
+    }, [walletClient]);
 
     const getUserAddress = async () => {
         if (wagmiAddress) {
@@ -58,7 +69,6 @@ export const useWeb3 = () => {
 
                 const { txHash } = await fundingResponse.json();
 
-                console.log('tx hash after is ', txHash)
                 // 2. Wait for CELO transaction confirmation
                 await publicClient.waitForTransactionReceipt({ hash: txHash });
             }
@@ -150,6 +160,7 @@ export const useWeb3 = () => {
         // mintMinipayNFT,
         // getNFTs,
         signTransaction,
-        checkCUSDBalance
+        checkCUSDBalance,
+        isWalletReady
     };
 };

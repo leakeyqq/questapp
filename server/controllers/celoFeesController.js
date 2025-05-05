@@ -4,7 +4,6 @@ dotenv.config()
 
 
 export const fundFeesOnWallet = async(req, res)=>{
-  console.log('I am here now trying to fund your wallet')
     try {
         const beneficiary_address = req.userWalletAddress
         console.log('waiting for tx')
@@ -39,7 +38,7 @@ async function sendCelo(toAddress) {
   
       return tx.hash;
     } catch (error) {
-      console.error("❌ Error:", error.message);
+      console.error("❌ Error:", error);
     //   process.exit(1);
     }
   }

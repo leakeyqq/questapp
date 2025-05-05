@@ -1,27 +1,101 @@
+'use client'
 import Link from "next/link"
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { quests } from "@/lib/data"
+// import { quests } from "@/lib/data"
+import { useAccount } from "wagmi";
+import { useWeb3 } from "@/contexts/useWeb3"
+import type { Quest } from "@/lib/types"
+
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
+interface QuestCardProps {
+  quest: Quest
+}
+
+
+
+
+let hasConnectedMiniPay = false;
+
 
 export default function BrandDashboardPage() {
+  
+  const [quests, setQuests] = useState([])
+  const [loading, setLoading] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { sendCUSD, checkCUSDBalance, getUserAddress, isWalletReady } = useWeb3();
+  
   // Filter to only show this brand's quests (in a real app, this would be based on authentication)
-  const brandQuests = quests.filter((quest) => quest.brand === "FashionBrand" || quest.brand === "TechCorp")
+  // const brandQuests = quests.filter((quest) => quest.brand === "FashionBrand" || quest.brand === "TechCorp")
+  // const brandQuests = quests
+
+  const [walletBalance, setWalletBalance] = useState(0)
+  const [fundsSpent, setFundsSpent] = useState(0)
+
+    useEffect(() => {
+
+        if(isConnected && address && isWalletReady){
+          setLoading(true);
+          
+          try{
+            const getTotalFundsSpent = async() => {
+
+
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brand/getTotalFundsSpent`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                credentials: "include", 
+              })
+            const data = await res.json()
+            setFundsSpent(data.totalSpent)
+            setQuests(data.allMyCreatedQuests)
+            
+            let fake_amount = '1'
+            const balanceCheck = await checkCUSDBalance(fake_amount);
+            setWalletBalance(Number(balanceCheck.balance))
+             
+
+            };
+            getTotalFundsSpent();
+          }catch(e){
+            alert (e)
+          }finally{
+            setLoading(false);
+          }
+        }
+      
+    }, [isConnected, address, isWalletReady]);
+
+  
+  
+
+  // const [loading, setLoading] = useState(true)
+
+
 
   return (
+<div>
+  {loading ? (
+    <div>Loading your dashboard...</div>
+  ): (
     <div className="min-h-screen bg-brand-light">
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-brand-dark">Brand Dashboard</h1>
+            <h1 className="text-3xl font-  text-brand-dark">Brand Dashboard</h1>
             <p className="text-gray-600">Manage your quests and submissions</p>
           </div>
           <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
             <Link href="/brand/quests/create">Create New Quest</Link>
           </Button>
         </div>
-
+{/* 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader className="pb-2">
@@ -55,34 +129,86 @@ export default function BrandDashboardPage() {
               <p className="text-gray-600 text-sm mt-1">$3,550 remaining</p>
             </CardContent>
           </Card>
+        </div> */}
+
+
+        
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card className="bg-white border-gray-200 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-brand-dark">Wallet</CardTitle>
+              <CardDescription className="text-gray-600">Balance remaining</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-brand-purple">{walletBalance} <CurrencyDisplay/></div>
+              {/* <p className="text-gray-600 text-sm mt-1">2 ending this week</p> */}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-gray-200 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-brand-dark">Spent</CardTitle>
+              <CardDescription className="text-gray-600">Funds spent on creating quests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-brand-dark">{fundsSpent} <CurrencyDisplay/></div>
+              {/* <p className="text-gray-600 text-sm mt-1">8 pending review</p> */}
+            </CardContent>
+          </Card>
+
+          {/* <Card className="bg-white border-gray-200 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-brand-dark">Budget Spent</CardTitle>
+              <CardDescription className="text-gray-600">This month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-brand-teal">$1,450</div>
+              <p className="text-gray-600 text-sm mt-1">$3,550 remaining</p>
+            </CardContent>
+          </Card> */}
         </div>
 
-        <Tabs defaultValue="active" className="mb-8">
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {/* <Tabs defaultValue="active" className="mb-8"> */}
+        <Tabs defaultValue="active" className="mb-12">
+
           <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="active">Active Quests</TabsTrigger>
-            <TabsTrigger value="pending">Pending Review</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="active">My created quests</TabsTrigger>
+            {/* <TabsTrigger value="pending">Pending Review</TabsTrigger> */}
+            {/* <TabsTrigger value="completed">Completed</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="active" className="mt-4">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="p-4">
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Active Quests ({brandQuests.length})</h2>
+                <h2 className="text-xl font-bold mb-4 text-brand-dark">My Quests ({quests.length})</h2>
 
                 <div className="space-y-4">
-                  {brandQuests.map((quest) => (
-                    <div key={quest.id} className="bg-brand-light rounded-lg p-4 flex flex-col md:flex-row gap-4">
+                  {quests.map((quest: Quest) => (
+                    <div key={quest._id} className="bg-brand-light rounded-lg p-4 flex flex-col md:flex-row gap-4">
                       <div
                         className="h-24 md:w-40 rounded-lg bg-cover bg-center"
-                        style={{ backgroundImage: `url(${quest.imageUrl})` }}
+                        style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
                       ></div>
 
                       <div className="flex-1">
                         <div className="flex flex-wrap gap-2 mb-2">
-                          <Badge className="bg-brand-purple text-white">{quest.category}</Badge>
+                          <Badge className="bg-brand-purple text-white">Create Video</Badge>
                           <Badge variant="outline" className="border-brand-purple/30 text-brand-dark">
                             {Math.ceil(
-                              (new Date(quest.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+                              (new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
                             )}{" "}
                             days left
                           </Badge>
@@ -92,7 +218,7 @@ export default function BrandDashboardPage() {
                         <p className="text-gray-600 text-sm mb-2">{quest.description}</p>
 
                         <div className="flex items-center justify-between">
-                          <div className="text-brand-purple font-bold">{quest.prizePool}</div>
+                          <div className="text-brand-purple font-bold">{quest.prizePoolUsd} <CurrencyDisplay/></div>
                           <div className="flex gap-2">
                             <Button
                               asChild
@@ -100,12 +226,12 @@ export default function BrandDashboardPage() {
                               variant="outline"
                               className="border-brand-purple text-brand-purple hover:bg-brand-purple/10"
                             >
-                              <Link href={`/brand/quests/${quest.id}/submissions`}>
-                                View Submissions ({quest.submissions})
+                              <Link href={`/brand/quests/${quest._id}/submissions`}>
+                                View Submissions ({quest.submissions.length})
                               </Link>
                             </Button>
                             <Button asChild size="sm" className="bg-brand-purple hover:bg-brand-purple/90 text-white">
-                              <Link href={`/brand/quests/${quest.id}/edit`}>Edit</Link>
+                              <Link href={`/brand/quests/${quest._id}/edit`}>Edit</Link>
                             </Button>
                           </div>
                         </div>
@@ -117,7 +243,7 @@ export default function BrandDashboardPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="pending" className="mt-4">
+          {/* <TabsContent value="pending" className="mt-4">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="p-4">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Submissions Pending Review (8)</h2>
@@ -189,9 +315,9 @@ export default function BrandDashboardPage() {
                 </div>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="completed" className="mt-4">
+          {/* <TabsContent value="completed" className="mt-4">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="p-4">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Completed Quests (5)</h2>
@@ -234,10 +360,10 @@ export default function BrandDashboardPage() {
                 </div>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-brand-dark">Performance Overview</CardTitle>
@@ -310,8 +436,11 @@ export default function BrandDashboardPage() {
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </div>
     </div>
+  )}
+</div>
+
   )
 }

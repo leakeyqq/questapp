@@ -36,9 +36,9 @@ export const validate_createQuest = [
   
     check("prizePool")
       .notEmpty()
-      .withMessage("Prize pool is required")
-      .isFloat({ gt: 0 })
-      .withMessage("Prize pool must be a positive number"),
+      .withMessage("Prize pool is required"),
+      // .isFloat({ gt: 0 })
+      // .withMessage("Prize pool must be a positive number"),
   
     check("deadline")
       .notEmpty()
@@ -103,7 +103,6 @@ export const getAllQuests = async(req, res)=>{
 }
 
 export const getSingleQuest = async(req, res)=>{
-  console.log('asked for a single quest')
   try{
     const quest = await Quest.findById(req.params.questID).lean().exec()
     console.log('quest ', quest)
@@ -125,4 +124,76 @@ export const get3questsOnly = async(req, res)=>{
   } catch (error) {
     return res.status(500).json({"error": error.message})
   }
+}
+
+export const validate_questSubmission=[
+  check("platform")
+    .notEmpty().withMessage("Social media platform was not selected!")
+    .trim(),
+  check("contentUrl")
+    .notEmpty().withMessage("Video URL should not be empty!")
+    .isURL().withMessage('The Video URL submitted is not valid')
+    .trim()
+]
+
+export const submitQuestByCreator = async(req, res)=>{
+  console.log('submitted body ', req.body)
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log("There were errors", errors.array())
+    const firstError = errors.array()[0];
+    return res.status(400).json({ error: firstError});
+  }
+
+  try {
+    const questID = req.params.questID
+    const walletID = req.userWalletAddress
+
+    // Check if user has already submitted to this quest
+    const existingQuest = await Quest.findOne({
+      _id: questID,
+      'submissions.submittedByAddress': walletID
+    });
+
+    if (existingQuest) {
+      return res.status(400).json({ 
+        error: { 
+          msg: "Oops..You cannot submit a single quest twice😪" 
+        } 
+      });
+    }
+    
+  
+    const updatedQuest = await submitQuest(walletID, questID, req.body.platform, req.body.contentUrl)
+    return res.status(200).json({updatedQuest})
+  } catch (error) {
+    return res.status(500).json({"error": error.message})
+  }
+
+
+}
+
+
+async function submitQuest(walletID, questID, platform, contentUrl) {
+    try {
+        const updatedQuest = await Quest.findByIdAndUpdate(
+            questID,
+            {
+                $push: {
+                    submissions: {
+                        submittedByAddress: walletID,
+                        socialPlatformName: platform,
+                        videoLink: contentUrl,
+                        submittedAtTime: new Date()
+                    }
+                }
+            },
+            {new: true}
+        )
+
+        console.log(updatedQuest)
+        return updatedQuest
+    } catch (error) {
+        throw error
+    }
 }

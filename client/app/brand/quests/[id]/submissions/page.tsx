@@ -1,10 +1,59 @@
+'use client'
 import Link from "next/link"
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { quests } from "@/lib/data"
 import { notFound } from "next/navigation"
+import { CopyButton } from "@/components/copyButton"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
+
+import { 
+  FaYoutube, 
+  FaTwitter, 
+  FaInstagram, 
+  FaTiktok,
+  FaTwitch,
+  FaFacebook,
+  FaGlobe 
+} from 'react-icons/fa';
+
+type PlatformIconProps = {
+  platform?: string;
+  className?: string;
+};
+
+export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
+  if (!platform) return <FaGlobe className={className} />;
+  
+  const platformLower = platform.toLowerCase();
+  
+  if (platformLower.includes('youtube')) return <FaYoutube className={className} />;
+  if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
+  if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
+  if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
+  
+  return <FaGlobe className={className} />;
+};
+
+export const shortenAddress = (address: string, chars = 4): string => {
+  if (!address) return 'Anonymous';
+  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
+};
+export const formatDateString = (dateString?: string) => {
+  if (!dateString) return '';
+  try {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return dateString; // fallback to raw string if parsing fails
+  }
+};
 
 interface SubmissionsPageProps {
   params: {
@@ -12,63 +61,71 @@ interface SubmissionsPageProps {
   }
 }
 
-export default function SubmissionsPage({ params }: SubmissionsPageProps) {
-  const quest = quests.find((q) => q.id === params.id)
+interface Submission {
+  _id?: string;
+  submittedByAddress: string;
+  socialPlatformName?: string;
+  videoLink?: string;
+  submittedAtTime?: string;
+  comments?: string;
+  rewarded?: boolean;
+  rewardAmountUsd?: String;
+  submissionRead?: boolean;
+  rewardedAtTime?: Date;
+  // Add any other properties that exist in your submission objects
+}
 
-  if (!quest) {
-    notFound()
+export default function SubmissionsPage({ 
+  params 
+}: { 
+  params: { id: string } 
+}){
+  const [loading, setLoading] = useState(false)
+  const [quest, setQuest] = useState<any>(null)
+  const [pendingSubmissions, setPendingSubmissions] = useState<Submission[]>([])
+  const [approvedSubmissions, setApprovedSubmissions] = useState<Submission[]>([])
+
+
+  // const quest = quests.find((q) => q.id === params.id)
+
+  useEffect(() => {
+    const fetchSubmissions = async ()=>{
+      try{
+        setLoading(true)
+        const awaitedParams = await params; // Properly await params first
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brand/mySingleCreatedQuest/${awaitedParams.id}`, {
+          credentials: "include",
+        });
+        
+        const data = await res.json();
+
+        const fetchedQuest = data.quest;
+
+        if (!fetchedQuest) {
+          notFound()
+        }
+        setQuest(fetchedQuest)
+        setPendingSubmissions(fetchedQuest.submissions.filter((s: Submission) => !s.rewarded))
+        setApprovedSubmissions(fetchedQuest.submissions.filter((s: Submission) => s.rewarded))      
+      }catch(e){
+        console.log(e)
+      }finally{
+        setLoading(false)
+      }
+    }
+    fetchSubmissions()
+  }, [params])
+  
+
+
+  if (loading) {
+    return <div>Fetching quest submissions...</div>
   }
 
-  // Mock submissions data
-  const pendingSubmissions = [
-    {
-      id: "sub-1",
-      username: "creator1",
-      date: "2 days ago",
-      comment: "I created this video showcasing your products at the beach. The lighting was perfect!",
-      link: "https://example.com/video1",
-      platform: "Instagram",
-    },
-    {
-      id: "sub-2",
-      username: "fashionista22",
-      date: "3 days ago",
-      comment: "Here's my submission featuring your collection. I focused on the summer dresses as requested.",
-      link: "https://example.com/video2",
-      platform: "TikTok",
-    },
-    {
-      id: "sub-3",
-      username: "contentcreator",
-      date: "4 days ago",
-      comment: "I created a beach-themed showcase of your products. My followers loved it!",
-      link: "https://example.com/video3",
-      platform: "YouTube",
-    },
-  ]
-
-  const approvedSubmissions = [
-    {
-      id: "sub-4",
-      username: "style_creator",
-      date: "1 week ago",
-      comment: "Love the new collection, especially the summer dresses!",
-      link: "https://example.com/video4",
-      platform: "Instagram",
-      reward: "15 USDC",
-      views: "4.2K",
-    },
-    {
-      id: "sub-5",
-      username: "fashion_influencer",
-      date: "1 week ago",
-      comment: "Here's my take on styling your summer collection for different occasions.",
-      link: "https://example.com/video5",
-      platform: "TikTok",
-      reward: "15 USDC",
-      views: "8.7K",
-    },
-  ]
+  if (!quest) {
+    return <div>Quest not found</div>
+  }
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -104,11 +161,11 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
               variant="outline"
               className="border-brand-purple text-brand-purple hover:bg-brand-purple/10"
             >
-              <Link href={`/brand/quests/${quest.id}/edit`}>Edit Quest</Link>
+              <Link href={`/brand/quests/${quest._id}/edit`}>Edit Quest</Link>
             </Button>
-            <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
-              <Link href={`/brand/quests/${quest.id}/analytics`}>View Analytics</Link>
-            </Button>
+            {/* <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
+              <Link href={`/brand/quests/${quest._id}/analytics`}>View Analytics</Link>
+            </Button> */}
           </div>
         </div>
 
@@ -118,59 +175,63 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
             <CardDescription className="text-gray-600">{quest.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Prize Pool</p>
-                <p className="text-xl font-bold text-brand-purple">{quest.prizePool}</p>
+                <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
               </div>
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Deadline</p>
-                <p className="text-xl font-bold text-brand-dark">{new Date(quest.deadline).toLocaleDateString()}</p>
+                <p className="text-xl font-bold text-brand-dark">{new Date(quest.endsOn).toLocaleDateString()}</p>
               </div>
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Total Submissions</p>
-                <p className="text-xl font-bold text-brand-dark">{quest.submissions}</p>
+                <p className="text-xl font-bold text-brand-dark">{quest.submissions.length}</p>
               </div>
-              <div className="bg-brand-light p-3 rounded-lg text-center">
-                <p className="text-gray-600 text-sm">Pending Review</p>
+              {/* <div className="bg-brand-light p-3 rounded-lg text-center">
+                <p className="text-gray-600 text-sm">Not rewarded</p>
                 <p className="text-xl font-bold text-brand-yellow">{pendingSubmissions.length}</p>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
 
         <Tabs defaultValue="pending" className="mb-8">
           <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="pending">Pending Review ({pendingSubmissions.length})</TabsTrigger>
-            <TabsTrigger value="approved">Approved ({approvedSubmissions.length})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected (2)</TabsTrigger>
+            <TabsTrigger value="pending">Not rewarded ({pendingSubmissions.length})</TabsTrigger>
+            <TabsTrigger value="approved">Rewarded ({approvedSubmissions.length})</TabsTrigger>
+            {/* <TabsTrigger value="rejected">Rejected (2)</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="pending" className="mt-4">
             <div className="space-y-4">
-              {pendingSubmissions.map((submission) => (
-                <div key={submission.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              {pendingSubmissions.map((submission: Submission) => (
+                <div key={submission._id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <Badge className="bg-brand-yellow text-brand-dark mb-2">Pending Review</Badge>
-                      <h3 className="text-lg font-bold text-brand-dark">{submission.username}</h3>
+                      <Badge className="bg-brand-yellow text-brand-dark mb-2">Not rewarded</Badge>
+                      <h3 className="text-lg font-bold text-brand-dark">{shortenAddress(submission.submittedByAddress)}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Submitted {submission.date}</span>
+                        <span>Submitted {formatDateString(submission.submittedAtTime)}</span>
                         <span>•</span>
-                        <span>via {submission.platform}</span>
+                        <span>via {submission.socialPlatformName} </span>
+                        <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
+                        <span className="">
+                        <CopyButton text={submission.videoLink || ''} />
+                      </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-brand-light p-3 rounded-lg mb-3">
-                    <p className="text-gray-700">{submission.comment}</p>
+                    {/* <p className="text-gray-700">{submission.comment}</p> */}
                     <a
-                      href={submission.link}
+                      href={submission.videoLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-purple hover:text-brand-pink text-sm inline-flex items-center mt-1"
                     >
-                      {submission.link}
+                      Watch video
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -187,15 +248,19 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
                         <path d="M7 17 17 7"></path>
                       </svg>
                     </a>
+
                   </div>
 
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" size="sm" className="border-red-400 text-red-500 hover:bg-red-50">
+                    {/* <Button variant="outline" size="sm" className="border-red-400 text-red-500 hover:bg-red-50">
                       Reject
-                    </Button>
+                    </Button> */}
                     <Button size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                      Approve & Award
+                      Reward
                     </Button>
+
+ 
+                  
                   </div>
                 </div>
               ))}
@@ -204,33 +269,33 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
 
           <TabsContent value="approved" className="mt-4">
             <div className="space-y-4">
-              {approvedSubmissions.map((submission) => (
-                <div key={submission.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              {approvedSubmissions.map((submission: Submission) => (
+                <div key={submission._id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <Badge className="bg-brand-teal text-white mb-2">Approved</Badge>
-                      <h3 className="text-lg font-bold text-brand-dark">{submission.username}</h3>
+                      <h3 className="text-lg font-bold text-brand-dark">{submission.submittedByAddress}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Submitted {submission.date}</span>
+                        <span>Submitted {submission.submittedAtTime}</span>
                         <span>•</span>
-                        <span>via {submission.platform}</span>
+                        <span>via {submission.socialPlatformName}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-brand-purple font-bold">{submission.reward} awarded</div>
-                      <div className="text-sm text-gray-600">{submission.views} views</div>
+                      <div className="text-brand-purple font-bold">{submission.rewardAmountUsd} USD awarded</div>
+                      {/* <div className="text-sm text-gray-600">{submission.views} views</div> */}
                     </div>
                   </div>
 
                   <div className="bg-brand-light p-3 rounded-lg mb-3">
-                    <p className="text-gray-700">{submission.comment}</p>
+                    {/* <p className="text-gray-700">{submission.comment}</p> */}
                     <a
-                      href={submission.link}
+                      href={submission.videoLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-purple hover:text-brand-pink text-sm inline-flex items-center mt-1"
                     >
-                      {submission.link}
+                      {submission.videoLink}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -253,7 +318,7 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="rejected" className="mt-4">
+          {/* <TabsContent value="rejected" className="mt-4">
             <div className="space-y-4">
               {[1, 2].map((item) => (
                 <div key={item} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
@@ -305,7 +370,7 @@ export default function SubmissionsPage({ params }: SubmissionsPageProps) {
                 </div>
               ))}
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>

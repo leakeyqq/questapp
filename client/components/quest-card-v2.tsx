@@ -5,6 +5,8 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { Quest } from "@/lib/types"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
 
 interface QuestCardProps {
   quest: Quest
@@ -57,7 +59,7 @@ return (
         </div>
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <div className="flex items-center text-brand-purple font-bold">{quest.prizePoolUsd} USD</div>
+            <div className="flex items-center text-brand-purple font-bold">{quest.prizePoolUsd} <CurrencyDisplay/></div>
           </div>
           <p className="text-sm text-gray-600">by {quest.brandName}</p>
         </CardHeader>
@@ -88,7 +90,7 @@ return (
         
         <CardHeader className="p-3">
           <div className="flex justify-between items-center">
-            <div className="text-sm font-bold text-brand-purple">{quest.prizePoolUsd} USD</div>
+            <div className="text-sm font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></div>
             <Badge variant="outline" className="text-xs border-brand-purple/30 bg-white/90 text-brand-dark">
               {daysLeft}d left
             </Badge>

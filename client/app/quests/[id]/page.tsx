@@ -9,11 +9,42 @@ import { notFound, useParams, useRouter  } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getSingleQuest } from "@/lib/quest";
 import LinkifyText from '@/components/LinkifyText';
+import { CopyButton } from "@/components/copyButton"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
 
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
 
+// components/SocialPlatformIcon.tsx
+import { 
+  FaYoutube, 
+  FaTwitter, 
+  FaInstagram, 
+  FaTiktok,
+  FaTwitch,
+  FaFacebook,
+  FaGlobe 
+} from 'react-icons/fa';
+
+type PlatformIconProps = {
+  platform?: string;
+  className?: string;
+};
+
+export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
+  if (!platform) return <FaGlobe className={className} />;
+  
+  const platformLower = platform.toLowerCase();
+  
+  if (platformLower.includes('youtube')) return <FaYoutube className={className} />;
+  if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
+  if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
+  if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
+  
+  return <FaGlobe className={className} />;
+};
 
 interface PageProps {
   params: { id: string };
@@ -24,12 +55,43 @@ interface PageProps {
 //     id: string
 //   }
 // }
+// utils/date.ts
+export const formatDateString = (dateString?: string) => {
+  if (!dateString) return '';
+  try {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return dateString; // fallback to raw string if parsing fails
+  }
+};
+export const shortenAddress = (address: string, chars = 4): string => {
+  if (!address) return 'Anonymous';
+  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
+};
 
 export default async function QuestPage({ 
   params 
 }: { 
   params: { id: string } 
 }) {
+  interface Submission {
+    submittedByAddress: string;
+    socialPlatformName?: string;
+    videoLink?: string;
+    submittedAtTime?: string;
+    comments?: string;
+    rewarded?: boolean;
+    rewardAmountUsd?: String;
+    submissionRead?: boolean;
+    rewardedAtTime?: Date;
+    // Add any other properties that exist in your submission objects
+  }
+
+  
   const awaitedParams = await params; // Properly await params first
 
   const quest = await getSingleQuest(awaitedParams.id);
@@ -148,7 +210,7 @@ export default async function QuestPage({
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Prize Pool</p>
-                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</p>
+                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
@@ -170,26 +232,32 @@ export default async function QuestPage({
                 className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md"
               >
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Recent Submissions</h2>
-                {/* {quest.recentSubmissions && quest.recentSubmissions.length > 0 ? (
+                 {quest.submissions && quest.submissions.length > 0 ? (
                   <div className="space-y-4">
-                    {quest.recentSubmissions.map((submission, index) => (
+                    {quest.submissions.map((submission: Submission, index: number) => (
                       <div key={index} className="flex items-start gap-4 p-4 bg-brand-light rounded-lg">
-                        <div className="h-10 w-10 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple">
-                          {submission.username.charAt(0).toUpperCase()}
-                        </div>
+                        {/* <div className="h-10 w-10 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple">
+                          {submission.submittedByAddress.charAt(12).toUpperCase()}
+                        </div> */}
                         <div className="flex-1">
                           <div className="flex justify-between">
-                            <p className="font-semibold text-brand-dark">{submission.username}</p>
-                            <p className="text-gray-500 text-sm">{submission.date}</p>
+                            {/* <p className="font-semibold text-brand-dark">User ID: {shortenAddress(submission.submittedByAddress)}</p>   */}
+                            <p className="font-semibold text-brand-dark">Submission {index + 1}</p>  
+
+                            <p className="text-gray-500 text-sm">{formatDateString(submission.submittedAtTime)}</p>
                           </div>
-                          <p className="text-gray-700 mt-1">{submission.comment}</p>
+                          <p className="text-gray-700 mt-1">Rewarded <span className="font-bold">{submission.rewardAmountUsd} <CurrencyDisplay/></span></p>
+                          
+                          <div className="relative inline-flex items-center">
                           <a
-                            href={submission.link}
+                            href={submission.videoLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-2 inline-flex items-center text-brand-purple hover:text-brand-pink text-sm"
                           >
-                            View Submission
+                            <p className="pe-2">Watch video</p>
+                            <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
+                            {submission.socialPlatformName}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="16"
@@ -206,6 +274,17 @@ export default async function QuestPage({
                               <path d="M7 17 17 7"></path>
                             </svg>
                           </a>
+
+                          <div className="absolute -right-6">
+                          <CopyButton text={submission.videoLink || ''} />
+                        </div>
+
+                          </div>
+
+                          <div className="absolute -right-6">
+                          <CopyButton text={submission.videoLink || ''} />
+                        </div>
+                          
                         </div>
                       </div>
                     ))}
@@ -214,7 +293,7 @@ export default async function QuestPage({
                   <div className="text-center py-8 text-gray-500">
                     <p>No submissions yet. Be the first to complete this quest!</p>
                   </div>
-                )} */}
+                )} 
               </TabsContent>
             </Tabs>
           </div>
@@ -228,7 +307,7 @@ export default async function QuestPage({
                   <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Prize Pool:</span>
-                      <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} USD</span>
+                      <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">Distributed among all selected submissions</div>
                   </div>
