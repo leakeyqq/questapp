@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://www.questpanda.xyz/logo.png" alt="QuestPanda Logo" width="200"/>
+  <img src="https://res.cloudinary.com/dcfln9xqx/image/upload/v1746429284/my-business-name-high-resolution-logo-transparent_b4nexu.png" alt="QuestPanda Logo" width="200"/>
 </p>
 
 <h1 align="center" style="color:#ff69b4;">🎀 QuestPanda 🎀</h1>
@@ -14,8 +14,6 @@
 ## 🌸 About QuestPanda
 
 **QuestPanda** an app that pays content creators for creating and posting short promotional videos for brands on TikTok and other socials. It is your all-in-one platform for exploring, completing, and rewarding quests. Whether you're launching marketing campaigns, engaging users, or building community momentum — QuestPanda makes it seamless, fun, and stylish.
-
-Designed with elegance and power in mind, the app provides a beautiful pink-themed experience for both creators and participants.
 
 ---
 
