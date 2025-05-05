@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/copyButton"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
 
 
 import { 
@@ -162,9 +163,9 @@ export default function SubmissionsPage({
             >
               <Link href={`/brand/quests/${quest._id}/edit`}>Edit Quest</Link>
             </Button>
-            <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
+            {/* <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
               <Link href={`/brand/quests/${quest._id}/analytics`}>View Analytics</Link>
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -177,7 +178,7 @@ export default function SubmissionsPage({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Prize Pool</p>
-                <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd}</p>
+                <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
               </div>
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Deadline</p>

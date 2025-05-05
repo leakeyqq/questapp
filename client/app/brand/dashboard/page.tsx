@@ -10,6 +10,7 @@ import { useAccount } from "wagmi";
 import { useWeb3 } from "@/contexts/useWeb3"
 import type { Quest } from "@/lib/types"
 
+import CurrencyDisplay from '@/components/CurrencyDisplay';
 
 interface QuestCardProps {
   quest: Quest
@@ -139,7 +140,7 @@ export default function BrandDashboardPage() {
               <CardDescription className="text-gray-600">Balance remaining</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-brand-purple">{walletBalance} USD</div>
+              <div className="text-3xl font-bold text-brand-purple">{walletBalance} <CurrencyDisplay/></div>
               {/* <p className="text-gray-600 text-sm mt-1">2 ending this week</p> */}
             </CardContent>
           </Card>
@@ -150,7 +151,7 @@ export default function BrandDashboardPage() {
               <CardDescription className="text-gray-600">Funds spent on creating quests</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-brand-dark">{fundsSpent} USD</div>
+              <div className="text-3xl font-bold text-brand-dark">{fundsSpent} <CurrencyDisplay/></div>
               {/* <p className="text-gray-600 text-sm mt-1">8 pending review</p> */}
             </CardContent>
           </Card>
@@ -217,7 +218,7 @@ export default function BrandDashboardPage() {
                         <p className="text-gray-600 text-sm mb-2">{quest.description}</p>
 
                         <div className="flex items-center justify-between">
-                          <div className="text-brand-purple font-bold">{quest.prizePoolUsd} USD</div>
+                          <div className="text-brand-purple font-bold">{quest.prizePoolUsd} <CurrencyDisplay/></div>
                           <div className="flex gap-2">
                             <Button
                               asChild

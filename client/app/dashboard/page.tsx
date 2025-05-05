@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+
 
 export default function DashboardPage() {
   return (
@@ -19,15 +21,15 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-brand-dark">Total Earnings</CardTitle>
               <CardDescription className="text-gray-600">All time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-brand-teal">$1,245.00</div>
-              <p className="text-gray-600 text-sm mt-1">+$320.00 this month</p>
+              <div className="text-3xl font-bold text-brand-teal">0 <CurrencyDisplay/></div>
+              <p className="text-gray-600 text-sm mt-1">0 <CurrencyDisplay/> this month</p>
             </CardContent>
           </Card>
 
@@ -37,12 +39,12 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-600">All time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-brand-dark">24</div>
-              <p className="text-gray-600 text-sm mt-1">5 pending review</p>
+              <div className="text-3xl font-bold text-brand-dark">3</div>
+              <p className="text-gray-600 text-sm mt-1">3 pending review</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border-gray-200 shadow-sm">
+          {/* <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-brand-dark">Creator Level</CardTitle>
               <CardDescription className="text-gray-600">Based on activity</CardDescription>
@@ -74,7 +76,7 @@ export default function DashboardPage() {
                 <Progress value={65} className="h-2 bg-gray-200" indicatorClassName="bg-brand-purple" />
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <Tabs defaultValue="active" className="mb-8">
@@ -84,7 +86,7 @@ export default function DashboardPage() {
             <TabsTrigger value="pending">Pending Review</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="active" className="mt-4">
+          {/* <TabsContent value="active" className="mt-4">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="p-4">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Active Quests (3)</h2>
@@ -250,10 +252,10 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </TabsContent> */}
+        </Tabs> 
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-brand-dark">Payout History</CardTitle>
@@ -335,7 +337,7 @@ export default function DashboardPage() {
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </div>
     </div>
   )
