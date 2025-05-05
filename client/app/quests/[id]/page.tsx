@@ -246,7 +246,7 @@ export default async function QuestPage({
 
                             <p className="text-gray-500 text-sm">{formatDateString(submission.submittedAtTime)}</p>
                           </div>
-                          <p className="text-gray-700 mt-1">Reward earned <span className="font-bold text-brand-purple">{submission.rewardAmountUsd} <CurrencyDisplay/></span></p>
+                          <p className="text-gray-700 mt-1">Rewarded <span className="font-bold">{submission.rewardAmountUsd} <CurrencyDisplay/></span></p>
                           
                           <div className="relative inline-flex items-center">
                           <a
@@ -255,7 +255,7 @@ export default async function QuestPage({
                             rel="noopener noreferrer"
                             className="mt-2 inline-flex items-center text-brand-purple hover:text-brand-pink text-sm"
                           >
-                            <p className="pe-2">Watch video...</p>
+                            <p className="pe-2">Watch video</p>
                             <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
                             {submission.socialPlatformName}
                             <svg
@@ -274,10 +274,16 @@ export default async function QuestPage({
                               <path d="M7 17 17 7"></path>
                             </svg>
                           </a>
+
                           <div className="absolute -right-6">
                           <CopyButton text={submission.videoLink || ''} />
                         </div>
+
                           </div>
+
+                          <div className="absolute -right-6">
+                          <CopyButton text={submission.videoLink || ''} />
+                        </div>
                           
                         </div>
                       </div>

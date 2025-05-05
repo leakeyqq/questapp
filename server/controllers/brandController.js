@@ -20,8 +20,7 @@ export const fetchMySingleCreatedQuest = async(req, res)=>{
         const singleQuest = await Quest.findById(questID).lean().exec()
         if(singleQuest){
 
-            if(singleQuest.createdByAddress.toLowerCase() == userWalletAddress){
-                console.log('my quest is ', singleQuest)
+            if(singleQuest.createdByAddress.toLowerCase() == userWalletAddress.toLowerCase()){
                 return res.status(200).json({quest: singleQuest})
 
             }else{
@@ -58,8 +57,7 @@ export const getTotalFundsSpent = async(req, res)=>{
         }
 
         totalSpent = totalSpent.toString()
-        console.log('funds spent ', totalSpent)
-        return res.status(200).json({totalSpent})
+        return res.status(200).json({totalSpent, allMyCreatedQuests})
     } catch (error) {
         return res.status(500).json({error: error.message})
     }

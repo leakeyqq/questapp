@@ -33,7 +33,6 @@ app.use(cors({
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
-      // console.log('Has been allowed by CORS')
       callback(null, true);
     } else {
       console.log('Not allowed by CORS')

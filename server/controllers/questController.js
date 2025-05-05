@@ -36,9 +36,9 @@ export const validate_createQuest = [
   
     check("prizePool")
       .notEmpty()
-      .withMessage("Prize pool is required")
-      .isFloat({ gt: 0 })
-      .withMessage("Prize pool must be a positive number"),
+      .withMessage("Prize pool is required"),
+      // .isFloat({ gt: 0 })
+      // .withMessage("Prize pool must be a positive number"),
   
     check("deadline")
       .notEmpty()
@@ -103,7 +103,6 @@ export const getAllQuests = async(req, res)=>{
 }
 
 export const getSingleQuest = async(req, res)=>{
-  console.log('asked for a single quest')
   try{
     const quest = await Quest.findById(req.params.questID).lean().exec()
     console.log('quest ', quest)

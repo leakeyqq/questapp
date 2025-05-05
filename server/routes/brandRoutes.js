@@ -5,7 +5,7 @@ import {fetchMyCreatedQuests, fetchMySingleCreatedQuest, getTotalFundsSpent} fro
 import {requireAuth} from "../middleware/auth.js"
 
 router.get('/myCreatedQuests', requireAuth, fetchMyCreatedQuests)
-router.get('/mySingleCreatedQuest', requireAuth, fetchMySingleCreatedQuest )
+router.get('/mySingleCreatedQuest/:questID', requireAuth, fetchMySingleCreatedQuest )
 router.get('/getTotalFundsSpent',requireAuth, getTotalFundsSpent)
 
 export default router
