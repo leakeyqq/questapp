@@ -11,8 +11,7 @@ import { getSingleQuest } from "@/lib/quest";
 import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
-
-
+import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
@@ -150,10 +149,13 @@ export default async function QuestPage({
     return colors[category as keyof typeof colors] || "bg-brand-yellow text-brand-dark"
   }
 
+
+    
   // console.log('on page file, quest is ', quest)
 
   return (
     <div className="min-h-screen bg-brand-light">
+      <FarcasterSDKInitializer />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/quests" className="text-brand-purple hover:text-brand-pink flex items-center">
