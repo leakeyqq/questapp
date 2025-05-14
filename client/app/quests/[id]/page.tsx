@@ -130,9 +130,9 @@ export default async function QuestPage({
   //   return <div>Loading quest...</div>
   // }
   
-  if (!quest) {
-    notFound()
-  }
+  // if (!quest) {
+  //   notFound()
+  // }
 
 
   // const percentComplete = Math.min(100, Math.round((quest.submissions / quest.maxParticipants) * 100))
