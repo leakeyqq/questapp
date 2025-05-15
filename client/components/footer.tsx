@@ -65,7 +65,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
+          {/* <div>
             <h4 className="text-gray-800 font-bold mb-4">For Creators</h4>
             <ul className="space-y-2">
               <li>
@@ -141,7 +141,8 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
+
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
