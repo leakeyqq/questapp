@@ -10,8 +10,8 @@ import {
   connectorsForWallets,
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { celo, celoAlfajores } from 'wagmi/chains';
-import { farcasterFrame as miniAppConnector } from '@farcaster/frame-wagmi-connector'
+import { base, celo, celoAlfajores } from 'wagmi/chains';
+import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
  
 // import Layout from '../components/Layout';
 import { injectedWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets';
@@ -34,16 +34,18 @@ const connectors = connectorsForWallets(
 // Add Web3Auth manually after RainbowKit connectors
 const allConnectors = [
   ...connectors,
-  getWeb3AuthConnector([celo, celoAlfajores])
+  getWeb3AuthConnector([celo, celoAlfajores]),
+  farcasterFrame()
 ];
 
 
 const config = createConfig({
   connectors: allConnectors,
-  chains: [celo, celoAlfajores],
+  chains: [base, celo, celoAlfajores],
   transports: {
     [celo.id]: http(),
     [celoAlfajores.id]: http(),
+    [base.id]:http()
   },
 });
 

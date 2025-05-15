@@ -84,7 +84,7 @@ export default async function QuestPage({
     submittedAtTime?: string;
     comments?: string;
     rewarded?: boolean;
-    rewardAmountUsd?: String;
+    rewardAmountUsd?: string;
     submissionRead?: boolean;
     rewardedAtTime?: Date;
     // Add any other properties that exist in your submission objects
