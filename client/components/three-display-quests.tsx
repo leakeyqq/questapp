@@ -1,6 +1,8 @@
 "use client"
 import { useEffect, useState } from "react"
 import QuestCardV2 from "@/components/quest-card-v2"
+import { sdk } from '@farcaster/frame-sdk'// Update the path
+
 
 export default function ThreeQuests(){
     const [quests, setQuests] = useState([])
@@ -25,6 +27,22 @@ export default function ThreeQuests(){
     
         fetchQuests()
       }, [])
+
+    useEffect(() => {
+      if (quests.length === 0) return; // skip if no quests yet
+      const init = async () => {
+        try {
+          await sdk.actions.ready();
+          console.log("SDK ready")
+        } catch (err) {
+          console.error("Failed to initialize SDK:", err)
+        }
+      }
+      init()
+    }, [quests])
+      
+    
+      
       
       return (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

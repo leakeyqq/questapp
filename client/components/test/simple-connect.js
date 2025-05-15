@@ -1,10 +1,13 @@
 "use client";
-
+import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
+import { sdk } from '@farcaster/frame-sdk';
 
 let hasConnectedMiniPay = false;
+let hasConnectedFarcaster = false;
+
 
 export default function ConnectWalletButton() {
   // const [hideButton, setHideButton] = useState(false);
@@ -13,6 +16,12 @@ export default function ConnectWalletButton() {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
+  // const [isMiniApp, setIsMiniApp] = useState(false);
+const [isMiniApp, setIsMiniApp] = useState(null);
+
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  
+
 
   // 🧠 Find Web3Auth connector
   const web3authConnector = connectors.find((c) => c.id === "web3auth");
@@ -33,6 +42,29 @@ export default function ConnectWalletButton() {
       }
     }
   }, [connect]);
+
+    // Detect Farcaster Mini App environment
+  useEffect(() => {
+    if (mounted && !hasConnectedFarcaster) {
+      const checkMiniApp = async () => {
+        try {
+          const miniAppStatus = await sdk.isInMiniApp();
+          setIsMiniApp(miniAppStatus);
+          
+          if (miniAppStatus) {
+            hasConnectedFarcaster = true;
+            console.log("Running in Farcaster Mini App");
+            connect({ connector: farcasterFrame() })
+          }
+        } catch (error) {
+          console.error("Error checking Mini App status:", error);
+        }
+      };
+      
+      checkMiniApp();
+    }
+  }, [mounted, connect]);
+
 
   // 🔐 Backend auth after connecting
   useEffect(() => {
@@ -74,10 +106,15 @@ export default function ConnectWalletButton() {
   // // 🙈 Hide if MiniPay auto-connected
   // if (hideButton) return null;
 
-  if (!mounted || (typeof window !== "undefined" && window.ethereum?.isMiniPay)) {
+  if (!mounted || isMiniApp === null) {
+  return null;
+}
+
+  if (!mounted || isMiniApp || (typeof window !== "undefined" && window.ethereum?.isMiniPay)) {
     return null;
   }
 
+  
   return (
     <div className="flex flex-col items-center gap-4">
       {/* ✅ Web3Auth Connect Button */}

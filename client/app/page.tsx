@@ -104,7 +104,7 @@ export default function Home() {
                       4
                     </span>
                     <div>
-                      <h3 className="font-semibold text-lg text-brand-dark">Earn USD</h3>
+                      <h3 className="font-semibold text-lg text-brand-dark">Earn <CurrencyDisplay/></h3>
                       <p className="text-gray-600">Get paid from the quest's prize pool</p>
                     </div>
                   </li>

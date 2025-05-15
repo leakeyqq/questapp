@@ -9,6 +9,8 @@ import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 
 import {CurrencyProvider} from "../contexts/CurrencyContext"
+import { frameEmbed } from "@/lib/fcFrameMeta"
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -36,6 +38,9 @@ export const metadata: Metadata = {
     title: "QuestPanda - Create content and earn",
     description: "Connecting brands that need digital marketing with content creators",
     images: ["/dancing-panda.webp"], // again can be full URL
+  },
+  other: {
+    'fc:frame': JSON.stringify(frameEmbed),
   },
 }
 

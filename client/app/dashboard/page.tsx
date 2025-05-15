@@ -39,8 +39,8 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-600">All time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-brand-dark">3</div>
-              <p className="text-gray-600 text-sm mt-1">3 pending review</p>
+              <div className="text-3xl font-bold text-brand-dark">0</div>
+              <p className="text-gray-600 text-sm mt-1">0 pending review</p>
             </CardContent>
           </Card>
 
