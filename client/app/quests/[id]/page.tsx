@@ -236,7 +236,7 @@ export default async function QuestPage({
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Recent Submissions</h2>
                  {quest.submissions && quest.submissions.length > 0 ? (
                   <div className="space-y-4">
-                    {quest.submissions.map((submission: Submission, index: number) => (
+                    {quest.submissions.reverse().map((submission: Submission, index: number) => (
                       <div key={index} className="flex items-start gap-4 p-4 bg-brand-light rounded-lg">
                         {/* <div className="h-10 w-10 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple">
                           {submission.submittedByAddress.charAt(12).toUpperCase()}
