@@ -6,8 +6,16 @@ import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK, WALLET_ADAPTERS } from "@web3auth/b
 import { Chain } from "wagmi/chains";
 import { WalletServicesPlugin } from "@web3auth/wallet-services-plugin";
 
+// Singleton instances
+let web3AuthInstance: Web3Auth | null = null;
+let privateKeyProvider: EthereumPrivateKeyProvider | null = null;
+let walletServicesPlugin: WalletServicesPlugin | null = null;
+
+
 export  function getWeb3AuthConnector(chains: Chain[]) {
+  
   // Create Web3Auth Instance
+   if (!web3AuthInstance) {
   const name = "QuestPanda";
   const chainConfig = {
     chainNamespace: CHAIN_NAMESPACES.EIP155,
@@ -20,9 +28,9 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
     logo: "https://cryptologos.cc/logos/celo-celo-logo.png",
   };
 
-  const privateKeyProvider = new EthereumPrivateKeyProvider({ config: { chainConfig } });
+  privateKeyProvider = new EthereumPrivateKeyProvider({ config: { chainConfig } });
 
-  const web3AuthInstance = new Web3Auth({
+  web3AuthInstance = new Web3Auth({
     clientId: "BAeQG5Y8daxvkdrBO-Uz7W33nKDF7stJK2XhHI9j7MVal5lEJRhxU7VHewIWyC1wBDr32Q6yLKq9l8IWC-v0AxU",
     chainConfig,
     privateKeyProvider,
@@ -41,7 +49,7 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
     enableLogging: true,
   });
 
-  const walletServicesPlugin = new WalletServicesPlugin({
+  walletServicesPlugin = new WalletServicesPlugin({
     walletInitOptions: {
       whiteLabel: {
         showWidgetButton: true,
@@ -49,6 +57,7 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
     }
   });
   web3AuthInstance.addPlugin(walletServicesPlugin);
+}
 
   const modalConfig = {
     [WALLET_ADAPTERS.AUTH]: {
@@ -66,7 +75,7 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
   }
 
   return Web3AuthConnector({
-      web3AuthInstance,
+      web3AuthInstance: web3AuthInstance!,
       modalConfig,
   });
 }
