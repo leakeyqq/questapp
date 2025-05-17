@@ -47,7 +47,7 @@ export default function Home() {
 
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-brand-dark">Trending quests</h2>
+            <h2 className="text-3xl font-bold text-brand-dark">Latest quests</h2>
             <Link href="/quests" className="text-brand-purple hover:text-brand-pink transition-colors">
               View all →
             </Link>
