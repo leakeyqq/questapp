@@ -57,9 +57,16 @@ export const validate_createQuest = [
       .withMessage("Image URL must be a valid URL"),
   
     // You can add more fields as needed.
-    check("rewardCriteria")
+    // check("rewardCriteria")
+    //     .notEmpty()
+    //     .withMessage('Reward criteria should not be empty!'),
+
+    check("videosToReward")
         .notEmpty()
-        .withMessage('Reward criteria should not be empty!')
+        .withMessage('The number of videos to reward cannot be empty'),
+    check("rewardPerVideo")
+        .notEmpty()
+        .withMessage('The reward per video cannot be empty!')
   ];
 
   
@@ -78,10 +85,12 @@ export const handleQuestCreation = async(req, res)=>{
             brandName: req.body.brand,
             brandImageUrl: req.body.imageUrl,
             description: req.body.longDescription,
-            rewardCriteria: req.body.rewardCriteria,
+            // rewardCriteria: req.body.rewardCriteria,
             prizePoolUsd: req.body.prizePool,
             minFollowerCount: req.body.minFollowers || 0,
-            endsOn: req.body.deadline
+            endsOn: req.body.deadline,
+            pricePerVideo: req.body.rewardPerVideo,
+            videosToBeAwarded: req.body.videosToReward
         });
         await quest.save();
         res.status(201).json({ message: "Quest created successfully", quest });
@@ -95,7 +104,7 @@ export const getAllQuests = async(req, res)=>{
   try{
     
     // const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
-    const allQuests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1 }).sort({ createdAt: -1 }).lean().exec()
+    const allQuests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1 }).sort({ createdAt: -1 }).lean().exec()
     return res.status(200).json({allQuests})
   }catch(e){
     return res.status(500).json({"error": e.message})
@@ -119,7 +128,7 @@ export const getSingleQuest = async(req, res)=>{
 
 export const get3questsOnly = async(req, res)=>{
   try {
-    const _3quests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
+    const _3quests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
     return res.status(200).json({_3quests})
   } catch (error) {
     return res.status(500).json({"error": error.message})

@@ -206,13 +206,13 @@ export default async function QuestPage({
 
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
-                  <p className="text-gray-700 mb-4">{quest.rewardCriteria}</p>
+                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} videos shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
-                    <p className="text-gray-600 text-sm">Prize Pool</p>
-                    <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
+                    <p className="text-gray-600 text-sm">Reward</p>
+                    <p className="text-xl font-bold text-brand-purple">{quest.pricePerVideo} <CurrencyDisplay/></p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
@@ -282,10 +282,10 @@ export default async function QuestPage({
                         </div>
 
                           </div>
-
+{/* 
                           <div className="absolute -right-6">
                           <CopyButton text={submission.videoLink || ''} />
-                        </div>
+                        </div> */}
                           
                         </div>
                       </div>
@@ -306,13 +306,13 @@ export default async function QuestPage({
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Status</h2>
 
                 <div className="space-y-4 mb-6">
-                  <div className="bg-brand-light p-4 rounded-lg">
+                  {/* <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Prize Pool:</span>
                       <span className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">Distributed among all selected submissions</div>
-                  </div>
+                  </div> */}
 
                   <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
