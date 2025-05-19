@@ -15,11 +15,16 @@ import { toast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { useWeb3 } from "@/contexts/useWeb3"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
+import {useAlert} from "@/components/custom-popup"
+import {useConfirm} from '@/components/custom-confirm'
 
 
 let hasConnectedMiniPay = false;
 
 export default function CreateQuestPage() {
+const { showAlert, AlertComponent } = useAlert()
+const { showConfirm, ConfirmComponent } = useConfirm()
+
     // 🚀 Auto-connect MiniPay if detected
     useEffect(() => {
       if (typeof window !== "undefined") {
@@ -101,7 +106,8 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setImageUrl(url);
       console.log("Uploaded image URL:", url);
     } catch (err) {
-      console.error("Upload failed", err);
+      await showAlert(`Upload failed : ${err}`)
+      // console.error("Upload failed", err);
     }
     setUploading(false);
   };
@@ -110,7 +116,8 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
   
     if (!title || !brand || !category || !longDescription || !prizePool || !deadline || !imageUrl || !videosToReward || !rewardPerVideo) {
-      alert("Something is missing! Please fill out all fields!")
+      
+      await showAlert("Something is missing! Please fill out all fields!")
       // toast({
       //   title: "Missing information",
       //   description: "Please fill in all required fields",
@@ -132,12 +139,12 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const userAddress = await getUserAddress();
       if (!userAddress) {
-        alert("Please sign in first!");
+        await showAlert("Please sign in first!");
         return;
       }
   
         // Show confirmation dialog for depositing funds
-       const confirmDeposit = confirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
+       const confirmDeposit = await showConfirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
 
        if(!confirmDeposit){
         return
@@ -192,10 +199,10 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           throw new Error(data.error || "Something went wrong");
         }
     
-        toast({
-          title: "Quest created!",
-          description: "Your quest has been created successfully.",
-        });
+        // toast({
+        //   title: "Quest created!",
+        //   description: "Your quest has been created successfully.",
+        // });
     
         router.push("/brand/dashboard");
       } catch (paymentError: any) {
@@ -225,6 +232,8 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   return (
     <div className="min-h-screen bg-brand-light">
+        <AlertComponent />
+        <ConfirmComponent />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/brand/dashboard" className="text-brand-purple hover:text-brand-pink flex items-center">

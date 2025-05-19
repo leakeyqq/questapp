@@ -2,13 +2,16 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import { useWeb3 } from "@/contexts/useWeb3"
+import { sdk } from '@farcaster/frame-sdk';
+import {useAlert} from "@/components/custom-popup"
+import {useConfirm} from '@/components/custom-confirm'
 
 
 interface SubmissionFormProps {
@@ -16,9 +19,27 @@ interface SubmissionFormProps {
 }
 
 export default function SubmissionForm({ questId }: SubmissionFormProps) {
+  const { showAlert, AlertComponent } = useAlert()
+  const { showConfirm, ConfirmComponent } = useConfirm()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [platform, setPlatform] = useState("")
   const [contentUrl, setContentUrl] = useState("")
+  const [isFarcaster, setIsFarcaster] = useState(false)
+
+  useEffect(() => {
+  const checkFarcaster = async () => {
+    try {
+      const farcasterStatus = await sdk.isInMiniApp();
+      setIsFarcaster(farcasterStatus);
+    } catch (error) {
+      console.error("Error checking Farcaster status:", error);
+      setIsFarcaster(false);
+    }
+  };
+  
+  checkFarcaster();
+}, []);
+
   // const [comment, setComment] = useState("")
 
   const {getUserAddress } = useWeb3();
@@ -27,37 +48,25 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
     e.preventDefault()
 
     if (!platform) {
-      alert("You did not select the social media platform where you posted the video!")
+      await showAlert("You did not select the social media platform where you posted the video!")
       return;
     }
 
-    if (!platform || !contentUrl) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
+    if (!contentUrl) {
+      await showAlert('Video URL of your post is missing!')
       return
     }
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    // await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // toast({
-    //   title: "Submission received!",
-    //   description: "Your quest submission is being reviewed.",
-    // })
-
     try{
       const userAddress = await getUserAddress();
       if (!userAddress) {
-        alert("Please sign in first! Then we can proceed..😀");
+        await showAlert("Please sign in first! Then we can proceed..😀");
         return;
       }
 
-      const confirmSubmission = confirm('Please be aware that you can only submit once for a single quest. Do you wish to proceed?🙂 ')
+      const confirmSubmission = await showConfirm('Please be aware that you can only submit once for a single quest. Do you wish to proceed?🙂 ')
       if(!confirmSubmission) return 
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/submitQuest/${questId}`,{
@@ -75,14 +84,17 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error.msg || "Something went wrong");
+        await showAlert(`${data.error.msg || "Something went wrong"}`)
+        return
+        // throw new Error(data.error.msg || "Something went wrong");
       }
-      alert("Quest was submitted successfully! Best of luck in getting rewarded😎");
+       await showAlert("Quest was submitted successfully! Best of luck in getting rewarded😎");
 
       setPlatform("")
       setContentUrl("")
     }catch(e: any){
-      alert(e)
+      // alert(e)
+       await showAlert(`${e}`);
     }finally{
       setIsSubmitting(false)
     }
@@ -92,6 +104,8 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
   return (
     <div>
       <h3 className="font-bold mb-4 text-brand-dark">Submit your short video link</h3>
+      <AlertComponent />
+        <ConfirmComponent />
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
@@ -107,6 +121,7 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
                 <SelectItem value="instagram">Instagram</SelectItem>
                 <SelectItem value="youtube">YouTube</SelectItem>
                 <SelectItem value="twitter">Twitter/X</SelectItem>
+                {isFarcaster && <SelectItem value="farcaster">Farcaster</SelectItem>}
               </SelectContent>
             </Select>
           </div>

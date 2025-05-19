@@ -88,18 +88,18 @@ export const useWeb3 = () => {
             });
     
             console.log('🟢 Transaction sent:', tx);
-            alert('Transaction sent! Waiting for confirmation...');
+            // alert('Transaction sent! Waiting for confirmation...');
     
             let receipt = await publicClient.waitForTransactionReceipt({
                 hash: tx,
             });
     
             console.log('✅ Transaction confirmed!', receipt);
-            alert('Transaction successful!');
+            // alert('Transaction successful!');
             return receipt;
         } catch (e: any) {
             console.error('❌ Error sending CUSD:', e);
-            alert(`Error sending CUSD: ${e?.message || e}`);
+            // alert(`Error sending CUSD: ${e?.message || e}`);
             throw e;
         }
     };
