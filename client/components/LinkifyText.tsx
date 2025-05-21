@@ -1,23 +1,20 @@
-// components/LinkifyText.tsx
 'use client';
 
 import React from 'react';
 
 const LinkifyText = ({ text }: { text: string }) => {
-  // Combined regex for URLs and hashtags
-  const combinedRegex = /(https?:\/\/[^\s]+)|(#\w+)/g;
+  // Updated regex to include @ mentions
+  const combinedRegex = /(https?:\/\/[^\s]+)|(@\w+)|(#\w+)/g;
 
   const parts = [];
   let lastIndex = 0;
   let match;
 
   while ((match = combinedRegex.exec(text)) !== null) {
-    // Add text before the match
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
     }
 
-    // Check if it's a URL or hashtag
     if (match[1]) { // URL
       parts.push(
         <a
@@ -30,10 +27,16 @@ const LinkifyText = ({ text }: { text: string }) => {
           {match[1]}
         </a>
       );
-    } else if (match[2]) { // Hashtag
+    } else if (match[2]) { // @ mention
+      parts.push(
+        <span key={lastIndex} className="text-purple-600">
+          {match[2]}
+        </span>
+      );
+    } else if (match[3]) { // Hashtag
       parts.push(
         <span key={lastIndex} className="text-blue-600">
-          {match[2]}
+          {match[3]}
         </span>
       );
     }
@@ -41,7 +44,6 @@ const LinkifyText = ({ text }: { text: string }) => {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text after last match
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }

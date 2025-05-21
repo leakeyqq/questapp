@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Quest from "../models/quests/quest.js"
+import Creator from "../models/creators/creator.js"
 import {check, validationResult} from "express-validator"
 
 
@@ -72,7 +73,8 @@ export const validate_createQuest = [
   
 export const handleQuestCreation = async(req, res)=>{
     console.log('submitted body ', req.body)
-    const errors = validationResult(req);
+    const errors = validationResult(req)
+    
     if (!errors.isEmpty()) {
       console.log("There were errors", errors.array())
       return res.status(400).json({ errors: errors.array() });
@@ -200,7 +202,28 @@ async function submitQuest(walletID, questID, platform, contentUrl) {
             {new: true}
         )
 
-        console.log(updatedQuest)
+        // console.log(updatedQuest)
+
+        // Update creator profile
+        const updatedCreator = await Creator.findOneAndUpdate(
+        { creatorAddress: walletID },
+        {
+            $push: {
+                questsDone: {
+                    questID: questID,
+                    platformPosted: platform,
+                    videoUrl: contentUrl,
+                    submittedOn: new Date()
+                }
+            }
+        },
+        {
+            upsert: true,   
+            new: true,       
+        }
+    );
+
+
         return updatedQuest
     } catch (error) {
         throw error
