@@ -40,7 +40,7 @@ export default function QuestsPage() {
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8 text-brand-dark">Discover quests</h1>
 
-        <div className="bg-white rounded-xl p-6 mb-8 shadow-md border border-gray-100">
+        {/* <div className="bg-white rounded-xl p-6 mb-8 shadow-md border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input placeholder="Search quests..." className="bg-white border-gray-300 text-gray-800" />
@@ -61,7 +61,7 @@ export default function QuestsPage() {
             </div>
           </div>
 
-          {/*<div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4">
             <Button
               variant="outline"
               size="sm"
@@ -78,9 +78,9 @@ export default function QuestsPage() {
             <Button variant="outline" size="sm" className="border-brand-blue text-brand-blue hover:bg-brand-blue/10 hover:text-brand-blue">
               Low Competition
             </Button>
-          </div> */}
+          </div>
 
-        </div>
+        </div> */}
 
         {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quests.map((quest) => (

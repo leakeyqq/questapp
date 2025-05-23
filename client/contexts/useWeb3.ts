@@ -5,6 +5,7 @@ import {
     createPublicClient,
     createWalletClient,
     custom,
+    encodeFunctionData,
     getContract,
     http,
     parseEther,
@@ -12,6 +13,7 @@ import {
 } from "viem";
 import { celoAlfajores, celo } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
+import { getDataSuffix, submitReferral } from '@divvi/referral-sdk'
 
 const publicClient = createPublicClient({
     chain: celo,
@@ -79,27 +81,55 @@ export const useWeb3 = () => {
             console.log('🟡 Preparing to send CUSD:', amount, 'to', to);
             const amountInWei = parseEther(amount);
     
-            const tx = await walletClient.writeContract({
-                address: cUSDTokenAddress,
-                abi: StableTokenABI.abi,
-                functionName: "transfer",
-                account: walletClient.account.address,
-                args: [to, amountInWei],
+            // 2. Prepare Divvi data suffix
+            const dataSuffix = getDataSuffix({
+                consumer: '0x6CB95b7c84675dE923E179a40347898D4AcC5BeA', // Your Divvi identifier
+                providers: ['0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8'], // Your reward campaign addresses
             });
+
+                    // 3. Encode the transfer function call manually
+                const transferData = encodeFunctionData({
+                    abi: StableTokenABI.abi,
+                    functionName: "transfer",
+                    args: [to, amountInWei],
+                }) + dataSuffix;
+
+                // Ensure both parts are hex strings and combine them properly
+                const combinedData = (transferData + dataSuffix.replace('0x', '')) as `0x${string}`;
+
+                // 4. Send transaction with Divvi suffix
+                const txHash = await walletClient.sendTransaction({
+                    account: walletClient.account.address,
+                    to: cUSDTokenAddress,
+                    data: combinedData,
+                });
+
+                const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+        
+                const chainId = await walletClient.getChainId();
+                await submitReferral({ txHash, chainId });
+
+            // const tx = await walletClient.writeContract({
+            //     address: cUSDTokenAddress,
+            //     abi: StableTokenABI.abi,
+            //     functionName: "transfer",
+            //     account: walletClient.account.address,
+            //     args: [to, amountInWei],
+            // });
     
-            console.log('🟢 Transaction sent:', tx);
-            alert('Transaction sent! Waiting for confirmation...');
+            // console.log('🟢 Transaction sent:', tx);
+            // // alert('Transaction sent! Waiting for confirmation...');
     
-            let receipt = await publicClient.waitForTransactionReceipt({
-                hash: tx,
-            });
+            // let receipt = await publicClient.waitForTransactionReceipt({
+            //     hash: tx,
+            // });
     
             console.log('✅ Transaction confirmed!', receipt);
-            alert('Transaction successful!');
+            // alert('Transaction successful!');
             return receipt;
         } catch (e: any) {
             console.error('❌ Error sending CUSD:', e);
-            alert(`Error sending CUSD: ${e?.message || e}`);
+            // alert(`Error sending CUSD: ${e?.message || e}`);
             throw e;
         }
     };

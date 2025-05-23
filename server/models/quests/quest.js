@@ -23,11 +23,19 @@ const questSchema = new mongoose.Schema({
     },
     rewardCriteria: {
         type: String,
-        required: true
+        required: false
     },
     prizePoolUsd: {
         type: String,
         required: String
+    },
+    pricePerVideo: {
+        type: String,
+        required: false
+    },
+    videosToBeAwarded: {
+        type: Number,
+        required: false
     },
     submissions: [
         {

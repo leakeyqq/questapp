@@ -14,10 +14,17 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { useWeb3 } from "@/contexts/useWeb3"
+import CurrencyDisplay from '@/components/CurrencyDisplay';
+import {useAlert} from "@/components/custom-popup"
+import {useConfirm} from '@/components/custom-confirm'
+
 
 let hasConnectedMiniPay = false;
 
 export default function CreateQuestPage() {
+const { showAlert, AlertComponent } = useAlert()
+const { showConfirm, ConfirmComponent } = useConfirm()
+
     // 🚀 Auto-connect MiniPay if detected
     useEffect(() => {
       if (typeof window !== "undefined") {
@@ -37,7 +44,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   // Form state
   const [title, setTitle] = useState("")
   const [brand, setBrandName] = useState("")
-  const [rewardCriteria, setRewardCriteria] = useState("")
+  // const [rewardCriteria, setRewardCriteria] = useState("")
   const [category, setCategory] = useState("Create video")
   // const [description, setDescription] = useState("")
   const [longDescription, setLongDescription] = useState("")
@@ -46,9 +53,48 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [minFollowers, setMinFollowers] = useState("")
   // const [requirements, setRequirements] = useState("")
   const [imageUrl, setImageUrl] = useState("")
+  const [videosToReward, setVideosToReward] = useState("10")
+  const[rewardPerVideo, setRewardPerVideo] = useState("")
   const [uploading, setUploading] = useState(false);
-
+  const [showBudgetInput, setShowBudgetInput] = useState(false);
   const [balanceError, setBalanceError] = useState<{ hasError: boolean;message: string; balance: string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
+
+  // string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
+
+const handleVideosToRewardChange = (value: string) => {
+  setVideosToReward(value);
+
+    // Hide budget if value is empty, zero, or invalid
+  if (!value || parseFloat(value) <= 0 || !rewardPerVideo) {
+    setShowBudgetInput(false);
+    setPrizePool(""); // Clear the prize pool value
+    return;
+  }
+  
+  if (value && rewardPerVideo) {
+    const budget = parseFloat(value) * parseFloat(rewardPerVideo);
+    setPrizePool(budget.toString());
+    setShowBudgetInput(true);
+  }
+};
+
+const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value;
+  setRewardPerVideo(value);
+
+    // Hide budget if value is empty, zero, or invalid
+  if (!value || parseFloat(value) <= 0 || !videosToReward) {
+    setShowBudgetInput(false);
+    setPrizePool(""); // Clear the prize pool value
+    return;
+  }
+
+  if (value && videosToReward) {
+    const budget = parseFloat(videosToReward) * parseFloat(value);
+    setPrizePool(budget.toString());
+    setShowBudgetInput(true);
+  }
+};
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,7 +106,8 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
       setImageUrl(url);
       console.log("Uploaded image URL:", url);
     } catch (err) {
-      console.error("Upload failed", err);
+      await showAlert(`Upload failed : ${err}`)
+      // console.error("Upload failed", err);
     }
     setUploading(false);
   };
@@ -68,12 +115,14 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    if (!title || !brand || !rewardCriteria || !category || !longDescription || !prizePool || !deadline || !imageUrl) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+    if (!title || !brand || !category || !longDescription || !prizePool || !deadline || !imageUrl || !videosToReward || !rewardPerVideo) {
+      
+      await showAlert("Something is missing! Please fill out all fields!")
+      // toast({
+      //   title: "Missing information",
+      //   description: "Please fill in all required fields",
+      //   variant: "destructive",
+      // });
       return;
     }
     try{
@@ -90,12 +139,12 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
     try {
       const userAddress = await getUserAddress();
       if (!userAddress) {
-        alert("Please sign in first!");
+        await showAlert("Please sign in first!");
         return;
       }
   
         // Show confirmation dialog for depositing funds
-       const confirmDeposit = confirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
+       const confirmDeposit = await showConfirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
 
        if(!confirmDeposit){
         return
@@ -133,13 +182,14 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
           body: JSON.stringify({
             title,
             brand,
-            rewardCriteria,
             category,
             longDescription,
             prizePool,
             deadline,
             minFollowers,
             imageUrl,
+            videosToReward,
+            rewardPerVideo
           }),
         });
     
@@ -149,10 +199,10 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
           throw new Error(data.error || "Something went wrong");
         }
     
-        toast({
-          title: "Quest created!",
-          description: "Your quest has been created successfully.",
-        });
+        // toast({
+        //   title: "Quest created!",
+        //   description: "Your quest has been created successfully.",
+        // });
     
         router.push("/brand/dashboard");
       } catch (paymentError: any) {
@@ -182,6 +232,8 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   return (
     <div className="min-h-screen bg-brand-light">
+        <AlertComponent />
+        <ConfirmComponent />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/brand/dashboard" className="text-brand-purple hover:text-brand-pink flex items-center">
@@ -293,6 +345,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
 
                       onChange={(e) => setLongDescription(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 resize-none h-32"
+                      required
                     />
                   </div>
 
@@ -307,39 +360,8 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="prizePool" className="text-brand-dark">
-                        Prize Pool (USD)  - To be shared among the selected<span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="prizePool"
-                        placeholder="e.g., 100 USD"
-                        value={prizePool}
-                        onChange={(e) => setPrizePool(e.target.value)}
-                        className="bg-white border-gray-300 text-gray-800"
-                        type="number"
-                        // min="1"
-                        required
-                      />
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="deadline" className="text-brand-dark">
-                        Deadline - Quest ends on.<span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="deadline"
-                        type="date"
-                        value={deadline}
-                        onChange={(e) => setDeadline(e.target.value)}
-                        className="bg-white border-gray-300 text-gray-800"
-                        min={new Date().toISOString().split("T")[0]}
-                        max={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
-                        required
-                      />
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                   <div className="space-y-2">
                     <Label htmlFor="minFollowers" className="text-brand-dark">
@@ -355,6 +377,125 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                       min="0"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                      <Label htmlFor="deadline" className="text-brand-dark">
+                        Deadline - Quest ends on.<span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="deadline"
+                        type="date"
+                        value={deadline}
+                        onChange={(e) => setDeadline(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-800"
+                        min={new Date().toISOString().split("T")[0]}
+                        max={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // ✅ 7 days from today
+                        
+                      />
+                    </div>
+
+                    </div>
+        
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="videosToReward" className="text-brand-dark">
+                        How many videos will you reward? <span className="text-red-500">*</span>
+                      </Label>
+                      <Select value={videosToReward} onValueChange={handleVideosToRewardChange} required>
+                        <SelectTrigger className="bg-white border-gray-300 text-gray-800">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-gray-200 text-gray-800">
+                          <SelectItem value="10">The best 10 videos</SelectItem>
+                          <SelectItem value="20">The best 20 videos</SelectItem>
+                          <SelectItem value="30">The best 30 videos</SelectItem>
+                          <SelectItem value="50">The best 50 videos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+
+                    <div className="space-y-2">
+                      <Label htmlFor="rewardPerVideo" className="text-brand-dark">
+                        How much reward per video? <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="rewardPerVideo"
+                        placeholder="e.g., 5 USD"
+                        value={rewardPerVideo}
+                        // onChange={(e) => setRewardPerVideo(e.target.value)}
+                        onChange={handleRewardPerVideoChange}
+                        className="bg-white border-gray-300 text-gray-800"
+                        type="number"
+                        // min="1"
+                        required
+                      />
+                    </div>
+              </div>
+
+
+
+                 {/* {showBudgetInput && (
+
+                    <div className="space-y-2">
+                      <Label htmlFor="prizePool" className="text-brand-dark">
+                        Budget  - Amount of funds you need to create this quest<span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="prizePool"
+                        placeholder="e.g., 100 USD"
+                        value={prizePool}
+                        onChange={(e) => setPrizePool(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-800"
+                        type="number"
+                        // min="1"
+                        required
+                        readOnly
+                      />
+                    </div>
+                )}  */}
+
+
+{showBudgetInput && (
+  <div className="bg-pink-50 border-l-4 border-pink-400 p-4 rounded">
+    <div className="flex items-start">
+      <div className="flex-shrink-0">
+        <svg 
+          className="h-5 w-5 text-pink-400" 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 20 20" 
+          fill="currentColor"
+        >
+          <path 
+            fillRule="evenodd" 
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" 
+            clipRule="evenodd" 
+          />
+        </svg>
+      </div>
+      <div className="ml-3">
+        <h3 className="text-sm font-medium text-pink-800">
+          Budget
+        </h3>
+        <div className="mt-2 text-sm text-pink-700">
+          <p>
+            You'll need <span className="font-bold">{prizePool}<CurrencyDisplay/></span> to reward {videosToReward} videos at {rewardPerVideo}<CurrencyDisplay/> each
+          </p>
+        </div>
+      </div>
+    </div>
+    {/* Hidden input for form submission */}
+    <input 
+      type="hidden" 
+      name="prizePool" 
+      value={prizePool} 
+      required 
+    />
+  </div>
+)}
+                
+
 {/* 
                   <div className="space-y-2">
                     <Label htmlFor="rewardriteria" className="text-brand-dark">
@@ -371,7 +512,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                   </div> */}
 
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="rewardriteria" className="text-brand-dark">
                       Reward criteria - How the winners will be picked and rewarded
                     </Label>
@@ -384,7 +525,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
                       onChange={(e) => setRewardCriteria(e.target.value)}
                       className="bg-white border-gray-300 text-gray-800 resize-none h-30"
                     />
-                  </div>
+                  </div> */}
 
                   {/* <div className="space-y-2">
                     <Label htmlFor="requirements" className="text-brand-dark">

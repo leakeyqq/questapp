@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { Quest } from "@/lib/types"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
-
+import { Gift, Trophy, Award } from 'lucide-react';
 
 interface QuestCardProps {
   quest: Quest
@@ -59,7 +59,7 @@ return (
         </div>
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <div className="flex items-center text-brand-purple font-bold">{quest.prizePoolUsd} <CurrencyDisplay/></div>
+            <div className="flex items-center text-brand-purple font-bold"><Gift className="w-4 h-4 mr-2" /> {quest.pricePerVideo} <CurrencyDisplay/></div>
           </div>
           <p className="text-sm text-gray-600">by {quest.brandName}</p>
         </CardHeader>
@@ -89,12 +89,16 @@ return (
         </div>
         
         <CardHeader className="p-3">
-          <div className="flex justify-between items-center">
-            <div className="text-sm font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></div>
-            <Badge variant="outline" className="text-xs border-brand-purple/30 bg-white/90 text-brand-dark">
-              {daysLeft}d left
-            </Badge>
-          </div>
+
+<div className="flex justify-between items-center">
+  <div className="flex items-center gap-1 text-sm font-bold text-brand-purple">
+    <Gift className="w-4 h-4" />
+    <span>{quest.pricePerVideo}<CurrencyDisplay/></span>
+  </div>
+  <Badge variant="outline" className="text-xs border-brand-purple/30 bg-white/90 text-brand-dark">
+    {daysLeft}d left
+  </Badge>
+</div>
           <p className="text-xs text-gray-600">by {quest.brandName}</p>
         </CardHeader>
         

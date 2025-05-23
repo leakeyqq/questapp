@@ -19,7 +19,7 @@ export async function generateMetadata({
       imageUrl: quest.brandImageUrl || "https://www.questpanda.xyz/icon.png", // Use quest image or fallback
       button: {
         // title: `🎯 Join Quest (${quest.prizePoolUsd})`, // Customize button text
-        title: `🎯 Do quest - upto ${quest.prizePoolUsd} USD`, // Customize button text
+        title: `🎯 Do quest -  ${quest.pricePerVideo} USD reward`, // Customize button text
 
         action: {
           type: "launch_frame",
@@ -34,15 +34,15 @@ export async function generateMetadata({
   // console.log('file:generate metadata the found quest is ', quest)
 
   return {
-    title: `${quest.title} - $${quest.prizePoolUsd} prize`,
+    title: `${quest.title} - $${quest.pricePerVideo} reward`,
     description: quest.description,
     openGraph: {
-      title: `${quest.title} - $${quest.prizePoolUsd} prize`,
+      title: `${quest.title} - $${quest.pricePerVideo} reward`,
       description: quest.description,
       images: quest.brandImageUrl ? [quest.brandImageUrl] : [],
     },
     twitter: {
-      title: `${quest.title} - $${quest.prizePoolUsd} prize`,
+      title: `${quest.title} - $${quest.pricePerVideo} reward`,
       description: quest.description,
       images: quest.brandImageUrl ? [quest.brandImageUrl] : [],
       card: "summary_large_image",

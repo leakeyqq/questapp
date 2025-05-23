@@ -10,6 +10,43 @@ export default function Footer() {
               QuestPanda
             </h3>
             <p className="mb-4">Complete creative quests, earn USD.</p>
+                        <a
+              href="https://t.me/questpanda"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center justify-center px-6 py-3.5 mb-6 overflow-hidden rounded-full bg-gradient-to-r from-brand-purple to-brand-pink text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-white/20"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-lg"></span>
+              <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal opacity-30 group-hover:opacity-50 animate-pulse transition-opacity duration-500 blur-sm"></span>
+              <span className="relative flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="mr-2 transform group-hover:scale-110 transition-transform duration-300"
+                >
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                </svg>
+                <span className="font-semibold">Join our Telegram</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300"
+                >
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </span>
+            </a>
             <div className="flex space-x-4">
               <a href="#" className="text-brand-purple hover:text-brand-pink transition-colors">
                 <span className="sr-only">Twitter</span>

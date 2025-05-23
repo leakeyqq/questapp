@@ -128,7 +128,7 @@ export default function Home() {
                       <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-brand-dark">$124,500+</h3>
+                  <h3 className="text-2xl font-bold text-brand-dark">124,500 <CurrencyDisplay/>+</h3>
                   <p className="text-gray-600">Paid to creators this month</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
@@ -137,7 +137,7 @@ export default function Home() {
                     <p className="text-gray-600">Active Quests</p>
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg">
-                    <h4 className="text-xl font-bold text-brand-dark">12,400+</h4>
+                    <h4 className="text-xl font-bold text-brand-dark">12,400 <CurrencyDisplay/>+</h4>
                     <p className="text-gray-600">Content Creators</p>
                   </div>
                 </div>

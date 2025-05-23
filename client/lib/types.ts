@@ -16,6 +16,8 @@ export interface Quest {
   maxParticipants: number
   minFollowers: number
   prizePoolUsd: number
+  pricePerVideo: number
+  videosToReward: number
   requirements: string[]
   rewardCriteria: string
   featured?: boolean
