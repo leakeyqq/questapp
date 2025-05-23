@@ -17,7 +17,8 @@ export default function ConnectWalletButton() {
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   // const [isMiniApp, setIsMiniApp] = useState(false);
-const [isMiniApp, setIsMiniApp] = useState(null);
+  const [isMiniApp, setIsMiniApp] = useState(null);
+  const [isValora, setIsValora] = useState(false);
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   
@@ -25,11 +26,19 @@ const [isMiniApp, setIsMiniApp] = useState(null);
 
   // 🧠 Find Web3Auth connector
   const web3authConnector = connectors.find((c) => c.id === "web3auth");
-
+  const valoraConnector  =  connectors.find(c => c.id === 'walletConnect');
   useEffect(() => {
     setMounted(true); // ✅ Now it's safe to render client-only logic
   }, []);
 
+  useEffect(() => {
+    // Detect Valora wallet
+    setIsValora(mounted && typeof window !== "undefined" && (
+      window.ethereum?.isValora || 
+      window.ethereum?.providers?.some(p => p.isValora) ||
+      /valora/i.test(navigator.userAgent)
+    ));
+  }, []);
 
   // 🚀 Auto-connect MiniPay if detected
   useEffect(() => {
@@ -114,7 +123,33 @@ const [isMiniApp, setIsMiniApp] = useState(null);
     return null;
   }
 
-  
+    // Split the return into two blocks based on isValora
+  if (isValora) {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        {/* Valora-specific UI */}
+        {!isConnected && (
+          <button
+            onClick={() => connect({ connector: valoraConnector })}
+            className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition"
+          >
+            Connect Wallet
+          </button>
+        )}
+
+        {isConnected && (
+          <button
+            onClick={() => disconnect()}
+            className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
+    );
+  }
+
+
   return (
     <div className="flex flex-col items-center gap-4">
       {/* ✅ Web3Auth Connect Button */}
