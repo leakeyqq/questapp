@@ -231,7 +231,9 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   
 
   return (
-    <div className="min-h-screen bg-brand-light">
+    // <div className="min-h-screen bg-brand-light">
+    <div className="min-h-screen bg-brand-light overflow-x-hidden"> 
+
         <AlertComponent />
         <ConfirmComponent />
       <div className="container mx-auto px-4 py-12">
