@@ -10,7 +10,7 @@ import { WagmiProvider, createConfig, http } from 'wagmi';
 import { base, celo, celoAlfajores } from 'wagmi/chains';
 import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 // import Layout from '../components/Layout';
-import { injectedWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets';
+import { injectedWallet, walletConnectWallet, valoraWallet } from '@rainbow-me/rainbowkit/wallets';
 
 const queryClient = new QueryClient();
 
@@ -18,7 +18,7 @@ const queryClient = new QueryClient();
       [
         {
           groupName: 'Recommended',
-          wallets: [injectedWallet, walletConnectWallet],
+          wallets: [injectedWallet, walletConnectWallet, valoraWallet],
         },
       ],
       {
