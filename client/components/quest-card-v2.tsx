@@ -59,7 +59,7 @@ return (
         </div>
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <div className="flex items-center text-brand-purple font-bold"><Gift className="w-4 h-4" /> {quest.pricePerVideo} <CurrencyDisplay/></div>
+            <div className="flex items-center text-brand-purple font-bold"><Gift className="w-4 h-4 mr-2" /> {quest.pricePerVideo} <CurrencyDisplay/></div>
           </div>
           <p className="text-sm text-gray-600">by {quest.brandName}</p>
         </CardHeader>
