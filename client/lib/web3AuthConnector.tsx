@@ -44,26 +44,79 @@ export  function getWeb3AuthConnector(chains: Chain[]) {
   const walletServicesPlugin = new WalletServicesPlugin({
     walletInitOptions: {
       whiteLabel: {
-        showWidgetButton: true,
+        showWidgetButton: false,
       }
     }
   });
   web3AuthInstance.addPlugin(walletServicesPlugin);
 
-  const modalConfig = {
-    [WALLET_ADAPTERS.AUTH]: {
-      label: "openlogin",
-      loginMethods: {
-        facebook: {
-          // it will hide the facebook option from the Web3Auth modal.
-          name: "facebook login",
-          showOnModal: false,
-        },
+
+const modalConfig = {
+  [WALLET_ADAPTERS.AUTH]: {
+    label: "openlogin",
+    loginMethods: {
+      google: {
+        name: "Google",
+        showOnModal: true,
       },
-      // setting it to false will hide all social login methods from modal.
-      showOnModal: true,
+      facebook: {
+        name: "Facebook",
+        showOnModal: false,
+      },
+      discord: {
+        name: "Discord",
+        showOnModal: false,
+      },
+      reddit: {
+        name: "Reddit",
+        showOnModal: false,
+      },
+      twitch: {
+        name: "Twitch",
+        showOnModal: false,
+      },
+      apple: {
+        name: "Apple",
+        showOnModal: false,
+      },
+      line: {
+        name: "Line",
+        showOnModal: false,
+      },
+      github: {
+        name: "Github",
+        showOnModal: false,
+      },
+      kakao: {
+        name: "Kakao",
+        showOnModal: false,
+      },
+      linkedin: {
+        name: "Linkedin",
+        showOnModal: false,
+      },
+      twitter: {
+        name: "Twitter",
+        showOnModal: false,
+      },
+      weibo: {
+        name: "Weibo",
+        showOnModal: false,
+      },
+      wechat: {
+        name: "Wechat",
+        showOnModal: false,
+      },
+      farcaster: {
+        name: "Farcaster",
+        showOnModal: false,
+      },
+      
     },
-  }
+    showOnModal: true,
+  },
+};
+
   
 
   return Web3AuthConnector({

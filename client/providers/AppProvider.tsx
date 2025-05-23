@@ -22,7 +22,7 @@ const queryClient = new QueryClient();
         },
       ],
       {
-        appName: 'Celo Composer',
+        appName: 'QuestPanda',
         projectId: process.env.WC_PROJECT_ID ?? '044601f65212332475a09bc14ceb3c34',
       }
     );
