@@ -72,6 +72,20 @@ const creatorSchema = new mongoose.Schema({
         profilePicture: {type: String, required: false},
         canDm: {type: Boolean, required: false},
         isAutomated: {type: Boolean, required: false},
+    },
+    tiktokData: {
+        id: {type: String, required: false},
+        uniqueId: {type: String, required: false},
+        nickname: {type: String, required: false},
+        avatarThumb: {type: String, required: false},
+        createTime: {type: Date, required: false},
+        verified: {type: Boolean, required: false},
+        followerCount: {type: Number, required: false},
+        followingCount: {type: Number, required: false},
+        heartCount: {type: Number, required: false},
+        videoCount: {type: Number, required: false},
+        diggCount: {type: Number, required: false},
+        friendCount: {type: Number, required: false}
     }
 }, {timestamps: true})
 
