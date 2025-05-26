@@ -51,7 +51,28 @@ const creatorSchema = new mongoose.Schema({
             type: Date,
             required: false
         }
-    }]
+    }],
+    twitterData: {
+        id: {type: String,required: false},
+        name: {type: String,required: false},
+        userName: {type: String,required: false},
+        location: {type: String, required: false},
+        url: {type: String, required: false},
+        description: {type: String, required: false},
+        protected: {type: Boolean, required: false},
+        isVerified: {type: Boolean, required: false},
+        isBlueVerified: {type: Boolean, required: false},
+        followers: {type: Number, required: false},
+        following: {type: Number, required: false},
+        favouritesCount: {type: Number, required: false},
+        statusesCount: {type: Number, required: false},
+        mediaCount: {type: Number, required: false},
+        createdAt: {type: Date, required: false},
+        coverPicture: {type: String, required: false},
+        profilePicture: {type: String, required: false},
+        canDm: {type: Boolean, required: false},
+        isAutomated: {type: Boolean, required: false},
+    }
 }, {timestamps: true})
 
 const Creator = mongoose.model("creators", creatorSchema, 'creators')

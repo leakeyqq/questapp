@@ -74,6 +74,34 @@ const questSchema = new mongoose.Schema({
             rewardedAtTime:{
                 type: Date,
                 required: false
+            },
+            twitterData: {
+                id: {type: String, required: false},
+                text: {type: String, required: false},
+                retweetCount: {type: Number, required: false},
+                replyCount: {type: Number, required: false},
+                likeCount: {type: Number, required: false},
+                quoteCount: {type: Number, required: false},
+                viewCount: {type: Number, required: false},
+                createdAt: {type: Date, required: false},
+                lang: {type: String, required: false},
+                bookmarkCount: {type: Number, required: false},
+                isReply: {type: Boolean, required: false},
+                isPinned: {type: Boolean, required: false},
+                isRetweet: {type: Boolean, required: false},
+                isQuote: {type: Boolean, required: false},
+                isConversationControlled: {type: Boolean, required: false},
+                author: {
+                    userName: {type: String, required: false},
+                    id: {type: String, required: false},
+                    name: {type: String, required: false},
+                    isVerified: {type: Boolean, required: false},
+                    isBlueVerified: {type: Boolean, required: false},
+                    profilePicture: {type: String, required: false},
+                    location: {type: String, required: false},
+                    followers: {type: Number, required: false},
+                    following: {type: Number, required: false}
+                }
             }
         }
     ],
