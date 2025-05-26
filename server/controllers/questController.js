@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 import Quest from "../models/quests/quest.js"
 import Creator from "../models/creators/creator.js"
+import dotenv from 'dotenv'
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import chalk from 'chalk';
+
+dotenv.config()
+
 import {check, validationResult} from "express-validator"
 
 
@@ -116,8 +123,6 @@ export const getAllQuests = async(req, res)=>{
 export const getSingleQuest = async(req, res)=>{
   try{
     const quest = await Quest.findById(req.params.questID).lean().exec()
-    console.log('quest ', quest)
-
     if(quest){
       return res.status(200).json({quest})
     }else{
@@ -224,8 +229,250 @@ async function submitQuest(walletID, questID, platform, contentUrl) {
     );
 
 
-        return updatedQuest
-    } catch (error) {
-        throw error
+    if(platform.toLowerCase() === 'twitter'){
+      await pullTwitterData(walletID, contentUrl ,questID)
     }
+    if(platform.toLowerCase() === 'tiktok'){
+      await pullTikTokData(contentUrl, walletID, questID)
+    }
+
+      return updatedQuest
+    } catch (error) {
+      console.log('error ', error)
+      throw error
+    }
+}
+
+
+function extractTwitterUsername(url) {
+  try {
+    const cleanedUrl = url.split('?')[0]; // Remove query parameters
+    const match = cleanedUrl.match(/x\.com\/([^/]+)\/status/);
+    return match ? match[1] : null;
+  } catch {
+    console.log('twitter name could not be extracted!')
+    return null;
+  }
+}
+function extractTweetId(url) {
+  try {
+    const urlObj = new URL(url);
+    const validHosts = ['twitter.com', 'www.twitter.com', 'x.com', 'www.x.com'];
+    if (!validHosts.includes(urlObj.hostname)) {
+      return null;
+    }
+
+    const match = urlObj.pathname.match(/status\/(\d+)/);
+    return match ? match[1] : null;
+  } catch (err) {
+    console.error("Invalid URL format:", url);
+    return null;
+  }
+}
+async function pullTwitterData(walletID, contentUrl ,questID) {
+      // Update creator data
+      try {
+        let twitterUsername = extractTwitterUsername(contentUrl) 
+        const twitterOptions = {
+        method: 'GET',
+        url: 'https://api.twitterapi.io/twitter/user/info',
+        params: { userName: twitterUsername },
+        headers: {
+          'x-api-key': process.env.TWITTER_API_IO,
+        },
+      };
+
+      const twitterResponse = await axios.request(twitterOptions);
+      if (twitterResponse.data?.status === 'success') {
+        // console.log('twitterResponse.data is ', twitterResponse.data)
+        // console.log('')
+        const twitterData = twitterResponse.data.data;
+      // Attach twitterData only if it exists
+      if (twitterData) {
+            // First, unset the field
+            await Creator.updateOne(
+              { creatorAddress: walletID },
+              { $unset: { twitterData: "" } }
+            );
+
+            const creatorUpdateData = {
+              $set: { twitterData }
+            };
+            const updatedCreator = await Creator.findOneAndUpdate(
+            { creatorAddress: walletID },
+            creatorUpdateData,
+            {
+              upsert: true,
+              new: true,
+            }
+          );
+      }
+      }
+
+      } catch (error) {
+        console.log(error)
+        throw error
+      }
+  
+    // Update submission data
+      try {
+        const tweetId = extractTweetId(contentUrl);
+        if (!tweetId) throw new Error("Invalid tweet URL");
+
+          const twitterStatsOptions = {
+          method: 'GET',
+          url: 'https://api.twitterapi.io/twitter/tweets',
+          params: { tweet_ids: tweetId },
+          headers: { 'x-api-key': process.env.TWITTER_API_IO }
+        };
+
+        const statsResponse = await axios.request(twitterStatsOptions);
+        const tweetData = statsResponse.data?.tweets?.[0];
+
+        if (!tweetData) throw new Error("Tweet data not found");
+
+        await Quest.updateOne(
+          {
+            _id: questID,
+            submissions: {
+              $elemMatch: {
+                submittedByAddress: walletID,
+                videoLink: contentUrl
+              }
+            }
+          },
+          {
+            $set: {
+              "submissions.$.twitterData": tweetData
+            }
+          }
+        );
+
+
+        
+      } catch (error) {
+        throw error
+      }
+    
+}
+async function pullTikTokData(videoUrl, walletID, questID){
+ const headers = {
+    'Accept-Language': 'en-US,en;q=0.9',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+  };
+
+  try {
+    const response = await axios.get(videoUrl, { headers });
+
+    if (response.status !== 200) {
+      throw new Error(`Request blocked for ${videoUrl}`);
+    }
+
+    const $ = cheerio.load(response.data);
+    const scriptTag = $('#__UNIVERSAL_DATA_FOR_REHYDRATION__').html();
+
+    if (!scriptTag) {
+      throw new Error(`No data script tag found for ${videoUrl}`);
+    }
+
+    const rawJson = JSON.parse(scriptTag);
+    const videoData = rawJson.__DEFAULT_SCOPE__?.['webapp.video-detail']?.itemInfo?.itemStruct;
+
+    if (!videoData) {
+      throw new Error(`Video info not found in JSON for ${videoUrl}`);
+    }
+
+    const videoInfo = {
+      id: videoData.id,
+      desc: videoData.desc,
+      createTime: videoData.createTime,
+      author: videoData.author?.uniqueId,
+      stats: videoData.stats,
+      videoUrl: videoData.video?.playAddr,
+    };
+
+    // console.log(chalk.green(`✅ Scraped video: ${videoInfo.id}`));
+    // console.log(chalk.blueBright('\nScraped Video Info:'));
+    // console.dir(videoInfo, { depth: null });
+
+        // First, unset the field
+
+    // Map TikTok data from API to your schema
+      const tiktokData_author = {
+        id: videoData.author?.id,
+        uniqueId: videoData.author?.uniqueId,
+        nickname: videoData.author?.nickname,
+        avatarThumb: videoData.author?.avatarThumb,
+        createTime: videoData.createTime
+          ? new Date(parseInt(videoData.createTime) * 1000)
+          : undefined,
+        verified: videoData.author?.verified,
+        followerCount: videoData.authorStatsV2?.followerCount,
+        followingCount: videoData.authorStatsV2?.followingCount,
+        heartCount: videoData.authorStatsV2?.heartCount,
+        videoCount: videoData.authorStatsV2?.videoCount,
+        diggCount: videoData.authorStatsV2?.diggCount,
+        friendCount: videoData.authorStatsV2?.friendCount,
+      };
+      
+      const tiktokData = {
+        id: videoData?.id,
+        createTime: videoData?.createTime
+          ? new Date(parseInt(videoData.createTime) * 1000)
+          : undefined,
+        author: tiktokData_author,
+        diggCount: videoData?.statsV2?.diggCount,
+        shareCount: videoData?.statsV2?.shareCount,
+        commentCount: videoData?.statsV2?.commentCount,
+        playCount: videoData?.statsV2?.playCount,
+        collectCount: videoData?.statsV2?.collectCount,
+        repostCount: videoData?.statsV2?.repostCount,
+        locationCreated: videoData?.locationCreated || null // if present
+  }
+
+
+
+    await Creator.updateOne(
+      { creatorAddress: walletID },
+      { $unset: { tiktokData: "" } }
+    );
+
+    const creatorUpdateData = {
+      $set: { tiktokData: tiktokData_author }
+    };
+
+    const updatedCreator = await Creator.findOneAndUpdate(
+      { creatorAddress: walletID },
+        creatorUpdateData,
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+      await Quest.updateOne(
+        {
+          _id: questID,
+          submissions: {
+            $elemMatch: {
+              submittedByAddress: walletID,
+              videoLink: videoUrl
+            }
+          }
+        },
+        {
+          $set: {
+            "submissions.$.tiktokData": tiktokData
+          }
+        }
+  );
+
+    return videoInfo;
+  } catch (error) {
+    console.error(chalk.red(`❌ Error scraping video ${videoUrl}: ${error.message}`));
+    return null;
+  }
+
 }

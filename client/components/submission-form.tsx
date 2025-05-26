@@ -119,7 +119,7 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
               <SelectContent className="bg-white border-gray-200 text-gray-800">
                 <SelectItem value="tiktok">TikTok</SelectItem>
                 <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="youtube">YouTube</SelectItem>
+                {/* <SelectItem value="youtube">YouTube</SelectItem> */}
                 <SelectItem value="twitter">Twitter/X</SelectItem>
                 {isFarcaster && <SelectItem value="farcaster">Farcaster</SelectItem>}
               </SelectContent>
