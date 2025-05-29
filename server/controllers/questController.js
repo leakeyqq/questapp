@@ -328,6 +328,7 @@ async function pullTwitterData(walletID, contentUrl ,questID) {
 
         const statsResponse = await axios.request(twitterStatsOptions);
         const tweetData = statsResponse.data?.tweets?.[0];
+        tweetData.statsLastUpdated = new Date()
 
         if (!tweetData) throw new Error("Tweet data not found");
 
@@ -429,7 +430,8 @@ async function pullTikTokData(videoUrl, walletID, questID){
         playCount: videoData?.statsV2?.playCount,
         collectCount: videoData?.statsV2?.collectCount,
         repostCount: videoData?.statsV2?.repostCount,
-        locationCreated: videoData?.locationCreated || null // if present
+        locationCreated: videoData?.locationCreated || null, // if present
+        statsLastUpdated: new Date()
   }
 
 

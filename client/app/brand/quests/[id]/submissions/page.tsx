@@ -54,6 +54,15 @@ export const formatDateString = (dateString?: string) => {
     return dateString; // fallback to raw string if parsing fails
   }
 };
+export const formatLastUpdated = (date: Date) => {
+  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const day = days[date.getDay()];
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "pm" : "am";
+  hours = hours % 12 || 12; // Convert 0 to 12
+  return `${day} ${hours}.${minutes}${ampm}`;
+};
 
 interface SubmissionsPageProps {
   params: {
@@ -62,18 +71,69 @@ interface SubmissionsPageProps {
 }
 
 interface Submission {
-  _id?: string;
-  submittedByAddress: string;
-  socialPlatformName?: string;
-  videoLink?: string;
-  submittedAtTime?: string;
-  comments?: string;
-  rewarded?: boolean;
-  rewardAmountUsd?: String;
-  submissionRead?: boolean;
-  rewardedAtTime?: Date;
-  // Add any other properties that exist in your submission objects
+  _id?: string
+  submittedByAddress: string
+  socialPlatformName?: string
+  videoLink?: string
+  submittedAtTime?: string
+  comments?: string
+  rewarded?: boolean
+  rewardAmountUsd?: string
+  submissionRead?: boolean
+  rewardedAtTime?: Date,
+  twitterData?: {
+    id?: string
+    text?: string
+    retweetCount?: number
+    replyCount?: number
+    likeCount?: number
+    quoteCount?: number
+    viewCount?: number
+    createdAt?: Date
+    lang?: string
+    bookmarkCount?: number
+    statsLastUpdated?: Date,
+    author?: {
+      userName?: string
+      id?: string
+      name?: string
+      isVerified?: boolean
+      isBlueVerified?: boolean
+      profilePicture?: string
+      location?: string
+      followers?: number
+      following?: number
+    }
+  }
+  tiktokData?: {
+    id?: string
+    createTime?: Date
+    author?: {
+      id?: string
+      uniqueId?: string
+      nickname?: string
+      avatarThumb?: string
+      createTime?: Date
+      verified?: boolean
+      followerCount?: number
+      followingCount?: number
+      heartCount?: number
+      videoCount?: number
+      diggCount?: number
+      friendCount?: number
+    }
+    diggCount?: number
+    shareCount?: number
+    commentCount?: number
+    playCount?: number
+    collectCount?: number
+    repostCount?: number
+    locationCreated?: string
+    statsLastUpdated?: Date
+  }
 }
+
+
 
 export default function SubmissionsPage({ 
   params 
@@ -105,9 +165,13 @@ export default function SubmissionsPage({
         if (!fetchedQuest) {
           notFound()
         }
+
+
         setQuest(fetchedQuest)
         setPendingSubmissions(fetchedQuest.submissions.filter((s: Submission) => !s.rewarded))
-        setApprovedSubmissions(fetchedQuest.submissions.filter((s: Submission) => s.rewarded))      
+        setApprovedSubmissions(fetchedQuest.submissions.filter((s: Submission) => s.rewarded))   
+        
+        
       }catch(e){
         console.log(e)
       }finally{
@@ -118,7 +182,71 @@ export default function SubmissionsPage({
   }, [params])
   
 
+          // Helper function to format numbers
+        const formatNumber = (num?: number): string => {
+          if (!num) return "0"
+          if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + "M"
+          }
+          if (num >= 1000) {
+            return (num / 1000).toFixed(1) + "K"
+          }
+          return num.toString()
+        }
 
+          // Helper function to get creator data
+        const getCreatorData = (submission: Submission) => {
+          if (submission.twitterData?.author) {
+            return {
+              name: submission.twitterData.author.name || submission.twitterData.author.userName || "Unknown",
+              username: submission.twitterData.author.userName || "",
+              profilePic: submission.twitterData.author.profilePicture || "",
+              followers: submission.twitterData.author.followers || 0,
+              following: submission.twitterData.author.following || 0,
+              verified: submission.twitterData.author.isVerified || submission.twitterData.author.isBlueVerified || false,
+              platform: "Twitter",
+            }
+          }
+
+        if (submission.tiktokData?.author) {
+          return {
+            name: submission.tiktokData.author.nickname || submission.tiktokData.author.uniqueId || "Unknown",
+            username: submission.tiktokData.author.uniqueId || "",
+            profilePic: submission.tiktokData.author.avatarThumb || "",
+            followers: submission.tiktokData.author.followerCount || 0,
+            following: submission.tiktokData.author.followingCount || 0,
+            verified: submission.tiktokData.author.verified || false,
+            platform: "TikTok",
+          }
+    }
+
+    return null
+        }
+
+        // Helper function to get video metrics
+      const getVideoMetrics = (submission: Submission) => {
+        if (submission.twitterData) {
+          return {
+            views: submission.twitterData.viewCount || 0,
+            likes: submission.twitterData.likeCount || 0,
+            comments: submission.twitterData.replyCount || 0,
+            platform: "Twitter",
+            lastUpdated: submission.twitterData.statsLastUpdated || new Date()
+          }
+        }
+
+        if (submission.tiktokData) {
+          return {
+            views: submission.tiktokData.playCount || 0,
+            likes: submission.tiktokData.diggCount || 0,
+            comments: submission.tiktokData.commentCount || 0,
+            platform: "TikTok",
+            lastUpdated: submission.tiktokData.statsLastUpdated || new Date()
+          }
+        }
+
+        return null
+      }
   if (loading) {
     return <div>Fetching quest submissions...</div>
   }
@@ -163,30 +291,38 @@ export default function SubmissionsPage({
             >
               <Link href={`/brand/quests/${quest._id}/edit`}>Edit Quest</Link>
             </Button>
-            {/* <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
+            <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
               <Link href={`/brand/quests/${quest._id}/analytics`}>View Analytics</Link>
-            </Button> */}
+            </Button>
           </div>
         </div>
 
         <Card className="bg-white border-gray-200 shadow-sm mb-8">
           <CardHeader className="pb-2">
             <CardTitle className="text-brand-dark">Quest Overview</CardTitle>
-            <CardDescription className="text-gray-600">{quest.description}</CardDescription>
+            {/* <CardDescription className="text-gray-600">{quest.description}</CardDescription> */}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="bg-brand-light p-3 rounded-lg text-center">
-                <p className="text-gray-600 text-sm">Prize Pool</p>
+                <p className="text-gray-600 text-sm">Total prize Pool</p>
                 <p className="text-xl font-bold text-brand-purple">{quest.prizePoolUsd} <CurrencyDisplay/></p>
               </div>
               <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Deadline</p>
                 <p className="text-xl font-bold text-brand-dark">{new Date(quest.endsOn).toLocaleDateString()}</p>
               </div>
-              <div className="bg-brand-light p-3 rounded-lg text-center">
+              {/* <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Total Submissions</p>
                 <p className="text-xl font-bold text-brand-dark">{quest.submissions.length}</p>
+              </div> */}
+              <div className="bg-brand-light p-3 rounded-lg text-center">
+                <p className="text-gray-600 text-sm">Winners</p>
+                <p className="text-xl font-bold text-brand-dark">{quest.videosToBeAwarded}</p>
+              </div>
+              <div className="bg-brand-light p-3 rounded-lg text-center">
+                <p className="text-gray-600 text-sm">Reward per winner</p>
+                <p className="text-xl font-bold text-brand-dark">{quest.pricePerVideo}<CurrencyDisplay/></p>
               </div>
               {/* <div className="bg-brand-light p-3 rounded-lg text-center">
                 <p className="text-gray-600 text-sm">Not rewarded</p>
@@ -203,69 +339,298 @@ export default function SubmissionsPage({
             {/* <TabsTrigger value="rejected">Rejected (2)</TabsTrigger> */}
           </TabsList>
 
+
+
           <TabsContent value="pending" className="mt-4">
             <div className="space-y-4">
-              {pendingSubmissions.map((submission: Submission) => (
-                <div key={submission._id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <Badge className="bg-brand-yellow text-brand-dark mb-2">Not rewarded</Badge>
-                      <h3 className="text-lg font-bold text-brand-dark">{shortenAddress(submission.submittedByAddress)}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Submitted {formatDateString(submission.submittedAtTime)}</span>
-                        <span>•</span>
-                        <span>via {submission.socialPlatformName} </span>
-                        <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
-                        <span className="">
-                        <CopyButton text={submission.videoLink || ''} />
-                      </span>
+              {pendingSubmissions.map((submission: Submission) => {
+                const creatorData = getCreatorData(submission)
+                const videoMetrics = getVideoMetrics(submission)
+
+                return (
+                  <div key={submission._id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-start gap-4">
+                        {/* Creator Profile Section */}
+                        <div className="flex items-center gap-3">
+                          {creatorData?.profilePic ? (
+                            <img
+                              src={creatorData.profilePic || "/placeholder.svg"}
+                              alt={creatorData.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple font-bold">
+                              {creatorData?.name?.charAt(0) || shortenAddress(submission.submittedByAddress).charAt(0)}
+                            </div>
+                          )}
+
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-bold text-brand-dark">
+                                {creatorData?.name || shortenAddress(submission.submittedByAddress)}
+                              </h3>
+                              {creatorData?.verified && (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-blue-500"
+                                >
+                                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                              )}
+                            </div>
+
+                            {creatorData?.username && <p className="text-gray-600 text-sm">@{creatorData.username}</p>}
+
+                            {/* Follower Stats */}
+                            {creatorData && (
+                              <div className="flex items-center gap-4 mt-1">
+                                <span className="text-xs text-gray-600">
+                                  <span className="font-medium text-brand-purple">
+                                    {formatNumber(creatorData.followers)}
+                                  </span>{" "}
+                                  followers
+                                </span>
+                                {/* <span className="text-xs text-gray-600">
+                                  <span className="font-medium text-brand-dark">
+                                    {formatNumber(creatorData.following)}
+                                  </span>{" "}
+                                  following
+                                </span> */}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="bg-brand-light p-3 rounded-lg mb-3">
-                    {/* <p className="text-gray-700">{submission.comment}</p> */}
-                    <a
-                      href={submission.videoLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-purple hover:text-brand-pink text-sm inline-flex items-center mt-1"
+                      {/*<Badge className="bg-brand-yellow text-brand-dark">Not rewarded</Badge>*/}
+                    {/* <div className="flex flex-col gap-2 items-end">
+                      <Button size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white">
+                        Reward
+                      </Button>
+                      <Button size="sm" className="bg-brand-pink hover:bg-brand-pink/90 text-white">
+                        Reject
+                      </Button>
+                    </div> */}
+
+                    <div className="flex flex-col gap-2 items-end w-full max-w-[60px]">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full  border border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
                     >
-                      Watch video
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="ml-1"
-                      >
-                        <path d="M7 7h10v10"></path>
-                        <path d="M7 17 17 7"></path>
-                      </svg>
-                    </a>
-
-                  </div>
-
-                  <div className="flex gap-2 justify-end">
-                    {/* <Button variant="outline" size="sm" className="border-red-400 text-red-500 hover:bg-red-50">
-                      Reject
-                    </Button> */}
-                    <Button size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white">
                       Reward
                     </Button>
-
- 
-                  
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white"
+                    >
+                      Reject
+                    </Button>
                   </div>
-                </div>
-              ))}
+
+
+                    </div>
+
+                    {/* Submission Details */}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+
+                    
+                      <span>{creatorData?.platform}</span>
+                      <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
+                      {/*<span className="text-xs bg-brand-purple/10 text-brand-purple px-2 py-1 rounded">
+                        {submission.socialPlatformName}
+                      </span>*/}
+
+
+                      <span className="bg-brand-light  rounded-lg">
+                      <a
+                        href={submission.videoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-purple hover:text-brand-pink text-sm inline-flex items-center font-medium"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2"
+                        >
+                          <path d="m22 8-6 4 6 4V8Z"></path>
+                          <rect x="2" y="6" width="14" height="12" rx="2" ry="2"></rect>
+                        </svg>
+                        Watch
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="ml-1"
+                        >
+                          <path d="M7 7h10v10"></path>
+                          <path d="M7 17 17 7"></path>
+                        </svg>
+                      </a>
+                    </span>
+
+
+
+
+
+
+
+                      <span className="">
+                        <button
+                          onClick={() => {
+                            if (submission.videoLink) {
+                              navigator.clipboard.writeText(submission.videoLink)
+                            }
+                          }}
+                          className="text-gray-500 hover:text-brand-purple transition-colors"
+                          title="Copy video link"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                        </button>
+                      </span>
+                    </div>
+
+                    {/* Video Metrics */}
+                    {videoMetrics && (
+                      <div className="bg-brand-light p-3 rounded-lg mb-3">
+                        <h4 className="text-xs font-medium text-brand-dark mb-2">Last updated on {formatLastUpdated(new Date(videoMetrics.lastUpdated))}</h4>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-brand-purple mr-1"
+                              >
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
+                            </div>
+                            <p className="text-base font-bold text-dark">{formatNumber(videoMetrics.views)}</p>
+                            <p className="text-xs text-gray-600">Views</p>
+                          </div>
+
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-brand-pink mr-1"
+                              >
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                              </svg>
+                            </div>
+                            <p className="text-base font-bold text-brand-pink">{formatNumber(videoMetrics.likes)}</p>
+                            <p className="text-xs text-gray-600">Likes</p>
+                          </div>
+
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-brand-teal mr-1"
+                              >
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                            </div>
+                            <p className="text-base font-bold text-dark">{formatNumber(videoMetrics.comments)}</p>
+                            <p className="text-xs text-gray-600">Comments</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No Data Available Message */}
+                    {!videoMetrics && !creatorData && (
+                      <div className="bg-gray-50 p-3 rounded-lg mb-3 text-center">
+                        <p className="text-gray-600 text-sm">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="inline mr-2 text-gray-400"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                          Social media metrics not available for this submission
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+                )
+              })}
             </div>
           </TabsContent>
+          
 
           <TabsContent value="approved" className="mt-4">
             <div className="space-y-4">

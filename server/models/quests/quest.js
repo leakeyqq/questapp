@@ -101,7 +101,8 @@ const questSchema = new mongoose.Schema({
                     location: {type: String, required: false},
                     followers: {type: Number, required: false},
                     following: {type: Number, required: false}
-                }
+                },
+                statsLastUpdate: {type: Date, required: false}
             },
             tiktokData: {
                 id: {type: String, required: false},
@@ -126,7 +127,8 @@ const questSchema = new mongoose.Schema({
                 playCount: {type: Number, required: false},
                 collectCount: {type: Number, required: false},
                 repostCount: {type: Number, required: false},
-                locationCreated: {type: String, required: false}
+                locationCreated: {type: String, required: false},
+                statsLastUpdate: {type: Date, required: false}
             }
         }
     ],
