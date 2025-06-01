@@ -3,6 +3,11 @@ pragma solidity ^0.8.20;
 
 import "./manageCurrencies.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+using SafeERC20 for IERC20Metadata;
+
+
 
 contract CreateQuest is ManageCurrencies, ReentrancyGuard{
      constructor(address initialOwner) ManageCurrencies(initialOwner) {}
@@ -61,7 +66,6 @@ contract CreateQuest is ManageCurrencies, ReentrancyGuard{
         require(allowance >= prizePool, "Insufficient allowance");
 
         // Transfer tokens from brand to this contract
-        bool success = erc20.transferFrom(msg.sender, address(this), prizePool);
-        require(success, "Token transfer failed");
+        erc20.safeTransferFrom(msg.sender, address(this), prizePool);
     }
 }
