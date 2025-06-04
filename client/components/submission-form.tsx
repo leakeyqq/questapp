@@ -12,6 +12,8 @@ import { useWeb3 } from "@/contexts/useWeb3"
 import { sdk } from '@farcaster/frame-sdk';
 import {useAlert} from "@/components/custom-popup"
 import {useConfirm} from '@/components/custom-confirm'
+import { useRouter } from 'next/navigation';
+
 
 
 interface SubmissionFormProps {
@@ -25,6 +27,8 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
   const [platform, setPlatform] = useState("")
   const [contentUrl, setContentUrl] = useState("")
   const [isFarcaster, setIsFarcaster] = useState(false)
+  const router = useRouter();
+  
 
   useEffect(() => {
   const checkFarcaster = async () => {
@@ -97,6 +101,8 @@ export default function SubmissionForm({ questId }: SubmissionFormProps) {
        await showAlert(`${e}`);
     }finally{
       setIsSubmitting(false)
+      router.replace(`${location.pathname}?t=${Date.now()}`)
+
     }
 
   }

@@ -102,7 +102,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* <div>
+           {/* <div>
             <h4 className="text-gray-800 font-bold mb-4">For Creators</h4>
             <ul className="space-y-2">
               <li>
@@ -152,12 +152,12 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           <div>
             <h4 className="text-gray-800 font-bold mb-4">Resources</h4>
             <ul className="space-y-2">
-              <li>
+              {/* <li>
                 <Link href="/help" className="hover:text-brand-purple transition-colors">
                   Help Center
                 </Link>
@@ -166,7 +166,7 @@ export default function Footer() {
                 <Link href="/blog" className="hover:text-brand-purple transition-colors">
                   Blog
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/terms" className="hover:text-brand-purple transition-colors">
                   Terms of Service
@@ -178,19 +178,19 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div> */}
+          </div> 
 
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2023 QuestPanda. All rights reserved.</p>
-          <div className="mt-4 md:mt-0">
+          <p>&copy; 2025 QuestPanda. All rights reserved.</p>
+          {/* <div className="mt-4 md:mt-0">
             <select className="bg-white border border-gray-300 text-gray-700 rounded-md px-3 py-1">
               <option>English</option>
               <option>Spanish</option>
               <option>French</option>
             </select>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

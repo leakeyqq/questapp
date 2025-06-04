@@ -1,5 +1,8 @@
 import Decimal from 'decimal.js'
 import Quest from "./../models/quests/quest.js"
+import Creator from "./../models/creators/creator.js"
+import {check, validationResult} from "express-validator"
+
 export const fetchMyCreatedQuests = async(req, res)=>{
     try {
         
@@ -62,5 +65,84 @@ export const getTotalFundsSpent = async(req, res)=>{
         return res.status(500).json({error: error.message})
     }
 
+
+}
+export const validate_rewardCreator = [
+    check('creatorAddress')
+        .notEmpty()
+        .withMessage('Missing creator address!'),
+    check('questOnChainId')
+        .notEmpty()
+        .withMessage('Quest onchain id is missing!')
+]
+export const rewardCreator = async(req, res)=>{
+    try{
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        const { creatorAddress, questOnChainId } = req.body;
+
+        // Fetch quest
+        let quest = await Quest.findOne({onchain_id: questOnChainId}).exec()
+
+        if (!quest) {
+            return res.status(404).json({ error: "Quest not found/ Its an old version quest" });
+        }
+
+        // Check if the creator has already submitted
+        const existingSubmission = quest.submissions.find(sub =>
+            sub.submittedByAddress?.toLowerCase() === creatorAddress.toLowerCase()
+        );
+
+        if (!existingSubmission) {
+            return res.status(400).json({ error: "Creator has not submitted to this quest" });
+        }
+
+        // Check if already rewarded
+        if (existingSubmission.rewarded) {
+            return res.status(400).json({ error: "Creator has already been rewarded for this quest" });
+        }
+
+                // Reward the creator
+        existingSubmission.rewarded = true;
+        existingSubmission.rewardAmountUsd = quest.pricePerVideo;
+        existingSubmission.rewardedAtTime = new Date();
+
+        await quest.save();
+
+        // ✅ Update Creator
+        const creator = await Creator.findOne({creatorAddress: new RegExp(`^${creatorAddress}$`, 'i')}).exec();
+        if (creator) {
+        const reward = new Decimal(quest.pricePerVideo || "0");
+        const prevEarnings = new Decimal(creator.totalEarnings || "0");
+        const prevBalance = new Decimal(creator.earningsBalance || "0");
+
+        creator.totalEarnings = prevEarnings.plus(reward).toFixed();
+        creator.earningsBalance = prevBalance.plus(reward).toFixed();
+
+        // ✅ Find the existing questsDone entry and update it
+        const questDoneEntry = creator.questsDone.find(
+            (entry) => entry.questID === quest._id.toString()
+        );
+
+        if (questDoneEntry) {
+            questDoneEntry.submissionRewarded = true;
+            questDoneEntry.rewardedAmount = reward.toFixed(0);
+            questDoneEntry.rewardedOn = new Date();
+        }
+
+        await creator.save();
+
+
+
+
+        }
+        return res.status(200).json({tokenSymbol: quest.rewardToken})
+
+
+    }catch(e){
+        throw e
+    }
 
 }

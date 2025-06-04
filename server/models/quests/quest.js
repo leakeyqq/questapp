@@ -5,6 +5,10 @@ const questSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    onchain_id: {
+        type: String,
+        required: false
+    },
     brandName: {
         type: String,
         required: true
@@ -28,6 +32,10 @@ const questSchema = new mongoose.Schema({
     prizePoolUsd: {
         type: String,
         required: String
+    },
+    rewardToken: {
+        type: String,
+        required: false
     },
     pricePerVideo: {
         type: String,
