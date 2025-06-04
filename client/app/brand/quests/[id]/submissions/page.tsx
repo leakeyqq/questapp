@@ -8,6 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
+import { useWeb3 } from "@/contexts/useWeb3"
+import {useAlert} from "@/components/custom-popup"
+import { useRouter } from 'next/navigation';
+import {useConfirm} from '@/components/custom-confirm'
 
 
 import { 
@@ -19,6 +23,7 @@ import {
   FaFacebook,
   FaGlobe 
 } from 'react-icons/fa';
+import router from "next/router";
 
 type PlatformIconProps = {
   platform?: string;
@@ -84,7 +89,16 @@ export default function SubmissionsPage({
   const [quest, setQuest] = useState<any>(null)
   const [pendingSubmissions, setPendingSubmissions] = useState<Submission[]>([])
   const [approvedSubmissions, setApprovedSubmissions] = useState<Submission[]>([])
+  const { showAlert, AlertComponent } = useAlert()
+  const [rewarding, setRewarding] = useState(false);
+  const { showConfirm, ConfirmComponent } = useConfirm()
+  
+  const router = useRouter();
 
+  
+
+  const { rewardCreator } = useWeb3();
+  
 
   // const quest = quests.find((q) => q.id === params.id)
 
@@ -127,8 +141,51 @@ export default function SubmissionsPage({
     return <div>Quest not found</div>
   }
 
+  const handleRewardCreator = async (e: React.FormEvent, creatorAddress: string, questOnChainId: string, pricePerVideo: string, questId: string) => {
+     try {
+      e.preventDefault();
+      setRewarding(true)
+
+      const confirmReward = await showConfirm(`Confirm that you are rewarding this creator ${pricePerVideo} USD?`)
+      if(!confirmReward) return
+
+      if(!creatorAddress){
+          await showAlert("Missing creator Address!")
+          return;
+      }else if(!questOnChainId){
+          await showAlert("Missing creator Address!")
+          return;
+      }
+
+
+      // Send tx to db
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/brand/rewardCreator`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // send cookies for auth
+          body: JSON.stringify({
+            questOnChainId,
+            creatorAddress,
+          }),
+        });
+
+        const data = await res.json();
+        const tokenSymbol = data.tokenSymbol; // e.g., 'cUSD'
+
+        await rewardCreator(questOnChainId, pricePerVideo, creatorAddress, tokenSymbol)
+
+     } catch (error) {
+      throw error
+     }finally{
+      setRewarding(false)
+      router.replace(`${location.pathname}?t=${Date.now()}`)
+     }
+  }
   return (
     <div className="min-h-screen bg-brand-light">
+        <ConfirmComponent />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/brand/dashboard" className="text-brand-purple hover:text-brand-pink flex items-center">
@@ -255,9 +312,13 @@ export default function SubmissionsPage({
                     {/* <Button variant="outline" size="sm" className="border-red-400 text-red-500 hover:bg-red-50">
                       Reject
                     </Button> */}
-                    <Button size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                      Reward
-                    </Button>
+                    <form onSubmit={(e) => handleRewardCreator(e, submission.submittedByAddress, quest.onchain_id, quest.pricePerVideo, quest._id)}>
+                      <Button type="submit" size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white" disabled={rewarding}>
+                        {rewarding ? "Rewarding creator..." :
+                        "Reward"
+                        }
+                      </Button>
+                    </form>
 
  
                   

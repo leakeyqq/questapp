@@ -64,7 +64,7 @@ export default function BrandDashboardPage() {
             };
             getTotalFundsSpent();
           }catch(e){
-            alert (e)
+            console.error(e)
           }finally{
             setLoading(false);
           }

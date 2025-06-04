@@ -216,7 +216,10 @@ export default async function QuestPage({
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
-                    <p className="text-xl font-bold text-brand-dark">{daysLeft} days</p>
+                    <p className="text-xl font-bold text-brand-dark">
+                          {daysLeft >= 0 ? `${daysLeft} days` : "Quest ended"}
+                    </p>
+
                   </div>
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Current participants</p>
@@ -317,7 +320,12 @@ export default async function QuestPage({
                   <div className="bg-brand-light p-4 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Time Left:</span>
-                      <span className="font-bold text-brand-dark">{daysLeft} days</span>
+                      {/* <span className="font-bold text-brand-dark">{daysLeft} days</span> */}
+                      <span className="font-bold text-brand-dark">
+                          {daysLeft >= 0 ? `${daysLeft} days` : "Quest ended"}
+                      </span>
+
+
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       Deadline: {new Date(quest.endsOn).toLocaleDateString()}

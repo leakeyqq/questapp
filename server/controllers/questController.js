@@ -74,22 +74,28 @@ export const validate_createQuest = [
         .withMessage('The number of videos to reward cannot be empty'),
     check("rewardPerVideo")
         .notEmpty()
-        .withMessage('The reward per video cannot be empty!')
+        .withMessage('The reward per video cannot be empty!'),
+
+    check("onchainQuestId")
+        .notEmpty()
+        .withMessage('Onchain quest ID is missing!'),
+    check("rewardToken")
+        .notEmpty()
+        .withMessage("Reward token missing!"),
   ];
 
   
 export const handleQuestCreation = async(req, res)=>{
-    console.log('submitted body ', req.body)
     const errors = validationResult(req)
     
     if (!errors.isEmpty()) {
-      console.log("There were errors", errors.array())
       return res.status(400).json({ errors: errors.array() });
     }
 
     try {
         const quest = new Quest({
             createdByAddress: req.userWalletAddress,
+            onchain_id: req.body.onchainQuestId,
             title: req.body.title,
             brandName: req.body.brand,
             brandImageUrl: req.body.imageUrl,
@@ -99,7 +105,8 @@ export const handleQuestCreation = async(req, res)=>{
             minFollowerCount: req.body.minFollowers || 0,
             endsOn: req.body.deadline,
             pricePerVideo: req.body.rewardPerVideo,
-            videosToBeAwarded: req.body.videosToReward
+            videosToBeAwarded: req.body.videosToReward,
+            rewardToken: req.body.rewardToken
         });
         await quest.save();
         res.status(201).json({ message: "Quest created successfully", quest });
@@ -113,7 +120,7 @@ export const getAllQuests = async(req, res)=>{
   try{
     
     // const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
-    const allQuests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1 }).sort({ createdAt: -1 }).lean().exec()
+    const allQuests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1 }).sort({ createdAt: -1 }).lean().exec()
     return res.status(200).json({allQuests})
   }catch(e){
     return res.status(500).json({"error": e.message})
@@ -135,7 +142,7 @@ export const getSingleQuest = async(req, res)=>{
 
 export const get3questsOnly = async(req, res)=>{
   try {
-    const _3quests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
+    const _3quests = await Quest.find({visibleOnline: true}, {brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
     return res.status(200).json({_3quests})
   } catch (error) {
     return res.status(500).json({"error": error.message})
@@ -153,10 +160,8 @@ export const validate_questSubmission=[
 ]
 
 export const submitQuestByCreator = async(req, res)=>{
-  console.log('submitted body ', req.body)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log("There were errors", errors.array())
     const firstError = errors.array()[0];
     return res.status(400).json({ error: firstError});
   }
@@ -207,7 +212,6 @@ async function submitQuest(walletID, questID, platform, contentUrl) {
             {new: true}
         )
 
-        // console.log(updatedQuest)
 
         // Update creator profile
         const updatedCreator = await Creator.findOneAndUpdate(
@@ -238,7 +242,6 @@ async function submitQuest(walletID, questID, platform, contentUrl) {
 
       return updatedQuest
     } catch (error) {
-      console.log('error ', error)
       throw error
     }
 }
@@ -250,7 +253,6 @@ function extractTwitterUsername(url) {
     const match = cleanedUrl.match(/x\.com\/([^/]+)\/status/);
     return match ? match[1] : null;
   } catch {
-    console.log('twitter name could not be extracted!')
     return null;
   }
 }
@@ -284,8 +286,6 @@ async function pullTwitterData(walletID, contentUrl ,questID) {
 
       const twitterResponse = await axios.request(twitterOptions);
       if (twitterResponse.data?.status === 'success') {
-        // console.log('twitterResponse.data is ', twitterResponse.data)
-        // console.log('')
         const twitterData = twitterResponse.data.data;
       // Attach twitterData only if it exists
       if (twitterData) {
@@ -310,7 +310,6 @@ async function pullTwitterData(walletID, contentUrl ,questID) {
       }
 
       } catch (error) {
-        console.log(error)
         throw error
       }
   
@@ -393,9 +392,7 @@ async function pullTikTokData(videoUrl, walletID, questID){
       videoUrl: videoData.video?.playAddr,
     };
 
-    // console.log(chalk.green(`✅ Scraped video: ${videoInfo.id}`));
-    // console.log(chalk.blueBright('\nScraped Video Info:'));
-    // console.dir(videoInfo, { depth: null });
+
 
         // First, unset the field
 

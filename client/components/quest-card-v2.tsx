@@ -52,9 +52,17 @@ return (
             <Badge className="bg-brand-purple text-white hover:text-brand-purple">Create video</Badge>
           </div>
           <div className="absolute bottom-3 right-3">
-            <Badge variant="outline" className="border-white text-white bg-black/30 backdrop-blur-sm">
-              {daysLeft} days left
-            </Badge>
+            {/* <Badge variant="outline" className="border-white text-white bg-black/30 backdrop-blur-sm">
+                {daysLeft >= 0 ? `${daysLeft} days left` : "Quest ended"}
+            </Badge> */}
+            <Badge
+                variant="outline"
+                className={`border-white text-white bg-black/30 backdrop-blur-sm ${
+                  daysLeft < 0 ? 'bg-red-600 text-white' : ''
+                }`}
+              >
+                {daysLeft >= 0 ? `${daysLeft} days left` : "Quest ended"}
+              </Badge>
           </div>
         </div>
         <CardHeader className="pb-2">
@@ -95,8 +103,18 @@ return (
     <Gift className="w-4 h-4" />
     <span>{quest.pricePerVideo}<CurrencyDisplay/></span>
   </div>
-  <Badge variant="outline" className="text-xs border-brand-purple/30 bg-white/90 text-brand-dark">
-    {daysLeft}d left
+  {/* <Badge variant="outline" className="text-xs border-brand-purple/30 bg-white/90 text-brand-dark">
+      {daysLeft > 0 ? `${daysLeft}d left` : "Quest ended"}
+  </Badge> */}
+    <Badge
+    variant="outline"
+    className={`text-xs bg-white/90 ${
+      daysLeft >= 0
+        ? 'border-brand-purple/30 text-brand-dark'
+        : 'bg-red-100 text-red-800 border-red-300'
+    }`}
+  >
+    {daysLeft >= 0 ? `${daysLeft}d left` : "Quest ended"}
   </Badge>
 </div>
           <p className="text-xs text-gray-600">by {quest.brandName}</p>

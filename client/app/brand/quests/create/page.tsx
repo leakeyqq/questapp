@@ -37,7 +37,7 @@ const { showConfirm, ConfirmComponent } = useConfirm()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD, checkCUSDBalance, getUserAddress } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
 
 
@@ -164,10 +164,11 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       return;
     }
 
-      // Convert prizePool to cUSD (assuming prizePool is in USD 1:1)
-      const txReceipt = await sendCUSD(platformEscrowAddress, prizePool);
-      
-      // If payment succeeds, proceed with quest creation
+    // Test approval
+    let _tokenName = 'cUSD'
+    await approveSpending(prizePool, _tokenName)
+    let onchainQuestId = await createQuest(prizePool, _tokenName)
+
       setIsSubmitting(true);
 
 
@@ -189,7 +190,9 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             minFollowers,
             imageUrl,
             videosToReward,
-            rewardPerVideo
+            rewardPerVideo,
+            onchainQuestId,
+            rewardToken: _tokenName
           }),
         });
     

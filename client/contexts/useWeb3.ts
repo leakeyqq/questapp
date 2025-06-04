@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import StableTokenABI from "./cusd-abi.json";
+import QuestPandaABI from "./questpanda-abi.json"
 // import MinipayNFTABI from "./minipay-nft.json";
 import {
     createPublicClient,
     createWalletClient,
     custom,
+    decodeEventLog,
     encodeFunctionData,
     getContract,
     http,
@@ -57,6 +59,165 @@ export const useWeb3 = () => {
         return null;
     };
 
+const approveSpending = async (amount: string, tokenSymbol: string) => {
+
+
+    try {
+        if (!walletClient) throw new Error("Wallet not connected");
+
+        const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
+
+        if (!spenderAddress) {
+        throw new Error("❌ Environment variable spenderAddress is not defined");
+        }
+
+        let decimals = checkDecimals(tokenSymbol)
+
+        const amountInWei = (Number(amount) * (10**decimals));
+        const tokenContractAddress = checkContractAddress(tokenSymbol)
+
+        const txHash = await walletClient.writeContract({
+            address: tokenContractAddress,
+            abi: StableTokenABI.abi,
+            functionName: "approve",
+            account: walletClient.account.address,
+            args: [spenderAddress, amountInWei],
+        });
+
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+        return receipt;
+    } catch (error) {
+        throw error
+    }
+
+};
+const createQuest = async (prizePool: string, tokenSymbol: string) => {
+    try {
+        if (!walletClient) throw new Error("Wallet not connected");
+
+        const createQuestContractAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
+
+        if (!createQuestContractAddress) {
+        throw new Error("❌ Environment variable createQuestContractAddress is not defined");
+        }
+
+        let decimals = checkDecimals(tokenSymbol)
+        const tokenContractAddress = checkContractAddress(tokenSymbol)
+        const amountInWei = (Number(prizePool) * (10**decimals));
+
+        const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
+          const txHash = await walletClient.writeContract({
+            address: createQuestContractAddress,
+            abi: QuestPandaABI,
+            functionName: "createQuestAsBrand",
+            account: walletClient.account.address,
+            args: [amountInWei, tokenContractAddress],
+            nonce: nonce
+        });
+
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+        console.log('receipt')
+        // get the matching log
+        const questCreatedLog = receipt.logs.find((log) => {
+        try {
+            const decoded = decodeEventLog({
+            abi: QuestPandaABI,
+            data: log.data,
+            topics: log.topics,
+            });
+            return decoded.eventName === 'QuestCreatedByBrand';
+        } catch {
+            return false;
+        }
+        });
+
+        if (!questCreatedLog) {
+        throw new Error("❌ QuestCreated event not found in logs");
+        }
+
+        // Decode with assertion
+        const decoded = decodeEventLog({
+            abi: QuestPandaABI,
+            data: questCreatedLog.data,
+            topics: questCreatedLog.topics,
+        }) as unknown as {
+        eventName: 'QuestCreatedByBrand';
+        args: {
+            questId: bigint;
+            brand: `0x${string}`;
+            token: `0x${string}`;
+            prizePool: bigint;
+        };
+        };
+
+        const questId = decoded.args.questId.toString();
+
+    // console.log("✅ Quest created!", receipt);
+    return questId;
+
+    } catch (error) {
+        throw error
+    }
+
+};
+const rewardCreator = async(quest_id: string, amount: string, creatorAddress: string, tokenSymbol: string) => {
+    try {
+        if (!walletClient) throw new Error("Wallet not connected");
+        const QuestPandaContract = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
+
+        if (!tokenSymbol) {
+            throw new Error("Token symbol is undefined!");
+        }
+        if (!QuestPandaContract) {
+        throw new Error("❌ Environment variable QuestPandaContract is not defined");
+        }
+
+        let decimals = checkDecimals(tokenSymbol)
+        const amountInWei = (Number(amount) * (10**decimals));
+
+        const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
+
+        const txHash = await walletClient.writeContract({
+            address: QuestPandaContract,
+            abi: QuestPandaABI,
+            functionName: "rewardCreatorAsBrand",
+            account: walletClient.account.address,
+            args: [quest_id, amountInWei, creatorAddress],
+            nonce: nonce 
+        });
+
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+        return;
+
+    } catch (error) {
+        throw error
+    }
+}
+const checkDecimals = (tokenSymbol: string) => {
+    if(tokenSymbol.toLowerCase() == 'cusd'){
+        return 18
+    }else if(tokenSymbol.toLowerCase() == 'usdt' || tokenSymbol.toLowerCase() == 'usdc'){
+        return 6
+    }else{
+        throw new Error('Token not supported!!')
+    }
+}
+const checkContractAddress = (tokenSymbol: string) => {
+    if(tokenSymbol.toLowerCase() == 'cusd'){
+        let address = '0x765DE816845861e75A25fCA122bb6898B8B1282a'
+        return address as `0x${string}`;
+    }else if(tokenSymbol.toLowerCase() == 'usdt'){
+        let address = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e'
+        return address as `0x${string}`;
+    }else if(tokenSymbol.toLowerCase() == 'usdc'){
+        let address = '0xcebA9300f2b948710d2653dD7B07f33A8B32118C'
+        return address as `0x${string}`;
+    }else{
+        throw new Error('Token not supported!!')
+    }
+}
     const sendCUSD = async (to: string, amount: string) => {
         try {
             if (!walletClient) throw new Error("Wallet not connected");
@@ -191,6 +352,9 @@ export const useWeb3 = () => {
         // getNFTs,
         signTransaction,
         checkCUSDBalance,
+        approveSpending,
+        createQuest,
+        rewardCreator,
         isWalletReady
     };
 };
