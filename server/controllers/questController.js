@@ -176,13 +176,13 @@ export const submitQuestByCreator = async(req, res)=>{
       'submissions.submittedByAddress': walletID
     });
 
-    if (existingQuest) {
-      return res.status(400).json({ 
-        error: { 
-          msg: "Oops..You cannot submit a single quest twice😪" 
-        } 
-      });
-    }
+    // if (existingQuest) {
+    //   return res.status(400).json({ 
+    //     error: { 
+    //       msg: "Oops..You cannot submit a single quest twice😪" 
+    //     } 
+    //   });
+    // }
     
   
     const updatedQuest = await submitQuest(walletID, questID, req.body.platform, req.body.contentUrl)
