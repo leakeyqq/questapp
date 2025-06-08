@@ -65,6 +65,21 @@ const approveSpending = async (amount: string, tokenSymbol: string) => {
     try {
         if (!walletClient) throw new Error("Wallet not connected");
 
+        
+        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
+            // 1. Request CELO funding from backend
+            const fundingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/prepare-deposit`, {
+                method: 'GET',
+                credentials: "include"
+                // body: JSON.stringify({ address: walletClient.account.address }),
+            });
+
+            const { txHash } = await fundingResponse.json();
+
+            // 2. Wait for CELO transaction confirmation
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+        }
+
         const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
 
         if (!spenderAddress) {
@@ -165,6 +180,22 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
 const rewardCreator = async(quest_id: string, amount: string, creatorAddress: string, tokenSymbol: string) => {
     try {
         if (!walletClient) throw new Error("Wallet not connected");
+
+        
+        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
+            // 1. Request CELO funding from backend
+            const fundingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/prepare-deposit`, {
+                method: 'GET',
+                credentials: "include"
+                // body: JSON.stringify({ address: walletClient.account.address }),
+            });
+
+            const { txHash } = await fundingResponse.json();
+
+            // 2. Wait for CELO transaction confirmation
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+        }
+
         const QuestPandaContract = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
 
         if (!tokenSymbol) {

@@ -6,7 +6,7 @@ import SubmissionForm from "@/components/submission-form"
 import { quests } from "@/lib/data"
 import type { Quest } from "@/lib/types"
 import { notFound, useParams, useRouter  } from "next/navigation"
-import { useEffect, useState } from "react"
+// import { useEffect, useState } from "react"
 import { getSingleQuest } from "@/lib/quest";
 import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
@@ -77,18 +77,71 @@ export default async function QuestPage({
 }: { 
   params: { id: string } 
 }) {
-  interface Submission {
-    submittedByAddress: string;
-    socialPlatformName?: string;
-    videoLink?: string;
-    submittedAtTime?: string;
-    comments?: string;
-    rewarded?: boolean;
-    rewardAmountUsd?: string;
-    submissionRead?: boolean;
-    rewardedAtTime?: Date;
-    // Add any other properties that exist in your submission objects
+interface Submission {
+  _id?: string
+  submittedByAddress: string
+  socialPlatformName?: string
+  videoLink?: string
+  submittedAtTime?: string
+  comments?: string
+  rewarded?: boolean
+  rewardAmountUsd?: string
+  submissionRead?: boolean
+  rewardedAtTime?: Date,
+  twitterData?: {
+    id?: string
+    text?: string
+    retweetCount?: number
+    replyCount?: number
+    likeCount?: number
+    quoteCount?: number
+    viewCount?: number
+    createdAt?: Date
+    lang?: string
+    bookmarkCount?: number
+    statsLastUpdated?: Date,
+    author?: {
+      userName?: string
+      id?: string
+      name?: string
+      isVerified?: boolean
+      isBlueVerified?: boolean
+      profilePicture?: string
+      location?: string
+      followers?: number
+      following?: number
+    }
   }
+  tiktokData?: {
+    id?: string
+    createTime?: Date
+    author?: {
+      id?: string
+      uniqueId?: string
+      nickname?: string
+      avatarThumb?: string
+      createTime?: Date
+      verified?: boolean
+      followerCount?: number
+      followingCount?: number
+      heartCount?: number
+      videoCount?: number
+      diggCount?: number
+      friendCount?: number
+    }
+    diggCount?: number
+    shareCount?: number
+    commentCount?: number
+    playCount?: number
+    collectCount?: number
+    repostCount?: number
+    locationCreated?: string
+    statsLastUpdated?: Date
+  }
+}
+  // const [allSubmissions, setAllSubmissions] = useState<Submission[]>([])
+
+let allSubmissions: Submission[] = []
 
   
   const awaitedParams = await params; // Properly await params first
@@ -96,45 +149,10 @@ export default async function QuestPage({
   const quest = await getSingleQuest(awaitedParams.id);
 
   if (!quest) notFound();
+        
+  // setAllSubmissions(quest.submissions)
+  allSubmissions = quest.submissions
 
-  // const { id } = useParams() as { id: string } // 👈 Get dynamic route param
-  // const [quest, setQuest] = useState<Quest | null>(null)
-  // const [loading, setLoading] = useState(true)
-
-  // useEffect(()=>{
-  //   const fetchQuest = async () => {
-  //     try{
-  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/getSingleQuest/${id}`,  {
-  //         credentials: "include"
-  //       })
-  //       if (res.status == 404) throw new Error("Quest not found")
-  //       if (res.status != 200) throw new Error("An error occured!")
-  
-          
-  //       const data = await res.json()
-  //       setQuest(data.quest)
-  //     }catch (error) {
-  //       console.error("Error fetching quest:", error)
-  //       // router.push("/404") // or use notFound() if in server context
-  //     } finally {
-  //       setLoading(false)
-  //     }
-
-  //   }
-  //   fetchQuest()
-  // }, [id])
-
-  // const quest = quests.find((q) => q.id === id)
-  // if (loading) {
-  //   return <div>Loading quest...</div>
-  // }
-  
-  // if (!quest) {
-  //   notFound()
-  // }
-
-
-  // const percentComplete = Math.min(100, Math.round((quest.submissions / quest.maxParticipants) * 100))
 
   const daysLeft = Math.ceil((new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
@@ -149,6 +167,71 @@ export default async function QuestPage({
     return colors[category as keyof typeof colors] || "bg-brand-yellow text-brand-dark"
   }
 
+          // Helper function to format numbers
+        const formatNumber = (num?: number): string => {
+          if (!num) return "0"
+          if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + "M"
+          }
+          if (num >= 1000) {
+            return (num / 1000).toFixed(1) + "K"
+          }
+          return num.toString()
+        }
+
+          // Helper function to get creator data
+        const getCreatorData = (submission: Submission) => {
+          if (submission.twitterData?.author) {
+            return {
+              name: submission.twitterData.author.name || submission.twitterData.author.userName || "Unknown",
+              username: submission.twitterData.author.userName || "",
+              profilePic: submission.twitterData.author.profilePicture || "",
+              followers: submission.twitterData.author.followers || 0,
+              following: submission.twitterData.author.following || 0,
+              verified: submission.twitterData.author.isVerified || submission.twitterData.author.isBlueVerified || false,
+              platform: "Twitter",
+            }
+          }
+
+        if (submission.tiktokData?.author) {
+          return {
+            name: submission.tiktokData.author.nickname || submission.tiktokData.author.uniqueId || "Unknown",
+            username: submission.tiktokData.author.uniqueId || "",
+            profilePic: submission.tiktokData.author.avatarThumb || "",
+            followers: submission.tiktokData.author.followerCount || 0,
+            following: submission.tiktokData.author.followingCount || 0,
+            verified: submission.tiktokData.author.verified || false,
+            platform: "TikTok",
+          }
+    }
+
+    return null
+        }
+
+        // Helper function to get video metrics
+      const getVideoMetrics = (submission: Submission) => {
+        if (submission.twitterData) {
+          return {
+            views: submission.twitterData.viewCount || 0,
+            likes: submission.twitterData.likeCount || 0,
+            comments: submission.twitterData.replyCount || 0,
+            platform: "Twitter",
+            lastUpdated: submission.twitterData.statsLastUpdated || new Date()
+          }
+        }
+
+        if (submission.tiktokData) {
+          return {
+            views: submission.tiktokData.playCount || 0,
+            likes: submission.tiktokData.diggCount || 0,
+            comments: submission.tiktokData.commentCount || 0,
+            platform: "TikTok",
+            lastUpdated: submission.tiktokData.statsLastUpdated || new Date()
+          }
+        }
+
+        return null
+      }
 
     
   // console.log('on page file, quest is ', quest)
@@ -232,74 +315,146 @@ export default async function QuestPage({
                 </div>
               </TabsContent>
 
-              <TabsContent
-                value="submissions"
-                className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md"
-              >
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Recent Submissions</h2>
-                 {quest.submissions && quest.submissions.length > 0 ? (
-                  <div className="space-y-4">
-                    {quest.submissions.reverse().map((submission: Submission, index: number) => (
-                      <div key={index} className="flex items-start gap-4 p-4 bg-brand-light rounded-lg">
-                        {/* <div className="h-10 w-10 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple">
-                          {submission.submittedByAddress.charAt(12).toUpperCase()}
-                        </div> */}
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            {/* <p className="font-semibold text-brand-dark">User ID: {shortenAddress(submission.submittedByAddress)}</p>   */}
-                            <p className="font-semibold text-brand-dark">Submission {index + 1}</p>  
+            <TabsContent value="submissions" className="bg-white rounded-lg p-4 border border-gray-200 mt-2 shadow-sm">
+              <div className="space-y-3">
+                {allSubmissions.reverse().map((submission: Submission) => {
+                  const creatorData = getCreatorData(submission)
+                  const videoMetrics = getVideoMetrics(submission)
 
-                            <p className="text-gray-500 text-sm">{formatDateString(submission.submittedAtTime)}</p>
+                  return (
+                    <div key={submission._id} className="bg-white rounded-md p-3 border border-gray-100 shadow-sm">
+                        {/* Reward Banner */}
+  {submission.rewardAmountUsd && (
+    <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+      Reward: {submission.rewardAmountUsd} USD
+    </div>
+  )}
+                      {/* Header: Profile + Buttons */}
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-start gap-3">
+                          {creatorData?.profilePic ? (
+                            <img
+                              src={creatorData.profilePic || "/placeholder.svg"}
+                              alt={creatorData.name}
+                              className="w-10 h-10 rounded-full object-cover border"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple font-semibold text-sm">
+                              {creatorData?.name?.charAt(0) || shortenAddress(submission.submittedByAddress).charAt(0)}
+                            </div>
+                          )}
+
+                          <div className="text-sm">
+                            <div className="flex items-center gap-1 font-semibold text-brand-dark text-base">
+                              {creatorData?.name || shortenAddress(submission.submittedByAddress)}
+                              {creatorData?.verified && (
+                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                              )}
+                            </div>
+                            {creatorData?.username && (
+                              <p className="text-gray-600 text-xs">@{creatorData.username}</p>
+                            )}
+                            {creatorData?.followers !== undefined && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                <span className="font-medium text-brand-purple">{formatNumber(creatorData.followers)}</span>{" "}
+                                followers
+                              </p>
+                            )}
                           </div>
-                          <p className="text-gray-700 mt-1">Rewarded <span className="font-bold">{submission.rewardAmountUsd} <CurrencyDisplay/></span></p>
-                          
-                          <div className="relative inline-flex items-center">
-                          <a
-                            href={submission.videoLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center text-brand-purple hover:text-brand-pink text-sm"
-                          >
-                            <p className="pe-2">Watch video</p>
-                            <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4"/>
-                            {submission.socialPlatformName}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="ml-1"
-                            >
-                              <path d="M7 7h10v10"></path>
-                              <path d="M7 17 17 7"></path>
-                            </svg>
-                          </a>
-
-                          <div className="absolute -right-6">
-                          <CopyButton text={submission.videoLink || ''} />
-                        </div>
-
-                          </div>
-{/* 
-                          <div className="absolute -right-6">
-                          <CopyButton text={submission.videoLink || ''} />
-                        </div> */}
-                          
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No submissions yet. Be the first to complete this quest!</p>
-                  </div>
-                )} 
-              </TabsContent>
+
+                      {/* Platform + Watch + Copy */}
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">
+                        <span>{creatorData?.platform}</span>
+
+                        <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
+                        <a
+                          href={submission.videoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-purple hover:text-brand-pink flex items-center text-sm"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="m22 8-6 4 6 4V8Z" />
+                            <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+                          </svg>
+                          Watch
+                        </a>
+                        <CopyButton text={submission.videoLink || ''} />
+                        <span
+                          className={`text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${
+                            submission.rewardAmountUsd == '0' ? 'bg-brand-purple' : 'bg-brand-teal'}`}>
+                          + {submission.rewardAmountUsd} USD
+                        </span>
+
+                      </div>
+  
+
+
+                      {/* Video Metrics */}
+                      {videoMetrics && submission.socialPlatformName?.toLowerCase() === 'twitter' && (
+                        <div className="bg-brand-light p-2 rounded-md mb-2">
+                          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div>
+                              <div className="flex justify-center mb-1 text-brand-purple">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </div>
+                              <p className="font-bold">{formatNumber(videoMetrics.views)}</p>
+                              <p className="text-gray-600">Views</p>
+                            </div>
+
+                            <div>
+                              <div className="flex justify-center mb-1 text-brand-pink">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                              </div>
+                              <p className="font-bold">{formatNumber(videoMetrics.likes)}</p>
+                              <p className="text-gray-600">Likes</p>
+                            </div>
+
+                            <div>
+                              <div className="flex justify-center mb-1 text-brand-teal">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                              </div>
+                              <p className="font-bold">{formatNumber(videoMetrics.comments)}</p>
+                              <p className="text-gray-600">Comments</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No Metrics Message */}
+                      {!videoMetrics && !creatorData && (
+                        <div className="bg-gray-50 p-2 rounded-md text-center text-sm text-gray-600">
+                          <svg
+                            className="inline w-4 h-4 mr-1 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          Social media metrics not available
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </TabsContent>
+
             </Tabs>
           </div>
 
