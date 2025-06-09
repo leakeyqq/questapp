@@ -17,6 +17,9 @@ import { useWeb3 } from "@/contexts/useWeb3"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import {useAlert} from "@/components/custom-popup"
 import {useConfirm} from '@/components/custom-confirm'
+import { PaymentModal } from "@/components/payment-modal"
+
+
 
 
 let hasConnectedMiniPay = false;
@@ -37,7 +40,7 @@ const { showConfirm, ConfirmComponent } = useConfirm()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest, checkTokenBalances } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
 
 
@@ -58,6 +61,12 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showBudgetInput, setShowBudgetInput] = useState(false);
   const [balanceError, setBalanceError] = useState<{ hasError: boolean;message: string; balance: string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentStepComplete, setPaymentStepComplete] = useState(false);
+  const [tokenForPayment, setTokenForPayment] = useState("")
+
+
 
   // string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
 
@@ -96,149 +105,171 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  setShowPaymentModal(true);
 
-    setUploading(true);
-    try {
-      const url = await uploadToCloudinary(file);
-      setImageUrl(url);
-      console.log("Uploaded image URL:", url);
-    } catch (err) {
-      await showAlert(`Upload failed : ${err}`)
-      // console.error("Upload failed", err);
-    }
-    setUploading(false);
-  };
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-  const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (!title || !brand || !category || !longDescription || !prizePool || !deadline || !imageUrl || !videosToReward || !rewardPerVideo) {
-      
-      await showAlert("Something is missing! Please fill out all fields!")
-      // toast({
-      //   title: "Missing information",
-      //   description: "Please fill in all required fields",
-      //   variant: "destructive",
-      // });
-      return;
-    }
-    try{
-      // First handle payment
-      setPaymentProcessing(true);
+  setUploading(true);
+  try {
+    const url = await uploadToCloudinary(file);
+    setImageUrl(url);
+    console.log("Uploaded image URL:", url);
+  } catch (err) {
+    await showAlert(`Upload failed : ${err}`)
+    // console.error("Upload failed", err);
+  }
+  setUploading(false);
+};
 
-      // Determine recipient address (this should be your platform's escrow address)
-      const platformEscrowAddress = process.env.NEXT_PUBLIC_PLATFORM_ESCROW_ADDRESS;
-      if (!platformEscrowAddress) {
-        throw new Error("Platform escrow address not configured");
-      }
+const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      
-    try {
-      const userAddress = await getUserAddress();
-      if (!userAddress) {
-        await showAlert("Please sign in first!");
-        return;
-      }
-  
-        // Show confirmation dialog for depositing funds
-       const confirmDeposit = await showConfirm(`${prizePool} cUSD will be transfered from your account into the prize pool. Confirm to proceed!`);
-
-       if(!confirmDeposit){
-        return
-       }
-      
-           // First check balance
-    const balanceCheck = await checkCUSDBalance(prizePool);
-
-    if (!balanceCheck.hasEnough) {
-      setBalanceError({
-        hasError: true,
-        message: "Insufficient balance to create this quest",
-        balance: balanceCheck.balance,
-        required: balanceCheck.required,
-      });
-      setPaymentProcessing(false);
-      return;
-    }
-
-    // Test approval
-    let _tokenName = 'cUSD'
-    await approveSpending(prizePool, _tokenName)
-    let onchainQuestId = await createQuest(prizePool, _tokenName)
-
-      setIsSubmitting(true);
-
-
-      setIsSubmitting(true);
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // send cookies for auth
-          body: JSON.stringify({
-            title,
-            brand,
-            category,
-            longDescription,
-            prizePool,
-            deadline,
-            minFollowers,
-            imageUrl,
-            videosToReward,
-            rewardPerVideo,
-            onchainQuestId,
-            rewardToken: _tokenName
-          }),
-        });
+  if (!title || !brand || !category || !longDescription || !prizePool || !deadline || !imageUrl || !videosToReward || !rewardPerVideo) {
     
-        const data = await res.json();
-    
-        if (!res.ok) {
-          throw new Error(data.error || "Something went wrong");
+    await showAlert("Something is missing! Please fill out all fields!")
+    // toast({
+    //   title: "Missing information",
+    //   description: "Please fill in all required fields",
+    //   variant: "destructive",
+    // });
+    return;
+  }
+
+  const userAddress = await getUserAddress();
+  if (!userAddress) {
+    await showAlert("Please sign in first!");
+    return;
+  }
+  // Show confirmation dialog for depositing funds
+  const confirmDeposit = await showConfirm(`${prizePool} USD will be transfered from your wallet into the prize pool. Confirm to proceed!`);
+
+  if(!confirmDeposit){
+  return
+  }
+  // Show modal first, then wait for user to complete
+        // Check the which asset to deduct from the user. by checking the balance of all their tokens
+      const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
+
+      if(Number(cUSDBalance) >= Number(prizePool)){
+        setTokenForPayment('cusd')
+        await completeQuestCreation()
+      }else if(Number(USDTBalance) >= Number(prizePool)){
+        setTokenForPayment('usdt')
+        await completeQuestCreation()
+      }else if(Number(USDCBalance) >= Number(prizePool)){
+        setTokenForPayment('usdc')
+        await completeQuestCreation()
+      }else{
+        // If user show them a warning and a deep link to go and deposit funds
+        // If user in on a different wallet then pop up the deposit modal
+        if (typeof window !== "undefined" && window.ethereum?.isMiniPay) {
+            setBalanceError({
+              hasError: true,
+              message: "Insufficient balance to create this quest",
+              balance: '0',
+              required: '0',
+            });
+            setPaymentProcessing(false);
+            return;
+        }else{
+            setShowPaymentModal(true);
         }
+
+      }
+};
+
+const completeQuestCreation = async ()=>{
+  alert('final stage')
+  try{
+    // First handle payment
+    setPaymentProcessing(true);
+
+    // Determine recipient address (this should be your platform's escrow address)
+    const platformEscrowAddress = process.env.NEXT_PUBLIC_PLATFORM_ESCROW_ADDRESS;
+    if (!platformEscrowAddress) {
+      throw new Error("Platform escrow address not configured");
+    }
+
     
-        // toast({
-        //   title: "Quest created!",
-        //   description: "Your quest has been created successfully.",
-        // });
-    
-        router.push("/brand/dashboard");
-      } catch (paymentError: any) {
-        // Specific handling for insufficient funds
-        if (paymentError.message.includes("insufficient funds") ){
-          toast({
-            title: "Insufficient Funds",
-            description: "You don't have enough cUSD for this transaction",
-            variant: "destructive",
+  try {
+
+      // Test approval
+      // let _tokenName = 'cUSD'
+      await approveSpending(prizePool, tokenForPayment)
+      let onchainQuestId = await createQuest(prizePool, tokenForPayment)
+
+        setIsSubmitting(true);
+
+
+        setIsSubmitting(true);
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/create`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include", // send cookies for auth
+            body: JSON.stringify({
+              title,
+              brand,
+              category,
+              longDescription,
+              prizePool,
+              deadline,
+              minFollowers,
+              imageUrl,
+              videosToReward,
+              rewardPerVideo,
+              onchainQuestId,
+              rewardToken: tokenForPayment
+            }),
           });
-        } else {
-          throw paymentError; // Re-throw other errors
-        }
-      }
-  } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to create quest.",
-        variant: "destructive",
-      });
-    } finally {
-      setPaymentProcessing(false);
-      setIsSubmitting(false);
-    }
-  };
+      
+          const data = await res.json();
+      
+          if (!res.ok) {
+            throw new Error(data.error || "Something went wrong");
+          }
   
+      // toast({
+      //   title: "Quest created!",
+      //   description: "Your quest has been created successfully.",
+      // });
+  
+      router.push("/brand/dashboard");
+    } catch (paymentError: any) {
+      // Specific handling for insufficient funds
+      if (paymentError.message.includes("insufficient funds") ){
+        toast({
+          title: "Insufficient Funds",
+          description: "You don't have enough cUSD for this transaction",
+          variant: "destructive",
+        });
+      } else {
+        throw paymentError; // Re-throw other errors
+      }
+    }
+} catch (err: any) {
+    toast({
+      title: "Error",
+      description: err.message || "Failed to create quest.",
+      variant: "destructive",
+    });
+  } finally {
+    setPaymentProcessing(false);
+    setIsSubmitting(false);
+  }
+}
 
+  
   return (
     // <div className="min-h-screen bg-brand-light">
     <div className="min-h-screen bg-brand-light overflow-x-hidden"> 
 
-        <AlertComponent />
-        <ConfirmComponent />
+      <AlertComponent />
+      <ConfirmComponent />
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/brand/dashboard" className="text-brand-purple hover:text-brand-pink flex items-center">
@@ -432,7 +463,7 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         // onChange={(e) => setRewardPerVideo(e.target.value)}
                         onChange={handleRewardPerVideoChange}
                         className="bg-white border-gray-300 text-gray-800"
-                        type="number"
+                        type="text"
                         // min="1"
                         required
                       />
@@ -634,19 +665,11 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-red-700">
-                        {balanceError.message} You have {balanceError.balance} cUSD but need {balanceError.required} cUSD.
-
-
-                        {hasConnectedMiniPay ? (
+                        {/* {balanceError.message} You have {balanceError.balance} cUSD but need {balanceError.required} cUSD. */}
+                        Insufficient funds.
+                        {hasConnectedMiniPay && (
                           <Link 
                           href="https://minipay.opera.com/add_cash" 
-                          className="ml-2 font-medium text-red-700 underline hover:text-red-600"
-                        >
-                          Click here to top up
-                        </Link>
-                      ) : (
-                          <Link 
-                          href="#" 
                           className="ml-2 font-medium text-red-700 underline hover:text-red-600"
                         >
                           Click here to top up
@@ -676,6 +699,8 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       {paymentProcessing ? "Processing payment..." : 
                        isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>
+
+                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={completeQuestCreation} prizePool={prizePool}/>
 
                   {/* // Add this loading state component */}
                 {/* {paymentProcessing && (
