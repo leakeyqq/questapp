@@ -3,6 +3,7 @@ import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
+import { useSearchParams } from 'next/navigation';
 import { sdk } from '@farcaster/frame-sdk';
 
 let hasConnectedMiniPay = false;
@@ -19,6 +20,7 @@ export default function ConnectWalletButton() {
   // const [isMiniApp, setIsMiniApp] = useState(false);
   const [isMiniApp, setIsMiniApp] = useState(null);
   const [isValora, setIsValora] = useState(false);
+  const searchParams = useSearchParams();
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   
@@ -31,14 +33,31 @@ export default function ConnectWalletButton() {
     setMounted(true); // ✅ Now it's safe to render client-only logic
   }, []);
 
+  // useEffect(() => {
+  //   // Detect Valora wallet
+  //   setIsValora(mounted && typeof window !== "undefined" && (
+  //     window.ethereum?.isValora || 
+  //     window.ethereum?.providers?.some(p => p.isValora) ||
+  //     /valora/i.test(navigator.userAgent)
+  //   ));
+  // }, []);
+
+  // Detect Valora
   useEffect(() => {
-    // Detect Valora wallet
-    setIsValora(mounted && typeof window !== "undefined" && (
-      window.ethereum?.isValora || 
-      window.ethereum?.providers?.some(p => p.isValora) ||
-      /valora/i.test(navigator.userAgent)
-    ));
-  }, []);
+    if(mounted && typeof window !== "undefined"){
+      const valoraParam = searchParams.get('valora');
+      const isValoraUrl = valoraParam === 'true';
+      const wasValoraDetected = sessionStorage.getItem('valoraDetected') === 'true'
+
+      if(isValoraUrl || wasValoraDetected){
+        setIsValora(true)
+        sessionStorage.setItem('valoraDetected', 'true');
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('valora');
+        window.history.replaceState({}, document.title, newUrl.toString());
+      }
+    }
+  })
 
   // 🚀 Auto-connect MiniPay if detected
   useEffect(() => {
