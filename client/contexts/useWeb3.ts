@@ -109,13 +109,16 @@ const approveSpending = async (amount: string, tokenSymbol: string) => {
 };
 const createQuest = async (prizePool: string, tokenSymbol: string) => {
     try {
-        if (!walletClient) throw new Error("Wallet not connected");
+        if (!walletClient) {
+            throw new Error("Wallet not connected");
+        }
 
         const createQuestContractAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
 
         if (!createQuestContractAddress) {
         throw new Error("❌ Environment variable createQuestContractAddress is not defined");
         }
+
 
         let decimals = checkDecimals(tokenSymbol)
         const tokenContractAddress = checkContractAddress(tokenSymbol)
@@ -133,17 +136,20 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-        console.log('receipt')
         // get the matching log
         const questCreatedLog = receipt.logs.find((log) => {
         try {
+            // Only decode logs from the QuestPanda contract
+            if (log.address.toLowerCase() !== createQuestContractAddress.toLowerCase()) {
+            return false;
+            }
             const decoded = decodeEventLog({
             abi: QuestPandaABI,
             data: log.data,
             topics: log.topics,
             });
             return decoded.eventName === 'QuestCreatedByBrand';
-        } catch {
+        } catch(e) {
             return false;
         }
         });
@@ -438,7 +444,6 @@ client: publicClient,
 const balanceInWei = await tokenContract.read.balanceOf([userAddress]);
 const balance = Number(balanceInWei) / 10**decimals; // Convert to cUSD (18 decimals)
 
-// alert(`going to return ${balance.toFixed(2)}`)
 return {
 balance: balance.toFixed(2)
 };

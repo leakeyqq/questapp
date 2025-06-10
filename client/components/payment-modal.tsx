@@ -21,7 +21,7 @@ import {useAlert} from "@/components/custom-popup"
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
-  onPaymentComplete: () => void
+  onPaymentComplete: (tokenSymbol: string) => void
   prizePool: string,
   paymentAddress:  `0x${string}` | null;
 }
@@ -152,7 +152,9 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
 
 
   const handleComplete = () => {
-    onPaymentComplete()
+    if (!selectedMethod) return; // Add type guard
+    const tokenSymbol = selectedMethod.toLowerCase();
+    onPaymentComplete(tokenSymbol)
     onClose()
   }
 
@@ -167,7 +169,6 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
     const bal = await checkBalanceOfSingleAsset(tokenName)
     setWalletBalance(Number(bal.balance).toFixed(2))
   }catch(e){
-    console.error(e)
     throw e
   }
 }
