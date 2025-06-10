@@ -3,6 +3,7 @@ import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
+import { useSearchParams } from 'next/navigation';
 import { sdk } from '@farcaster/frame-sdk';
 
 let hasConnectedMiniPay = false;
@@ -19,6 +20,8 @@ export default function ConnectWalletButton() {
   // const [isMiniApp, setIsMiniApp] = useState(false);
   const [isMiniApp, setIsMiniApp] = useState(null);
   const [isValora, setIsValora] = useState(false);
+  const [refreshPage, setRefreshpage] = useState(false);
+  const searchParams = useSearchParams();
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   
@@ -31,14 +34,31 @@ export default function ConnectWalletButton() {
     setMounted(true); // ✅ Now it's safe to render client-only logic
   }, []);
 
+  // useEffect(() => {
+  //   // Detect Valora wallet
+  //   setIsValora(mounted && typeof window !== "undefined" && (
+  //     window.ethereum?.isValora || 
+  //     window.ethereum?.providers?.some(p => p.isValora) ||
+  //     /valora/i.test(navigator.userAgent)
+  //   ));
+  // }, []);
+
+  // Detect Valora
   useEffect(() => {
-    // Detect Valora wallet
-    setIsValora(mounted && typeof window !== "undefined" && (
-      window.ethereum?.isValora || 
-      window.ethereum?.providers?.some(p => p.isValora) ||
-      /valora/i.test(navigator.userAgent)
-    ));
-  }, []);
+    if(mounted && typeof window !== "undefined"){
+      const valoraParam = searchParams.get('valora');
+      const isValoraUrl = valoraParam === 'true';
+      const wasValoraDetected = sessionStorage.getItem('valoraDetected') === 'true'
+
+      if(isValoraUrl || wasValoraDetected){
+        setIsValora(true)
+        sessionStorage.setItem('valoraDetected', 'true');
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('valora');
+        window.history.replaceState({}, document.title, newUrl.toString());
+      }
+    }
+  })
 
   // 🚀 Auto-connect MiniPay if detected
   useEffect(() => {
@@ -95,6 +115,11 @@ export default function ConnectWalletButton() {
           } else {
             console.log("Login failed:", data);
           }
+
+          if(refreshPage){
+            setRefreshpage(false)
+            window.location.reload();
+          }
         } catch (err) {
           console.error("Login error:", err);
         }
@@ -129,12 +154,7 @@ export default function ConnectWalletButton() {
       <div className="flex flex-col items-center gap-4">
         {/* Valora-specific UI */}
         {!isConnected && (
-          <button
-            onClick={() => connect({ connector: valoraConnector })}
-            className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition"
-          >
-            Connect Wallet
-          </button>
+          <button onClick={() => {connect({ connector: valoraConnector }); setRefreshpage(true); }} className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition">Connect Wallet </button>
         )}
 
         {isConnected && (

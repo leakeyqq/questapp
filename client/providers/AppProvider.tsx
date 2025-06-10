@@ -7,7 +7,7 @@ import { getWeb3AuthConnector } from '../lib/web3AuthConnector'; // adjust path 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { base, celo, celoAlfajores } from 'wagmi/chains';
+import { celo, celoAlfajores } from 'wagmi/chains';
 import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 // import Layout from '../components/Layout';
 import { injectedWallet, walletConnectWallet, valoraWallet } from '@rainbow-me/rainbowkit/wallets';
@@ -36,11 +36,10 @@ const queryClient = new QueryClient();
 
     const config = createConfig({
       connectors: allConnectors,
-      chains: [base, celo, celoAlfajores],
+      chains: [celo, celoAlfajores],
       transports: {
         [celo.id]: http(),
-        [celoAlfajores.id]: http(),
-        [base.id]:http()
+        [celoAlfajores.id]: http()
       },
     });
 

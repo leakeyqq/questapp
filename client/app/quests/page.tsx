@@ -8,6 +8,22 @@ import QuestCard from "@/components/quest-card"
 import QuestCardV2 from "@/components/quest-card-v2"
 import { quests } from "@/lib/data"
 
+// Skeleton Loader Component
+const QuestCardSkeleton = () => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden animate-pulse">
+    <div className="h-48 bg-gray-300 dark:bg-gray-700"></div>
+    <div className="p-4">
+      <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-2"></div>
+      <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-5/6 mb-4"></div>
+      <div className="flex justify-between items-center">
+        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
+        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
+      </div>
+    </div>
+  </div>
+)
+
 export default function QuestsPage() {
   const [quests, setQuests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -90,7 +106,18 @@ export default function QuestsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <p>Loading quests...</p>
+            // <p>Loading quests...</p>
+                                <>
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                      <QuestCardSkeleton />
+                    </>
           ) : quests.length > 0 ? (
             quests.map((quest: any) => <QuestCardV2 key={quest._id} quest={quest} />)
           ) : (
