@@ -20,6 +20,7 @@ export default function ConnectWalletButton() {
   // const [isMiniApp, setIsMiniApp] = useState(false);
   const [isMiniApp, setIsMiniApp] = useState(null);
   const [isValora, setIsValora] = useState(false);
+  const [refreshPage, setRefreshpage] = useState(false);
   const searchParams = useSearchParams();
 
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -114,6 +115,11 @@ export default function ConnectWalletButton() {
           } else {
             console.log("Login failed:", data);
           }
+
+          if(refreshPage){
+            setRefreshpage(false)
+            window.location.reload();
+          }
         } catch (err) {
           console.error("Login error:", err);
         }
@@ -148,12 +154,7 @@ export default function ConnectWalletButton() {
       <div className="flex flex-col items-center gap-4">
         {/* Valora-specific UI */}
         {!isConnected && (
-          <button
-            onClick={() => connect({ connector: valoraConnector })}
-            className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition"
-          >
-            Connect Wallet
-          </button>
+          <button onClick={() => {connect({ connector: valoraConnector }); setRefreshpage(true); }} className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition">Connect Wallet </button>
         )}
 
         {isConnected && (
