@@ -14,6 +14,8 @@ import QRCodeComponent from '@/components/QRCodeComponent';
 import { CopyButton } from "@/components/copyButton"
 import { useWeb3 } from "@/contexts/useWeb3"
 import { RefreshCw } from 'lucide-react'
+import {useAlert} from "@/components/custom-popup"
+
 
 
 interface PaymentModalProps {
@@ -32,9 +34,11 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
   const [paymentCompleted, setPaymentCompleted] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [bankDetails, setBankDetails] = useState({ accountNumber: "", bankName: "" })
-  const { checkBalanceOfSingleAsset } = useWeb3();
+  const { checkTokenBalances, checkBalanceOfSingleAsset } = useWeb3();
   const [walletBalance, setWalletBalance] = useState('0.00')
   const [isLoading, setIsLoading] = useState(false);
+  const { showAlert, AlertComponent } = useAlert()
+  
 
 
   // Mock wallet address for crypto payments
@@ -120,20 +124,30 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
 
     setIsProcessing(true)
 
-    // Simulate payment processing
-    const processingTime = selectedMethod === "bank" ? 3000 : 2000
-    await new Promise((resolve) => setTimeout(resolve, processingTime))
+      const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
+
+      let isBalanceSufficient;
+
+      if(Number(cUSDBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(USDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(USDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else{
+        isBalanceSufficient = false
+      }
+
+      if (!isBalanceSufficient) {
+      setIsProcessing(false)
+      await showAlert(`Your balance is insufficient to cover the ${prizePool} USD payment. Please deposit funds and try again`)
+      return;
+    }
 
     setIsProcessing(false)
     setPaymentCompleted(true)
 
     const isCrypto = ["cUSD", "USDT", "USDC"].includes(selectedMethod)
-    toast({
-      title: "Payment successful!",
-      description: isCrypto
-        ? `${prizePool} ${selectedMethod} has been deposited successfully.`
-        : `Payment of $${prizePool} has been initiated via ${selectedMethod.toUpperCase()}.`,
-    })
   }
 
 
@@ -327,55 +341,33 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
               {paymentOptions.map((option) => {
                 // const IconComponent = option.icon
                 return (
-//                   <Card
-//                     key={option.id}
-//                     className="cursor-pointer hover:shadow-md transition-all duration-200 hover:border-brand-purple/50 group"
-//                     onClick={() => setSelectedMethod(option.id as PaymentMethod)}
-//                   >
-//                       {/* Recommended Badge */}
-//   {option.id === "mpesa" && (
-//     <span className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full z-10">
-//       Recommended
-//     </span>
-//   )}
 
-//                     <CardContent className="p-4 text-center">
-//                       <div
-//                         className={`w-12 h-12 rounded-lg ${option.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
-//                       >
-//                         {/* <IconComponent className="h-6 w-6 text-white" /> */}
-//                         <img src={option.icon} alt={option.name} className="w- h-8 rounded" />
-//                       </div>
-//                       <h4 className="font-semibold text-brand-dark mb-1">{option.name}</h4>
-//                       <p className="text-sm text-gray-600">{option.description}</p>
-//                     </CardContent>
-//                   </Card>
 
-<Card
-  key={option.id}
-  className="cursor-pointer hover:shadow-md transition-all duration-200 hover:border-brand-purple/50 group"
-  onClick={() => setSelectedMethod(option.id as PaymentMethod)}
->
-  <CardContent className="p-4 text-center">
-    <div className="relative">
-      {/* Recommended Badge */}
-      {option.id === "mpesa" && (
-        <span className="absolute top-0 right-0 bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full z-10 -translate-y-1/2">
-          Recommended
-        </span>
-      )}
+              <Card
+                key={option.id}
+                className="cursor-pointer hover:shadow-md transition-all duration-200 hover:border-brand-purple/50 group"
+                onClick={() => setSelectedMethod(option.id as PaymentMethod)}
+              >
+                <CardContent className="p-4 text-center">
+                  <div className="relative">
+                    {/* Recommended Badge */}
+                    {option.id === "mpesa" && (
+                      <span className="absolute top-0 right-0 bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full z-10 -translate-y-1/2">
+                        Recommended
+                      </span>
+                    )}
 
-      <div
-        className={`w-12 h-12 rounded-lg ${option.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
-      >
-        <img src={option.icon} alt={option.name} className="w- h-8 rounded" />
-      </div>
-    </div>
+                    <div
+                      className={`w-12 h-12 rounded-lg ${option.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
+                    >
+                      <img src={option.icon} alt={option.name} className="w- h-8 rounded" />
+                    </div>
+                  </div>
 
-    <h4 className="font-semibold text-brand-dark mb-1">{option.name}</h4>
-    <p className="text-sm text-gray-600">{option.description}</p>
-  </CardContent>
-</Card>
+                  <h4 className="font-semibold text-brand-dark mb-1">{option.name}</h4>
+                  <p className="text-sm text-gray-600">{option.description}</p>
+                </CardContent>
+              </Card>
 
                 )
               })}
@@ -390,7 +382,10 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
             </div> */}
           </div>
         )}
+      <AlertComponent/>
+
       </DialogContent>
     </Dialog>
+    
   )
 }

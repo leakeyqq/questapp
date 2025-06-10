@@ -183,7 +183,6 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
 };
 
 const completeQuestCreation = async ()=>{
-  alert('final stage')
   try{
     // First handle payment
     setPaymentProcessing(true);
