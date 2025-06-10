@@ -105,7 +105,7 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  setShowPaymentModal(true);
+  // setShowPaymentModal(true);
 
   const file = e.target.files?.[0];
   if (!file) return;
@@ -175,6 +175,7 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
             setPaymentProcessing(false);
             return;
         }else{
+            await showAlert("We have noticed you have insufficient balance. We are going to ask you to top up!");
             setShowPaymentModal(true);
         }
 

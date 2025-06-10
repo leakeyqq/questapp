@@ -252,9 +252,9 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
                     <QRCodeComponent text={`ethereum:${walletAddress}`} />
                   </div>
 
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
+                  {/* <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
                     <strong>Important:</strong> Send the exact amount shown to the wallet address above.
-                  </div>
+                  </div> */}
                 </div>
               )}
 
@@ -311,7 +311,9 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
                 disabled={isProcessing}
                 className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
               >
-                {isProcessing ? "Processing..." : `Pay $${prizePool} with ${selectedOption?.name}`}
+                {/* {isProcessing ? "Processing..." : `Pay $${prizePool} with ${selectedOption?.name}`} */}
+                {isProcessing ? "Processing..." : `Confirm I have paid!`}
+
               </Button>
             </CardContent>
           </Card>
