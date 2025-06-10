@@ -15,16 +15,18 @@ import { CopyButton } from "@/components/copyButton"
 import { useWeb3 } from "@/contexts/useWeb3"
 import { RefreshCw } from 'lucide-react'
 
+
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
   onPaymentComplete: () => void
-  prizePool: string
+  prizePool: string,
+  paymentAddress:  `0x${string}` | null;
 }
 
 type PaymentMethod = "cUSD" | "USDT" | "USDC" | "mpesa" | "mtn" | "bank" | null
 
-export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool }: PaymentModalProps) {
+export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, paymentAddress }: PaymentModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentCompleted, setPaymentCompleted] = useState(false)
@@ -34,20 +36,20 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool }: 
   const [walletBalance, setWalletBalance] = useState('0.00')
   const [isLoading, setIsLoading] = useState(false);
 
-  
 
   // Mock wallet address for crypto payments
-  const walletAddress = "0x69974Cc73815f378218B56FD0ce03A8158b9e120"
+  // const walletAddress = "0x69974Cc73815f378218B56FD0ce03A8158b9e120"
+  const walletAddress = paymentAddress
 
   const paymentOptions = [
-    {
-      id: "mpesa",
-      name: "M-Pesa",
-      description: "Mobile Money",
-      icon: "/crypto/mpesa2.png",
-      color: "bg-light",
-      type: "cash",
-    },
+    // {
+    //   id: "mpesa",
+    //   name: "M-Pesa",
+    //   description: "Mobile Money",
+    //   icon: "/crypto/mpesa2.png",
+    //   color: "bg-light",
+    //   type: "cash",
+    // },
     {
       id: "cUSD",
       name: "cUSD",

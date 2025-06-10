@@ -65,8 +65,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentStepComplete, setPaymentStepComplete] = useState(false);
   const [tokenForPayment, setTokenForPayment] = useState("")
-
-
+const [paymentAddress, setPaymentAddress] = useState<`0x${string}` | null>(null);
 
   // string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
 
@@ -142,6 +141,8 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
     await showAlert("Please sign in first!");
     return;
   }
+  setPaymentAddress(userAddress)
+
   // Show confirmation dialog for depositing funds
   const confirmDeposit = await showConfirm(`${prizePool} USD will be transfered from your wallet into the prize pool. Confirm to proceed!`);
 
@@ -700,7 +701,7 @@ const completeQuestCreation = async ()=>{
                        isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>
 
-                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={completeQuestCreation} prizePool={prizePool}/>
+                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={completeQuestCreation} prizePool={prizePool} paymentAddress={paymentAddress}/>
 
                   {/* // Add this loading state component */}
                 {/* {paymentProcessing && (
