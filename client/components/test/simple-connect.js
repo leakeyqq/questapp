@@ -67,7 +67,7 @@ export default function ConnectWalletButton() {
         hasConnectedMiniPay = true;
         // setHideButton(true);
         connect({ connector: injected({ target: "metaMask" }) });
-        console.log("MiniPay detected. Auto-connecting...");
+        // console.log("MiniPay detected. Auto-connecting...");
       }
     }
   }, [connect]);
@@ -82,7 +82,7 @@ export default function ConnectWalletButton() {
           
           if (miniAppStatus) {
             hasConnectedFarcaster = true;
-            console.log("Running in Farcaster Mini App");
+            // console.log("Running in Farcaster Mini App");
             connect({ connector: farcasterFrame() })
           }
         } catch (error) {
@@ -111,9 +111,9 @@ export default function ConnectWalletButton() {
           );
           const data = await res.json();
           if (data.success) {
-            console.log("Login successful:", data);
+            // console.log("Login successful:", data);
           } else {
-            console.log("Login failed:", data);
+            // console.log("Login failed:", data);
           }
 
           if(refreshPage){

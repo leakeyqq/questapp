@@ -11,6 +11,7 @@ import questRoutes from "./routes/questRoutes.js"
 import feesRoutes from "./routes/feesRouter.js"
 import brandRoutes from "./routes/brandRoutes.js"
 import creatorRoutes from "./routes/creatorRoutes.js"
+import pretiumRoutes from "./routes/pretiumRoutes.js"
 
 const app = express();
 app.use(express.json());
@@ -55,6 +56,7 @@ app.use("/api/quest", questRoutes)
 app.use('/api/fees', feesRoutes)
 app.use('/api/brand', brandRoutes)
 app.use('/api/creator', creatorRoutes)
+app.use('/api/pretium', pretiumRoutes)
 
 app.use("*", (req, res) => {
   console.log(`[${req.method}] Unhandled request to: ${req.originalUrl}`);

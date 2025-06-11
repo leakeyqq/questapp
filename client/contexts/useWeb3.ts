@@ -133,7 +133,6 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-        console.log('receipt')
         // get the matching log
         const questCreatedLog = receipt.logs.find((log) => {
         try {
@@ -270,7 +269,7 @@ const sendCUSD = async (to: string, amount: string) => {
         
 
 
-        console.log('🟡 Preparing to send CUSD:', amount, 'to', to);
+        // console.log('🟡 Preparing to send CUSD:', amount, 'to', to);
         const amountInWei = parseEther(amount);
 
         // 2. Prepare Divvi data suffix
@@ -316,7 +315,7 @@ const sendCUSD = async (to: string, amount: string) => {
         //     hash: tx,
         // });
 
-        console.log('✅ Transaction confirmed!', receipt);
+        // console.log('✅ Transaction confirmed!', receipt);
         // alert('Transaction successful!');
         return receipt;
     } catch (e: any) {

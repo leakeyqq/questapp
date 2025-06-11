@@ -49,7 +49,7 @@ export default function ThreeQuests(){
       const init = async () => {
         try {
           await sdk.actions.ready();
-          console.log("SDK ready")
+          // console.log("SDK ready")
         } catch (err) {
           console.error("Failed to initialize SDK:", err)
         }

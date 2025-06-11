@@ -115,7 +115,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   try {
     const url = await uploadToCloudinary(file);
     setImageUrl(url);
-    console.log("Uploaded image URL:", url);
+    // console.log("Uploaded image URL:", url);
   } catch (err) {
     await showAlert(`Upload failed : ${err}`)
     // console.error("Upload failed", err);
@@ -181,7 +181,7 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
 };
 
 const completeQuestCreation = async ()=>{
-  alert('final stage')
+  // alert('final stage')
   try{
     // First handle payment
     setPaymentProcessing(true);

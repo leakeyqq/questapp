@@ -17,7 +17,7 @@ const WalletPage = () => {
     if (typeof window !== "undefined" && window.ethereum?.isMiniPay) {
       setHideButton(true);
       connect({ connector: injected({ target: 'metaMask' }) });
-      console.log("MiniPay detected. Auto-connecting...");
+      // console.log("MiniPay detected. Auto-connecting...");
     }
   }, [connect]);
 
@@ -35,9 +35,9 @@ const WalletPage = () => {
 
           const data = await res.json();
           if (data.success) {
-            console.log("Login successful:", data);
+            // console.log("Login successful:", data);
           } else {
-            console.log("Login failed:", data);
+            // console.log("Login failed:", data);
           }
         } catch (err) {
           console.error("Login error:", err);

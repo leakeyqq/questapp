@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AppProvider } from '@/providers/AppProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { Metadata } from "next";
 
 import Navbar from "@/components/navbar"
@@ -53,13 +54,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AppProvider>
-          {/* <ThemeProvider attribute="class" defaultTheme="dark"> */}
-          <CurrencyProvider>
-            <Navbar />
-            <main>{children}</main>
-            <Footer />
-          {/* </ThemeProvider> */}
-          </CurrencyProvider>
+          <AuthProvider>
+            {/* <ThemeProvider attribute="class" defaultTheme="dark"> */}
+            <CurrencyProvider>
+              <Navbar />
+              <main>{children}</main>
+              <Footer />
+            {/* </ThemeProvider> */}
+            </CurrencyProvider>
+          </AuthProvider>
         </AppProvider>
       </body>
     </html>
