@@ -32,12 +32,12 @@ export default function TestPage(){
     async function sendingCUSD() {
             setCUSDLoading(true);
             try {
-                console.log('sending cusd ', address)
+                // console.log('sending cusd ', address)
                 const tx = await sendCUSD("0x83c84E6d3a9A7483d4fbBDfaffF17C4c5002A4C1", amountToSend);
                 setTx(tx);
-                console.log('Tx is ', tx)
+                // console.log('Tx is ', tx)
             } catch (error) {
-                console.log(error);
+                // console.log(error);
             } finally {
                 setCUSDLoading(false)
                 // setSigningLoading(false);
@@ -52,7 +52,7 @@ export default function TestPage(){
             await signTransaction();
             setMessageSigned(true);
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         } finally {
             setSigningLoading(false);
             // setCUSDLoading(false);

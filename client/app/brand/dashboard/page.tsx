@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAccount } from "wagmi";
 import { useWeb3 } from "@/contexts/useWeb3"
 import type { Quest } from "@/lib/types"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 
@@ -80,11 +81,12 @@ export default function BrandDashboardPage() {
 
 
   return (
-<div>
-  {loading ? (
-    <div>Loading your dashboard...</div>
-  ): (
-    <div className="min-h-screen bg-brand-light">
+    <ProtectedRoute>
+      <div>
+        {loading ? (
+          <div>Loading your dashboard...</div>
+        ): (
+          <div className="min-h-screen bg-brand-light">
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -437,10 +439,10 @@ export default function BrandDashboardPage() {
             </CardContent>
           </Card>
         </div> */}
+        </div>
       </div>
-    </div>
-  )}
-</div>
-
+        )}
+      </div>
+    </ProtectedRoute>
   )
 }

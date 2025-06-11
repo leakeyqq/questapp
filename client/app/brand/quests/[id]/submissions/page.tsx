@@ -180,7 +180,7 @@ export default function SubmissionsPage({
         setPendingSubmissions(fetchedQuest.submissions.filter((s: Submission) => !s.rewarded))
         setApprovedSubmissions(fetchedQuest.submissions.filter((s: Submission) => s.rewarded))   
       }catch(e){
-        console.log(e)
+        // console.log(e)
       }finally{
         setLoading(false)
       }
