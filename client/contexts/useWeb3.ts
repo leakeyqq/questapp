@@ -131,7 +131,7 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
             functionName: "createQuestAsBrand",
             account: walletClient.account.address,
             args: [amountInWei, tokenContractAddress],
-            nonce: nonce
+            // nonce: nonce
         });
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
