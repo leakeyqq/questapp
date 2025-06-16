@@ -91,18 +91,25 @@ const approveSpending = async (amount: string, tokenSymbol: string) => {
         const amountInWei = (Number(amount) * (10**decimals));
         const tokenContractAddress = checkContractAddress(tokenSymbol)
 
+        const nonce = await publicClient.getTransactionCount({
+            address: walletClient.account.address,
+            blockTag: 'pending' // This is crucial
+        });
+
         const txHash = await walletClient.writeContract({
             address: tokenContractAddress,
             abi: StableTokenABI.abi,
             functionName: "approve",
             account: walletClient.account.address,
             args: [spenderAddress, amountInWei],
+            nonce: nonce
         });
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
         return receipt;
     } catch (error) {
+        console.log('error approving spending ', error)
         throw error
     }
 
@@ -113,25 +120,48 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
             throw new Error("Wallet not connected");
         }
 
+        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
+            // 1. Request CELO funding from backend
+            const fundingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/prepare-deposit`, {
+                method: 'GET',
+                credentials: "include"
+                // body: JSON.stringify({ address: walletClient.account.address }),
+            });
+
+            const { txHash } = await fundingResponse.json();
+
+            // 2. Wait for CELO transaction confirmation
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+        }
+
+
         const createQuestContractAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
 
         if (!createQuestContractAddress) {
         throw new Error("❌ Environment variable createQuestContractAddress is not defined");
         }
+        
+        
 
 
         let decimals = checkDecimals(tokenSymbol)
         const tokenContractAddress = checkContractAddress(tokenSymbol)
         const amountInWei = (Number(prizePool) * (10**decimals));
 
-        const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
+        // const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
+
+        const nonce = await publicClient.getTransactionCount({
+            address: walletClient.account.address,
+            blockTag: 'pending' // This is crucial
+            });
+
           const txHash = await walletClient.writeContract({
             address: createQuestContractAddress,
             abi: QuestPandaABI,
             functionName: "createQuestAsBrand",
             account: walletClient.account.address,
             args: [amountInWei, tokenContractAddress],
-            // nonce: nonce
+            nonce: nonce
         });
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
@@ -179,6 +209,7 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
     return questId;
 
     } catch (error) {
+        console.log('error creating quest ', error)
         throw error
     }
 

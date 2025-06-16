@@ -15,6 +15,12 @@ import { CopyButton } from "@/components/copyButton"
 import { useWeb3 } from "@/contexts/useWeb3"
 import { RefreshCw } from 'lucide-react'
 import {useAlert} from "@/components/custom-popup"
+import axios from 'axios';
+import { useMutation } from '@tanstack/react-query';
+
+import Cookies from 'js-cookie';
+
+
 
 
 
@@ -26,6 +32,11 @@ interface PaymentModalProps {
   paymentAddress:  `0x${string}` | null;
 }
 
+interface ExchangeRateResponse {
+  KES_RATE: number;
+  amountInKes: number;
+}
+
 type PaymentMethod = "cUSD" | "USDT" | "USDC" | "mpesa" | "mtn" | "bank" | null
 
 export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, paymentAddress }: PaymentModalProps) {
@@ -33,12 +44,141 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentCompleted, setPaymentCompleted] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
+  const [paymentCoin, setPaymentCoin] = useState("")
   const [bankDetails, setBankDetails] = useState({ accountNumber: "", bankName: "" })
   const { checkTokenBalances, checkBalanceOfSingleAsset } = useWeb3();
   const [walletBalance, setWalletBalance] = useState('0.00')
   const [isLoading, setIsLoading] = useState(false);
   const { showAlert, AlertComponent } = useAlert()
-  
+
+  const [exchangeRate, setExchangeRate] = useState<ExchangeRateResponse | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'initiated' | 'pending' | 'success' | 'failed' | 'cancelled'>('initiated');
+   
+useEffect(() => {
+  if (isOpen && selectedMethod === "mpesa") {
+    fetchExchangeRate.mutate(Number(prizePool));
+  }
+}, [isOpen, selectedMethod]);
+
+
+useEffect(() => {
+  // Check for existing order ID on component mount
+  const savedOrderId = Cookies.get('SwyptOnrampOrderId');
+  if (savedOrderId) {
+    setOrderId(savedOrderId);
+    setPaymentStatus('pending');
+    startPolling(savedOrderId);
+  }
+}, []);
+
+useEffect(() => {
+  // Clean up cookie when payment completes or modal closes
+  if (paymentStatus === 'success' || !isOpen) {
+    Cookies.remove('SwyptOnrampOrderId');
+  }
+}, [paymentStatus, isOpen]);
+
+// Add these mutation hooks
+const fetchExchangeRate = useMutation({
+  mutationFn: async (amountInUsd: number) => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/swypt/exchangeRate?amountInUsd=${amountInUsd}`);
+    return response.data;
+  },
+  onSuccess: (data: ExchangeRateResponse) => {
+    setExchangeRate(data);
+  },
+  onError: async (error) => {
+    console.log(error)
+    await showAlert('Failed to get current rates. Please try again.')
+  }
+});
+
+const initiatePayment = useMutation({
+  mutationFn: async ({ amountInUsd, phoneNumber }: { amountInUsd: number, phoneNumber: string }) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/swypt/sendStkPush`, {
+      amountInUsd,
+      mpesaNumber: phoneNumber
+    },{
+    withCredentials: true, // This is the Axios equivalent of credentials: "include"
+    headers: {
+      'Content-Type': 'application/json',
+      // Add other headers if needed
+    }
+    });
+    return response.data;
+  },
+  onSuccess: (data) => {
+    setOrderId(data.orderId);
+      // Save to cookie with 1 day expiration (adjust as needed)
+    Cookies.set('SwyptOnrampOrderId', data.orderId, { 
+      expires: 3, // 1 day
+      secure: true, 
+      sameSite: 'strict' 
+    });
+
+    setPaymentStatus('pending');
+    startPolling(data.orderId); // Start polling for payment status
+  },
+  onError: async (error) => {
+    await showAlert('Could not send payment request. Please try again.')
+  }
+});
+
+// Polling function to check payment status
+const startPolling = (orderId: string) => {
+  let pollingCount = 0;
+  const maxPollingAttempts = 24; // 24 attempts * 5 seconds = 2 minutes
+  const pollingInterval = 5000; // 5 seconds
+
+  const interval = setInterval(async () => {
+    try {
+      pollingCount++;
+      
+      // Timeout after 2 minutes (24 attempts * 5 seconds)
+      if (pollingCount >= maxPollingAttempts) {
+        clearInterval(interval);
+        setPaymentStatus('failed');
+        await showAlert("Payment verification timeout. Please check your transaction history.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/swypt/completeMpesaPayment`, 
+        { orderId },
+        {
+        withCredentials: true, // This is the Axios equivalent of credentials: "include"
+        headers: {'Content-Type': 'application/json'}
+        }
+      );
+      
+      const { orderStatus } = response.data;
+      console.log('order status ', orderStatus)
+      
+      if (orderStatus === 'success') {
+        clearInterval(interval);
+        setPaymentStatus('success');
+        setPaymentCompleted(true);
+      } else if (orderStatus === 'failed' || orderStatus === 'cancelled') {
+        clearInterval(interval);
+        setPaymentStatus(orderStatus);
+        setIsProcessing(false)
+        await showAlert(response.data.reason || "Payment could not be completed");
+      }
+      // Continue polling if status is still 'pending'
+      
+    } catch (error) {
+      clearInterval(interval);
+      setPaymentStatus('failed');
+      setIsProcessing(false)
+
+      await showAlert('Could not verify payment status. Please check your payment history.')
+    }
+  }, pollingInterval);
+
+  // Cleanup function to clear interval if component unmounts
+  return () => clearInterval(interval);
+};
 
 
   // Mock wallet address for crypto payments
@@ -46,14 +186,14 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
   const walletAddress = paymentAddress
 
   const paymentOptions = [
-    // {
-    //   id: "mpesa",
-    //   name: "M-Pesa",
-    //   description: "Mobile Money",
-    //   icon: "/crypto/mpesa2.png",
-    //   color: "bg-light",
-    //   type: "cash",
-    // },
+    {
+      id: "mpesa",
+      name: "M-Pesa",
+      description: "Mobile Money",
+      icon: "/crypto/mpesa2.png",
+      color: "bg-light",
+      type: "cash",
+    },
     {
       id: "cUSD",
       name: "cUSD",
@@ -102,13 +242,33 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
     // Validation for cash payments
     if (selectedMethod === "mpesa" || selectedMethod === "mtn") {
       if (!phoneNumber) {
-        toast({
-          title: "Phone number required",
-          description: `Please enter your ${selectedMethod === "mpesa" ? "M-Pesa" : "MTN"} phone number`,
-          variant: "destructive",
-        })
+
+        await showAlert(`Please enter your ${selectedMethod === "mpesa" ? "M-Pesa" : "MTN"} phone number`)
         return
       }
+
+      setIsProcessing(true);
+
+      try {
+        // First fetch the exchange rate if not already done
+        if (!exchangeRate) {
+          await fetchExchangeRate.mutateAsync(Number(prizePool));
+        }
+        
+        await showAlert(`We are going to send an STK push to your Mpesa ${phoneNumber}. You shall enter your Pin.`)
+        // Then initiate payment
+        setPaymentCoin('USDT')
+        await initiatePayment.mutateAsync({
+          amountInUsd: Number(prizePool),
+          phoneNumber
+        });
+        
+      } catch (error) {
+        setIsProcessing(false);
+      }
+
+      return
+  
     }
 
     if (selectedMethod === "bank") {
@@ -144,6 +304,7 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
       return;
     }
 
+    setPaymentCoin(selectedMethod)
     setIsProcessing(false)
     setPaymentCompleted(true)
 
@@ -153,8 +314,10 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
 
   const handleComplete = () => {
     if (!selectedMethod) return; // Add type guard
-    const tokenSymbol = selectedMethod.toLowerCase();
-    onPaymentComplete(tokenSymbol)
+    // const tokenSymbol = selectedMethod.toLowerCase();
+    // onPaymentComplete(tokenSymbol)
+    onPaymentComplete(paymentCoin)
+
     onClose()
   }
 
@@ -270,27 +433,110 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
                   {/* <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
                     <strong>Important:</strong> Send the exact amount shown to the wallet address above.
                   </div> */}
+
+                  <Button
+                      onClick={handlePayment}
+                      disabled={isProcessing}
+                      className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+                    >
+                      {/* {isProcessing ? "Processing..." : `Pay $${prizePool} with ${selectedOption?.name}`} */}
+                      {isProcessing ? "Processing..." : `Confirm I have sent ${selectedMethod}!`}
+
+                </Button>
+
                 </div>
               )}
 
-              {(selectedMethod === "mpesa" || selectedMethod === "mtn") && (
+              {/* {(selectedMethod === "mpesa" || selectedMethod === "mtn") && (
                 <div className="space-y-2 text-sm">
                   <div>
-                    <Label htmlFor="phone" className="text-xs">Phone Number</Label>
+                    <Label htmlFor="phone" className="text-xs">Mpesa Number</Label>
                     <Input
                       id="phone"
-                      placeholder={selectedMethod === "mpesa" ? "+254712345678" : "+256712345678"}
+                      placeholder={selectedMethod === "mpesa" ? "254712345678" : "+256712345678"}
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="bg-white border-gray-300 text-sm"
+                      className="bg-white border-gray-300 text-sm" minLength={12} maxLength={12}
                     />
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
                     You will receive a payment prompt on your phone.
                   </div>
+
+                <Button
+                  onClick={handlePayment}
+                  disabled={isProcessing}
+                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+                >
+                  {isProcessing ? "Processing..." : `Send STK Push!`}
+
+              </Button>
                 </div>
-              )}
+              )} */}
+
+            {(selectedMethod === "mpesa") && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="phone" className="text-xs">M-Pesa Number</Label>
+                  <Input
+                    id="phone"
+                    placeholder="254712345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="bg-white border-gray-300 text-sm" 
+                    minLength={12} 
+                    maxLength={12}
+                  />
+                </div>
+
+                {exchangeRate && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Amount in USD:</span>
+                      <span className="font-medium">${prizePool}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Exchange Rate:</span>
+                      <span className="font-medium">1 USD = {exchangeRate.KES_RATE} KES</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-semibold">
+                      <span className="text-gray-600">Amount to Pay:</span>
+                      <span className="text-brand-purple">{exchangeRate.amountInKes} KES</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+                  You will receive a payment prompt on your phone for {exchangeRate?.amountInKes || '___'} KES.
+                </div>
+
+                <Button
+                  onClick={handlePayment}
+                  disabled={isProcessing || initiatePayment.isPending}
+                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+                >
+                  {isProcessing || initiatePayment.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {paymentStatus === 'pending' ? 'Waiting for payment...' : 'Sending payment request...'}
+                    </div>
+                  ) : (
+                    'Send Payment Request'
+                  )}
+                </Button>
+
+                {paymentStatus === 'pending' && (
+                  <div className="text-center text-sm text-gray-600">
+                    <p>Please complete the payment on your phone.</p>
+                    <p>We'll notify you when payment is confirmed.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
               {selectedMethod === "bank" && (
                 <div className="space-y-2 text-sm">
@@ -321,15 +567,12 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
                 </div>
               )}
 
-              <Button
+              {/* <Button
                 onClick={handlePayment}
                 disabled={isProcessing}
-                className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
-              >
-                {/* {isProcessing ? "Processing..." : `Pay $${prizePool} with ${selectedOption?.name}`} */}
+                className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2">
                 {isProcessing ? "Processing..." : `Confirm I have paid!`}
-
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
 

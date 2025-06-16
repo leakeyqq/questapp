@@ -30,7 +30,7 @@ async function sendCelo(toAddress) {
       // Send transaction (0.01 CELO)
       const tx = await wallet.sendTransaction({
         to: toAddress,
-        value: ethers.parseEther("0.001")
+        value: ethers.parseEther("0.003")
       });
   
       console.log("🟢 Transaction sent:", tx.hash);

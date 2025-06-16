@@ -145,7 +145,8 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
   // Show modal first, then wait for user to complete
         // Check the which asset to deduct from the user. by checking the balance of all their tokens
       const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
-
+      
+      console.log('USDT balance is ', USDTBalance)
       if(Number(cUSDBalance) >= Number(prizePool)){
         await completeQuestCreation('cusd')
       }else if(Number(USDTBalance) >= Number(prizePool)){
