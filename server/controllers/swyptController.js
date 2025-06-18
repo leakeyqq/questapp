@@ -175,7 +175,7 @@ async function transferCrypto_afterOnramp(orderId, receiverAddress){
       chain: "celo",
       address: receiverAddress,
       orderID: orderId,
-      project: "onramp"
+      project: "Questpanda"
     }, {
       headers: {
         'x-api-key': process.env.SWYPT_API_KEY,
