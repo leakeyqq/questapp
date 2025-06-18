@@ -61,120 +61,229 @@ export const useWeb3 = () => {
 
 const approveSpending = async (amount: string, tokenSymbol: string) => {
 
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    let success = false;
 
-    try {
+    // try {
+
+
         if (!walletClient) throw new Error("Wallet not connected");
 
-        
-        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
-            // 1. Request CELO funding from backend
-            const fundingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/prepare-deposit`, {
-                method: 'GET',
-                credentials: "include"
-                // body: JSON.stringify({ address: walletClient.account.address }),
-            });
-
-            const { txHash } = await fundingResponse.json();
-
-            // 2. Wait for CELO transaction confirmation
-            await publicClient.waitForTransactionReceipt({ hash: txHash });
-        }
-
-        const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
-
-        if (!spenderAddress) {
-        throw new Error("❌ Environment variable spenderAddress is not defined");
-        }
-
         let decimals = checkDecimals(tokenSymbol)
-
         const amountInWei = (Number(amount) * (10**decimals));
         const tokenContractAddress = checkContractAddress(tokenSymbol)
+        const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
 
-        const txHash = await walletClient.writeContract({
-            address: tokenContractAddress,
-            abi: StableTokenABI.abi,
-            functionName: "approve",
-            account: walletClient.account.address,
-            args: [spenderAddress, amountInWei],
-        });
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
 
-        return receipt;
-    } catch (error) {
-        throw error
-    }
+            const gasEstimate = await publicClient.estimateContractGas({
+                address: tokenContractAddress,
+                abi: StableTokenABI.abi,
+                functionName: "approve",
+                account: walletClient.account.address,
+                args: [spenderAddress, amountInWei],
+            });
+
+            await prefillGas(gasEstimate)
+        }
+
+       while (!success && attempt < MAX_RETRIES) {
+            try{
+                    if (!spenderAddress) {
+                    throw new Error("❌ Environment variable spenderAddress is not defined");
+                    }
+
+                    // const nonce = await publicClient.getTransactionCount({
+                    //     address: walletClient.account.address,
+                    //     blockTag: 'pending' // This is crucial
+                    // });
+
+                    const txHash = await walletClient.writeContract({
+                        address: tokenContractAddress,
+                        abi: StableTokenABI.abi,
+                        functionName: "approve",
+                        account: walletClient.account.address,
+                        args: [spenderAddress, amountInWei],
+                        // nonce: nonce
+                    });
+
+                    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+                    success = true;
+                    return receipt;
+
+            }catch(error){
+                    attempt++;
+                    console.error(`Approval attempt ${attempt} failed:`, error);
+
+                    // Final attempt failed
+                    if (attempt >= MAX_RETRIES) {
+                        console.error('Max retries reached for approval');
+                        throw error;
+                    }
+
+                    // Specific handling for nonce-related errors
+                    if(error instanceof Error){
+                        if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') || error.message.includes('block is out of range')) {
+                            
+                            // Wait with exponential backoff
+                            const delay = 1000 * attempt; // 1s, 2s, 3s, etc.
+                            console.log(`Retrying after ${delay}ms delay...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            
+                            // Refresh wallet connection
+                        } else {
+                            // For other errors, rethrow immediately
+                            throw error;
+                        }
+                }
+
+            }
+        }
 
 };
 const createQuest = async (prizePool: string, tokenSymbol: string) => {
-    try {
-        if (!walletClient) throw new Error("Wallet not connected");
+        const MAX_RETRIES = 3;
+        let attempt = 0;
+        let success = false;
+
+
+    
+        if (!walletClient) {
+            throw new Error("Wallet not connected");
+        }
+
+
+        // if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
+        //     // 1. Request CELO funding from backend
+        //     const fundingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/prepare-deposit`, {
+        //         method: 'GET',
+        //         credentials: "include"
+        //         // body: JSON.stringify({ address: walletClient.account.address }),
+        //     });
+
+        //     const { txHash } = await fundingResponse.json();
+
+        //     // 2. Wait for CELO transaction confirmation
+        //     await publicClient.waitForTransactionReceipt({ hash: txHash });
+        // }
+
 
         const createQuestContractAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT as `0x${string}`;;
 
         if (!createQuestContractAddress) {
         throw new Error("❌ Environment variable createQuestContractAddress is not defined");
         }
-
+        
+        
         let decimals = checkDecimals(tokenSymbol)
         const tokenContractAddress = checkContractAddress(tokenSymbol)
         const amountInWei = (Number(prizePool) * (10**decimals));
 
-        const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
-          const txHash = await walletClient.writeContract({
-            address: createQuestContractAddress,
-            abi: QuestPandaABI,
-            functionName: "createQuestAsBrand",
-            account: walletClient.account.address,
-            args: [amountInWei, tokenContractAddress],
-            nonce: nonce
-        });
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-        console.log('receipt')
-        // get the matching log
-        const questCreatedLog = receipt.logs.find((log) => {
-        try {
-            const decoded = decodeEventLog({
-            abi: QuestPandaABI,
-            data: log.data,
-            topics: log.topics,
+        if(!(typeof window !== "undefined" && window.ethereum?.isMiniPay)){
+            // 1. First estimate gas
+            console.log('getting gas estimate on create quest')
+            const gasEstimate = await publicClient.estimateContractGas({
+                address: createQuestContractAddress,
+                abi: QuestPandaABI,
+                functionName: "createQuestAsBrand",
+                account: walletClient.account.address,
+                args: [amountInWei, tokenContractAddress],
             });
-            return decoded.eventName === 'QuestCreatedByBrand';
-        } catch {
-            return false;
-        }
-        });
 
-        if (!questCreatedLog) {
-        throw new Error("❌ QuestCreated event not found in logs");
+            console.log('gas found to be ', gasEstimate)
+            await prefillGas(gasEstimate)
         }
 
-        // Decode with assertion
-        const decoded = decodeEventLog({
-            abi: QuestPandaABI,
-            data: questCreatedLog.data,
-            topics: questCreatedLog.topics,
-        }) as unknown as {
-        eventName: 'QuestCreatedByBrand';
-        args: {
-            questId: bigint;
-            brand: `0x${string}`;
-            token: `0x${string}`;
-            prizePool: bigint;
-        };
-        };
+       while (!success && attempt < MAX_RETRIES) {
+        console.log('attempt ', attempt)
+        try {
+            const txHash = await walletClient.writeContract({
+                address: createQuestContractAddress,
+                abi: QuestPandaABI,
+                functionName: "createQuestAsBrand",
+                account: walletClient.account.address,
+                args: [amountInWei, tokenContractAddress]
+            });
 
-        const questId = decoded.args.questId.toString();
+            const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-    // console.log("✅ Quest created!", receipt);
-    return questId;
+            // get the matching log
+            const questCreatedLog = receipt.logs.find((log) => {
+            try {
+                // Only decode logs from the QuestPanda contract
+                if (log.address.toLowerCase() !== createQuestContractAddress.toLowerCase()) {
+                return false;
+                }
+                const decoded = decodeEventLog({
+                abi: QuestPandaABI,
+                data: log.data,
+                topics: log.topics,
+                });
+                return decoded.eventName === 'QuestCreatedByBrand';
+            } catch(e) {
+                return false;
+            }
+            });
 
-    } catch (error) {
-        throw error
-    }
+            if (!questCreatedLog) {
+            throw new Error("❌ QuestCreated event not found in logs");
+            }
+
+            // Decode with assertion
+            const decoded = decodeEventLog({
+                abi: QuestPandaABI,
+                data: questCreatedLog.data,
+                topics: questCreatedLog.topics,
+            }) as unknown as {
+            eventName: 'QuestCreatedByBrand';
+            args: {
+                questId: bigint;
+                brand: `0x${string}`;
+                token: `0x${string}`;
+                prizePool: bigint;
+            };
+            };
+
+            const questId = decoded.args.questId.toString();
+
+        // console.log("✅ Quest created!", receipt);
+            return questId;
+        } catch (error) {
+            attempt++;
+            console.error(`Creating quest attempt ${attempt} failed:`, error);
+
+            // Final attempt failed
+            if (attempt >= MAX_RETRIES) {
+                console.error('Max retries reached for creating quest');
+                throw error;
+            }
+
+            // Specific handling for nonce-related errors
+            if(error instanceof Error){
+                if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') ||  error.message.includes('insufficient allowance')) {
+                    
+                    // Wait with exponential backoff
+                    const delay = 1000 * attempt; // 1s, 2s, 3s, etc.
+                    console.log(`Retrying after ${delay}ms delay...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    
+                    // Refresh wallet connection
+                } else {
+                    // For other errors, rethrow immediately
+                    throw error;
+                }
+        }
+        }
+
+       }
+
+
+
+
 
 };
 const rewardCreator = async(quest_id: string, amount: string, creatorAddress: string, tokenSymbol: string) => {
@@ -438,7 +547,6 @@ client: publicClient,
 const balanceInWei = await tokenContract.read.balanceOf([userAddress]);
 const balance = Number(balanceInWei) / 10**decimals; // Convert to cUSD (18 decimals)
 
-// alert(`going to return ${balance.toFixed(2)}`)
 return {
 balance: balance.toFixed(2)
 };
@@ -463,6 +571,47 @@ const signTransaction = async () => {
     return res;
 };
 
+const prefillGas = async (gasEstimate: bigint) => {
+
+         // 2. Add 20% buffer (common practice)
+// Exact 20% increase without floating point
+        const gasWithBuffer = (gasEstimate * BigInt(12)) / BigInt(10);
+        // 3. Get current gas price
+        const gasPrice = await publicClient.getGasPrice();
+
+        // 4. Calculate estimated cost in wei
+        const estimatedCostWei = gasWithBuffer * gasPrice;
+
+        // 5. Convert to CELO for API (18 decimals)
+        const estimatedCostCELO = Number(estimatedCostWei) / 1e18;
+
+        try {
+            // Send gas estimate to your API if needed
+            const gasResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/gas-estimate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
+                body: JSON.stringify({
+                    function: "createQuestAsBrand",
+                    estimatedGas: gasWithBuffer.toString(),
+                    estimatedCostCELO,
+                    timestamp: new Date().toISOString()
+                })
+            });
+
+            const { txHash } = await gasResponse.json();
+
+            // 2. Wait for CELO transaction confirmation
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+            console.log('gas has been filled')
+            return true
+        } catch (error) {
+            console.log('error is addding gas ', error)
+            throw error
+        }
+
+}
     return {
         address: walletClient?.account.address || address,
         getUserAddress,

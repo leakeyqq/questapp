@@ -17,6 +17,21 @@ export const fundFeesOnWallet = async(req, res)=>{
 
 }
 
+export const customFundFeesOnWallet = async(req, res) => {
+      try {
+        console.log('custom fees')
+        const beneficiary_address = req.userWalletAddress
+        const amountInCelo = req.body.estimatedCostCELO
+        console.log('waiting for tx')
+        const txHash = await customSendCelo(beneficiary_address, amountInCelo )
+        console.log('got tx for custom fees')
+        return res.status(200).json({txHash})
+    } catch (error) {
+      console.log('error is ', error)
+        return res.status(500).json({'error': error.message})
+    }
+}
+
 
 async function sendCelo(toAddress) {
     try {
@@ -30,7 +45,7 @@ async function sendCelo(toAddress) {
       // Send transaction (0.01 CELO)
       const tx = await wallet.sendTransaction({
         to: toAddress,
-        value: ethers.parseEther("0.001")
+        value: ethers.parseEther("0.003")
       });
   
       console.log("🟢 Transaction sent:", tx.hash);
@@ -42,3 +57,51 @@ async function sendCelo(toAddress) {
     //   process.exit(1);
     }
   }
+
+async function customSendCelo(toAddress, celoAmount){
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+
+    const provider = new ethers.JsonRpcProvider("https://forno.celo.org");
+    // const provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/celo");
+
+
+    // Create wallet
+    const wallet = new ethers.Wallet(process.env.CELO_FEES_KEY, provider);
+    
+    console.log(`🟡 Sending 0.001 CELO from ${wallet.address} to ${toAddress}`);
+
+    const amountString = typeof celoAmount === 'number' ? celoAmount.toString() : String(celoAmount);
+    
+    while(attempt < MAX_RETRIES){
+      try {
+          console.log(`🟡 Attempt ${attempt + 1}: Sending ${amountString} CELO to ${toAddress}`);
+
+          // Send transaction (0.01 CELO)
+          const tx = await wallet.sendTransaction({
+            to: toAddress,
+            value: ethers.parseEther(amountString)
+          });
+      
+          console.log("🟢 Transaction sent:", tx.hash);
+          console.log(`🔗 Explorer: https://celoscan.io/tx/${tx.hash}`);
+      
+          return tx.hash;
+      } catch (error) {
+        console.log('error is ', error)
+          attempt++;
+          const msg = error?.message || "";
+          console.error(`❌ Attempt ${attempt} failed:`, msg);
+
+          if (msg.includes('block is out of range') || msg.includes('nonce') || msg.includes('replacement') || msg.includes('underpriced')) {
+              const delay = 1000 * attempt;
+              console.log(`🔁 Retrying in ${delay}ms...`);
+              await new Promise(res => setTimeout(res, delay));
+          } else {
+              throw error; // don't retry for unknown errors
+          }
+
+          if (attempt >= MAX_RETRIES) throw error;
+      }
+    }
+}

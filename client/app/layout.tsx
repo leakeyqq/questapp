@@ -19,23 +19,23 @@ export const metadata: Metadata = {
     icon: '/favicon.ico', // Path must start with /
     shortcut: '/favicon.ico',
   },
-  title: "QuestPanda - Create content and earn",
+  title: "Questpanda - Create content and earn",
   description: "Connecting brands that need digital marketing with content creators",
   openGraph: {
-    title: "QuestPanda - Create content and earn",
+    title: "Questpanda - Create content and earn",
     description: "Connecting brands that need digital marketing with content creators",
     images: [
       {
         url: "/dancing-panda.webp", // Or full URL like https://yourdomain.com/your-image.jpg
         width: 1200,
         height: 630,
-        alt: "QuestPanda Preview",
+        alt: "Questpanda Preview",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "QuestPanda - Create content and earn",
+    title: "Questpanda - Create content and earn",
     description: "Connecting brands that need digital marketing with content creators",
     images: ["/dancing-panda.webp"], // again can be full URL
   },

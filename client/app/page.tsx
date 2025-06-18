@@ -12,7 +12,7 @@ export default function Home() {
         <header className="mb-16 text-center">
           <div className="inline-block mb-4 relative">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
-              QuestPanda
+              Questpanda
             </h1>
             <div className="absolute -top-4 -right-4 md:-top-6 md:-right-6 w-8 h-8 md:w-12 md:h-12 bg-brand-yellow rounded-full opacity-70 blur-sm"></div>
             <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 w-6 h-6 md:w-8 md:h-8 bg-brand-teal rounded-full opacity-70 blur-sm"></div>

@@ -63,10 +63,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [balanceError, setBalanceError] = useState<{ hasError: boolean;message: string; balance: string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentStepComplete, setPaymentStepComplete] = useState(false);
-  const [tokenForPayment, setTokenForPayment] = useState("")
-
-
+const [paymentAddress, setPaymentAddress] = useState<`0x${string}` | null>(null);
 
   // string; required: string;}>({hasError: false, message: "", balance: "", required: ""});
 
@@ -106,7 +103,7 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  setShowPaymentModal(true);
+  // setShowPaymentModal(true);
 
   const file = e.target.files?.[0];
   if (!file) return;
@@ -129,11 +126,6 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
   if (!title || !brand || !category || !longDescription || !prizePool || !deadline || !imageUrl || !videosToReward || !rewardPerVideo) {
     
     await showAlert("Something is missing! Please fill out all fields!")
-    // toast({
-    //   title: "Missing information",
-    //   description: "Please fill in all required fields",
-    //   variant: "destructive",
-    // });
     return;
   }
 
@@ -142,6 +134,8 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
     await showAlert("Please sign in first!");
     return;
   }
+  setPaymentAddress(userAddress)
+
   // Show confirmation dialog for depositing funds
   const confirmDeposit = await showConfirm(`${prizePool} USD will be transfered from your wallet into the prize pool. Confirm to proceed!`);
 
@@ -151,16 +145,14 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
   // Show modal first, then wait for user to complete
         // Check the which asset to deduct from the user. by checking the balance of all their tokens
       const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
-
+      
+      console.log('USDT balance is ', USDTBalance)
       if(Number(cUSDBalance) >= Number(prizePool)){
-        setTokenForPayment('cusd')
-        await completeQuestCreation()
+        await completeQuestCreation('cusd')
       }else if(Number(USDTBalance) >= Number(prizePool)){
-        setTokenForPayment('usdt')
-        await completeQuestCreation()
+        await completeQuestCreation('usdt')
       }else if(Number(USDCBalance) >= Number(prizePool)){
-        setTokenForPayment('usdc')
-        await completeQuestCreation()
+        await completeQuestCreation('usdc')
       }else{
         // If user show them a warning and a deep link to go and deposit funds
         // If user in on a different wallet then pop up the deposit modal
@@ -174,24 +166,17 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
             setPaymentProcessing(false);
             return;
         }else{
+            await showAlert("We have noticed you have insufficient balance. We are going to ask you to top up!");
             setShowPaymentModal(true);
         }
 
       }
 };
 
-const completeQuestCreation = async ()=>{
-  alert('final stage')
+const completeQuestCreation = async (tokenForPayment: string)=>{
   try{
     // First handle payment
     setPaymentProcessing(true);
-
-    // Determine recipient address (this should be your platform's escrow address)
-    const platformEscrowAddress = process.env.NEXT_PUBLIC_PLATFORM_ESCROW_ADDRESS;
-    if (!platformEscrowAddress) {
-      throw new Error("Platform escrow address not configured");
-    }
-
     
   try {
 
@@ -230,6 +215,7 @@ const completeQuestCreation = async ()=>{
           const data = await res.json();
       
           if (!res.ok) {
+            // alert('an error occured')
             throw new Error(data.error || "Something went wrong");
           }
   
@@ -240,23 +226,15 @@ const completeQuestCreation = async ()=>{
   
       router.push("/brand/dashboard");
     } catch (paymentError: any) {
+      // alert(paymentError)
       // Specific handling for insufficient funds
       if (paymentError.message.includes("insufficient funds") ){
-        toast({
-          title: "Insufficient Funds",
-          description: "You don't have enough cUSD for this transaction",
-          variant: "destructive",
-        });
       } else {
         throw paymentError; // Re-throw other errors
       }
     }
 } catch (err: any) {
-    toast({
-      title: "Error",
-      description: err.message || "Failed to create quest.",
-      variant: "destructive",
-    });
+  alert(err)
   } finally {
     setPaymentProcessing(false);
     setIsSubmitting(false);
@@ -700,7 +678,7 @@ const completeQuestCreation = async ()=>{
                        isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>
 
-                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={completeQuestCreation} prizePool={prizePool}/>
+                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={(tokenSymbol) => completeQuestCreation(tokenSymbol)} prizePool={prizePool} paymentAddress={paymentAddress}/>
 
                   {/* // Add this loading state component */}
                 {/* {paymentProcessing && (
