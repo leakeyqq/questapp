@@ -144,7 +144,7 @@ const questSchema = new mongoose.Schema({
     },
     visibleOnline: {
         type: Boolean,
-        default: true
+        default: false
     },
     endsOn: {
         type: Date,

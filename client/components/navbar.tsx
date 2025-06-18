@@ -29,7 +29,7 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
-                QuestPanda
+                Questpanda
               </span>
             </Link>
           </div>

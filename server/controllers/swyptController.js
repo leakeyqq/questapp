@@ -62,7 +62,7 @@ export const onRampUserWithMpesa = async(req, res)=>{
     }
 }
 export const transferFundsAfterMpesaPayment = async(req, res)=>{
-
+    console.log('request to transfer crypto sent at ', new Date())
     try {
         // Make sure this is not a repeat request.
         let orderId = req.body.orderId
@@ -71,8 +71,10 @@ export const transferFundsAfterMpesaPayment = async(req, res)=>{
         let existingOrder = await SwyptOnrampOrder.findOne({orderId}).exec()
 
         if(!existingOrder){
+            console.log('Swypt order was not registered on our db')
             throw new Error('Swypt order was not registered on our db')
         }else if(existingOrder.cryptoTransferred == true){
+            console.log('This is a duplicate tranfer request. crypto was transferred before')
             return res.status(200).json({orderStatus: 'success', reason: 'Duplicate transaction'})
         }
 
@@ -85,6 +87,7 @@ export const transferFundsAfterMpesaPayment = async(req, res)=>{
             });
 
         const swypt_response = response.data
+        console.log('swypt response is ', swypt_response)
 
             // Check if it was successful
         if(swypt_response.status.toLowerCase() != "success"){
@@ -109,7 +112,7 @@ export const transferFundsAfterMpesaPayment = async(req, res)=>{
         }
     
     } catch (error) {
-        console.log(error)
+        console.log('An unexpected error occurred trrying to transfer crypto from swypt ', error)
         return res.status(500).json({orderStatus: 'error', reason: 'An unexpected error occurred!'})
     }
 

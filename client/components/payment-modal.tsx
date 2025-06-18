@@ -128,18 +128,23 @@ const initiatePayment = useMutation({
 // Polling function to check payment status
 const startPolling = (orderId: string) => {
   let pollingCount = 0;
-  const maxPollingAttempts = 24; // 24 attempts * 5 seconds = 2 minutes
-  const pollingInterval = 5000; // 5 seconds
+  const maxPollingAttempts = 24;
+  const pollingInterval = 5000;
+  let isCompleted = false; // New flag to track completion
 
   const interval = setInterval(async () => {
+    if (isCompleted) return; // Exit if already completed
+
     try {
       pollingCount++;
       
-      // Timeout after 2 minutes (24 attempts * 5 seconds)
+      // Timeout handling
       if (pollingCount >= maxPollingAttempts) {
+        isCompleted = true;
         clearInterval(interval);
         setPaymentStatus('failed');
-        await showAlert("Payment verification timeout. Please check your transaction history.");
+        setIsProcessing(false);
+        await showAlert("Payment verification timeout");
         return;
       }
 
@@ -147,39 +152,64 @@ const startPolling = (orderId: string) => {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/swypt/completeMpesaPayment`, 
         { orderId },
         {
-        withCredentials: true, // This is the Axios equivalent of credentials: "include"
-        headers: {'Content-Type': 'application/json'}
+          withCredentials: true,
+          headers: {'Content-Type': 'application/json'}
         }
       );
-      
-      const { orderStatus } = response.data;
-      console.log('order status ', orderStatus)
-      
-      if (orderStatus === 'success') {
-        clearInterval(interval);
-        setPaymentStatus('success');
-        setPaymentCompleted(true);
-      } else if (orderStatus === 'failed' || orderStatus === 'cancelled') {
-        clearInterval(interval);
-        setPaymentStatus(orderStatus);
-        setIsProcessing(false)
-        await showAlert(response.data.reason || "Payment could not be completed");
-      }
-      // Continue polling if status is still 'pending'
-      
-    } catch (error) {
-      clearInterval(interval);
-      setPaymentStatus('failed');
-      setIsProcessing(false)
 
-      await showAlert('Could not verify payment status. Please check your payment history.')
-    }
+      console.log('Polling attempt', pollingCount, 'Status:', response.data.orderStatus);
+      
+      const { orderStatus, reason } = response.data;
+      
+      // Handle final states
+      if (['success', 'failed', 'cancelled'].includes(orderStatus)) {
+        isCompleted = true;
+        clearInterval(interval);
+        
+        setPaymentStatus(orderStatus);
+        setIsProcessing(false);
+        
+        if (orderStatus === 'success') {
+          setPaymentCompleted(true);
+        } else {
+          await showAlert(reason || "Payment could not be completed");
+        }
+      }
+      
+    }catch (error) {
+      if (!isCompleted) {
+        isCompleted = true;
+        clearInterval(interval);
+        setPaymentStatus('failed');
+        setIsProcessing(false);
+        
+        // Type-safe error handling
+        if (axios.isAxiosError(error)) {
+          // Axios-specific error
+          console.error('Polling error:', error.response?.data);
+          await showAlert(
+            error.response?.data?.message || 
+            'Payment verification failed. Please check your transaction history.'
+          );
+        } else if (error instanceof Error) {
+          // Standard Error object
+          console.error('Polling error:', error.message);
+          await showAlert(error.message);
+        } else {
+          // Unknown error type
+          console.error('Unknown polling error:', error);
+          await showAlert('Could not verify payment status. Please try again later.');
+        }
+      }
+}
   }, pollingInterval);
 
-  // Cleanup function to clear interval if component unmounts
-  return () => clearInterval(interval);
+  return () => {
+    if (!isCompleted) {
+      clearInterval(interval);
+    }
+  };
 };
-
 
   // Mock wallet address for crypto payments
   // const walletAddress = "0x69974Cc73815f378218B56FD0ce03A8158b9e120"
