@@ -46,7 +46,7 @@ export default function BrandLandingPage() {
                 ></div>
               </div>
               <p className="text-xl md:text-2xl text-gray-700 mb-8 font-light">
-                QuestPanda connects your brand with thousands of authentic content creators
+                Questpanda connects your brand with thousands of authentic content creators
               </p>
             </div>
 
@@ -150,7 +150,7 @@ export default function BrandLandingPage() {
             >
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-gray-100 mb-8">
                 <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
-                  <span className="font-semibold text-brand-purple">QuestPanda</span> helps brands like yours create
+                  <span className="font-semibold text-brand-purple">Questpanda</span> helps brands like yours create
                   viral marketing campaigns.
                 </p>
 

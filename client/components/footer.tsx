@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink mb-4">
-              QuestPanda
+              Questpanda
             </h3>
             <p className="mb-4">Complete creative quests, earn USD.</p>
                         <a
@@ -183,7 +183,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2025 QuestPanda. All rights reserved.</p>
+          <p>&copy; 2025 Questpanda. All rights reserved.</p>
           {/* <div className="mt-4 md:mt-0">
             <select className="bg-white border border-gray-300 text-gray-700 rounded-md px-3 py-1">
               <option>English</option>

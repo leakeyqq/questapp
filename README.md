@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://res.cloudinary.com/dcfln9xqx/image/upload/v1746429284/my-business-name-high-resolution-logo-transparent_b4nexu.png" alt="QuestPanda Logo" width="200"/>
+  <img src="https://res.cloudinary.com/dcfln9xqx/image/upload/v1746429284/my-business-name-high-resolution-logo-transparent_b4nexu.png" alt="Questpanda Logo" width="200"/>
 </p>
 
-<h1 align="center" style="color:#ff69b4;">🎀 QuestPanda 🎀</h1>
+<h1 align="center" style="color:#ff69b4;">🎀 Questpanda 🎀</h1>
 
 <p align="center">
   <em>The classy way to complete quests and earn rewards</em><br/>
@@ -11,9 +11,9 @@
 
 ---
 
-## 🌸 About QuestPanda
+## 🌸 About Questpanda
 
-**QuestPanda** an app that pays content creators for creating and posting short promotional videos for brands on TikTok and other socials. It is your all-in-one platform for exploring, completing, and rewarding quests. Whether you're launching marketing campaigns, engaging users, or building community momentum — QuestPanda makes it seamless, fun, and stylish.
+**Questpanda** an app that pays content creators for creating and posting short promotional videos for brands on TikTok and other socials. It is your all-in-one platform for exploring, completing, and rewarding quests. Whether you're launching marketing campaigns, engaging users, or building community momentum — Questpanda makes it seamless, fun, and stylish.
 
 ---
 
@@ -28,7 +28,7 @@
 ## How it works 
 ### For brands
 
-- A business/brand signs up on QuestPanda.
+- A business/brand signs up on Questpanda.
 - The business creates a marketing campaign on the app. We call it a quest.
 - The business deposits cUSD into the prize pool. 
 - The prize pool is what content creators will be competing for and the best videos will get rewards from the prize pool.

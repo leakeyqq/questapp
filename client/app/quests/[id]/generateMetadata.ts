@@ -23,7 +23,7 @@ export async function generateMetadata({
 
         action: {
           type: "launch_frame",
-          name: "QuestPanda",
+          name: "Questpanda",
           url: `https://www.questpanda.xyz/quests/${awaitedParams.id}`, // Deep link to the quest
           splashImageUrl: "https://www.questpanda.xyz/icon.png",
           splashBackgroundColor: "#ffffff",

@@ -5,7 +5,7 @@ export const frameEmbed = {
       title: "🚀 Start Quest",
       action: {
         type: "launch_frame",
-        name: "QuestPanda",
+        name: "Questpanda",
         url: "https://www.questpanda.xyz", // The mini app URL
         splashImageUrl: "https://www.questpanda.xyz/icon.png", // 200x200
         splashBackgroundColor: "#ffffff",
