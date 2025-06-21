@@ -20,8 +20,8 @@ export const getSwyptExchangeRate = async(req, res)=>{
         return res.status(200).json({KES_RATE: roundedRate, amountInKes: Kes_amount_accurate})
 
     } catch (error) {
-        // console.log('error is ', error)
-        return res.status(500).json({error: error.msg})
+        console.error('getSwyptExchangeRate error:', error)
+        return res.status(500).json({error: error.message || error.toString(), details: error})
     }
 }
 export const onRampUserWithMpesa = async(req, res)=>{
