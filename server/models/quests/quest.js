@@ -45,6 +45,69 @@ const questSchema = new mongoose.Schema({
         type: Number,
         required: false
     },
+    approvalNeeded: {
+        type: Boolean, 
+        default: false
+    },
+    socialPlatformsAllowed:{
+        twitter: {
+            allowedOnCampaign: {type: Boolean, required: false},
+            minFollowers: {type: Number, required: false}
+        },
+        tiktok: {
+            allowedOnCampaign: {type: Boolean, required: false},
+            minFollowers: {type: Number, required: false}
+        },
+        instagram: {
+            allowedOnCampaign: {type: Boolean, required: false},
+            minFollowers: {type: Number, required: false}
+        }
+    }, 
+    applicants: [{
+        _id: false,
+        userWalletAddress: {
+            type: String,
+            required: false
+        },
+        platform: {
+            type: String,
+            required: false
+        },
+        approved: {
+            type: Boolean,
+            default: false
+        },
+        twitter: {
+            userName: {type: String, required: false},
+            name: {type: String, required: false},
+            isVerified: {type: Boolean, required: false},
+            isBlueVerified: {type: Boolean, required: false},
+            profilePicture: {type: String, required: false},
+            location: {type: String, required: false},
+            followers: {type: Number, required: false},
+            following: {type: Number, required: false},
+            description: {type: String, required: false},
+            createdAt: {type: Date, required: false}
+        },
+        instagram: {
+            userName: {type: String, required: false},
+            name: {type: String, required: false},
+            userId: {type: String, required: false},
+            profilePicture: {type: String, required: false},
+            biography: {type: String, required: false},
+            following: {type: Number, required: false},
+            followers: {type: Number, required: false}
+        },
+        tiktok: {
+            userId: {type: String, required: false},
+            userName: {type: String, required: false},
+            name: {type: String, required: false},
+            profilePicture: {type: String, required: false},
+            following: {type: Number, required: false},
+            followers: {type: Number, required: false},
+            createdAt: {type: String, required: false}
+        }
+    }],
     submissions: [
         {
             submittedByAddress: {

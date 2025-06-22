@@ -52,6 +52,14 @@ const creatorSchema = new mongoose.Schema({
             required: false
         }
     }],
+    myApplications: [{
+        _id: false,
+        questId: {type: String, required: false},
+        approved: {type: Boolean, default: false},
+        submittedOn: {type: Date, required: false},
+        approvedOn: {type: Date, required: false}
+    }],
+
     twitterData: {
         id: {type: String,required: false},
         name: {type: String,required: false},
