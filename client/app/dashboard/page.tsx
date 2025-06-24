@@ -12,6 +12,7 @@ import CurrencyDisplay from '@/components/CurrencyDisplay';
 import { useWeb3 } from "@/contexts/useWeb3"
 import { CopyButton } from "@/components/copyButton"
 import { Gift, Trophy, Award } from 'lucide-react';
+import { CashOutModal } from "@/components/cash-out-modal"
 
 // components/SocialPlatformIcon.tsx
 import { FaYoutube, FaTwitter, FaInstagram, FaTiktok, FaTwitch, FaFacebook, FaGlobe } from 'react-icons/fa';
@@ -415,7 +416,41 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
         </Tabs> 
+        <CashOutModal
+          isOpen={showCashOutModal}
+          onClose={() => setShowCashOutModal(false)}
+          onCashOutComplete={() => {
+            // Refresh creator data after cash out
+            setLoading(true);
+            const refreshData = async() => {
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include", 
+                })
 
+                if (res.ok) {
+                  const data = await res.json();
+                  setTotalEarnings(data.creator.totalEarnings)
+                  setTotalWithdrawn(data.creator.totalWithdrawn)
+                  setTotalBalance(data.creator.earningsBalance)
+                  setQuests(data.quests)
+                } 
+              } catch(e) {
+                console.error(e)
+              } finally {
+                setLoading(false);
+              }
+            }
+            refreshData();
+          }}
+          availableBalance={totalBalance}
+          walletAddress={address || ""}
+        />
+        
         {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
