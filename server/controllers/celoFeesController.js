@@ -93,7 +93,7 @@ async function customSendCelo(toAddress, celoAmount){
           const msg = error?.message || "";
           console.error(`❌ Attempt ${attempt} failed:`, msg);
 
-          if (msg.includes('block is out of range') || msg.includes('nonce') || msg.includes('replacement') || msg.includes('underpriced')) {
+          if (msg.includes('block is out of range') || msg.includes('nonce') || msg.includes('replacement') || msg.includes('underpriced') || msg.includes('insufficient funds')) {
               const delay = 1000 * attempt;
               console.log(`🔁 Retrying in ${delay}ms...`);
               await new Promise(res => setTimeout(res, delay));
