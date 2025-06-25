@@ -9,8 +9,8 @@ import { Progress } from "@/components/ui/progress"
 import { notFound } from "next/navigation"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import { PlatformDistributionChart } from "@/components/charts/platform-distribution-chart"
-import { PlatformEngagementChart } from "@/components/charts/platform-engagement-chart"
-
+import { PlatformEngagementAreaChart } from "@/components/charts/platform-engagement-chart"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 interface Submission {
   _id?: string
   submittedByAddress: string
@@ -200,6 +200,8 @@ export default function AnalyticsPage({
 
 
   return (
+    <ProtectedRoute>
+
     <div className="">
       {/* <h1 className="text-xl font-bold mb-4">Social media campaign report</h1> */}
 
@@ -425,7 +427,7 @@ export default function AnalyticsPage({
                 subtitle="Percentage of views per platform"
               />
 
-              <PlatformEngagementChart
+              <PlatformEngagementAreaChart
                 data={platformData}
                 title="Platform Engagement"
                 subtitle="Views and likes comparison"
@@ -444,5 +446,7 @@ export default function AnalyticsPage({
         </>
       )}
     </div>
+    </ProtectedRoute>
+
   )
 }

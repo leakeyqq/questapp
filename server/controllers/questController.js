@@ -473,3 +473,31 @@ async function pullTikTokData(videoUrl, walletID, questID){
   }
 
 }
+
+export const shareQuestToFriends = async (req, res) => {
+  try {
+    const { questID } = req.params;
+    const quest = await Quest.findById(questID).lean().exec();
+
+    if (!quest || !quest.visibleOnline) {
+      return res.status(404).json({ message: "Quest not found or not public." });
+    }
+
+    const shareableQuest = {
+      id: quest._id,
+      title: quest.title,
+      brandName: quest.brandName,
+      imageUrl: quest.brandImageUrl,
+      description: quest.description,
+      endsOn: quest.endsOn,
+      prizePoolUsd: quest.prizePoolUsd,
+      onchain_id: quest.onchain_id,
+      rewardToken: quest.rewardToken,
+      shareUrl: `${process.env.FRONTEND_URL}/quest/${quest._id}`
+    };
+
+    return res.status(200).json({ quest: shareableQuest });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};

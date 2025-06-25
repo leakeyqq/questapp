@@ -12,6 +12,7 @@ import { useWeb3 } from "@/contexts/useWeb3"
 import {useAlert} from "@/components/custom-popup"
 import { useRouter } from 'next/navigation';
 import {useConfirm} from '@/components/custom-confirm'
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
 
 import { 
@@ -305,6 +306,7 @@ export default function SubmissionsPage({
   }
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-brand-light">
         <ConfirmComponent />
         <AlertComponent/>
@@ -1091,5 +1093,6 @@ export default function SubmissionsPage({
         </Tabs>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }

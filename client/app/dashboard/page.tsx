@@ -10,9 +10,10 @@ import { Progress } from "@/components/ui/progress"
 import { useAccount } from "wagmi";
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import { useWeb3 } from "@/contexts/useWeb3"
+import { CashOutModal } from "@/components/cash-out-modal"
 import { CopyButton } from "@/components/copyButton"
 import { Gift, Trophy, Award } from 'lucide-react';
-import { CashOutModal } from "@/components/cash-out-modal"
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // components/SocialPlatformIcon.tsx
 import { FaYoutube, FaTwitter, FaInstagram, FaTiktok, FaTwitch, FaFacebook, FaGlobe } from 'react-icons/fa';
@@ -22,11 +23,10 @@ type PlatformIconProps = {
   className?: string;
 };
 
-export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
+const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
   if (!platform) return <FaGlobe className={className} />;
   
   const platformLower = platform.toLowerCase();
-  
   if (platformLower.includes('youtube')) return <FaYoutube className={className} />;
   if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
   if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
@@ -80,6 +80,7 @@ export default function DashboardPage() {
     const[totalWithdrawn, setTotalWithdrawn] = useState('0')
     const[totalBalance, setTotalBalance ] = useState('0')
     const [walletBalance, setWalletBalance] = useState(0)
+    const [showCashOutModal, setShowCashOutModal] = useState(false)
     
     const {checkCUSDBalance, isWalletReady } = useWeb3();
     
@@ -103,7 +104,7 @@ export default function DashboardPage() {
 
             if (res.ok) {
               const data = await res.json();
-              console.log('Creator data:', data);
+              // console.log('Creator data:', data);
 
               setTotalEarnings(data.creator.totalEarnings)
               setTotalWithdrawn(data.creator.totalWithdrawn)
@@ -124,11 +125,12 @@ export default function DashboardPage() {
 
   
   return (
-    <div>
-      {loading ? (
-    <div>Loading your dashboard...</div>
-      ): (
-    <div className="min-h-screen bg-brand-light">
+    <ProtectedRoute>
+      <div>
+        {loading ? (
+      <div>Loading your dashboard...</div>
+        ): (
+      <div className="min-h-screen bg-brand-light">
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -149,7 +151,15 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-3xl font-bold text-brand-teal">{totalEarnings} <CurrencyDisplay/></div>
               <p className="text-gray-600 text-sm mt-1">Wallet balance <span className="font-bold">{walletBalance}<CurrencyDisplay/></span></p>
-              
+              {parseFloat(totalBalance) > 0 && (
+                <Button 
+                  onClick={() => setShowCashOutModal(true)}
+                  className="mt-3 w-full bg-brand-purple hover:bg-brand-purple/90 text-white"
+                  size="sm"
+                >
+                  Cash Out ({totalBalance} cUSD available)
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -416,6 +426,7 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
         </Tabs> 
+
         <CashOutModal
           isOpen={showCashOutModal}
           onClose={() => setShowCashOutModal(false)}
@@ -450,7 +461,7 @@ export default function DashboardPage() {
           availableBalance={totalBalance}
           walletAddress={address || ""}
         />
-        
+
         {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
@@ -536,7 +547,8 @@ export default function DashboardPage() {
         </div> */}
       </div>
     </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ProtectedRoute>
   )
 }
