@@ -22,3 +22,4 @@ export const getSingleQuestAsBrand = cache(async (id: string) => {
   const data = await res.json();
   return data.quest; // Assuming your API returns { quest: {...} }
 });
+
