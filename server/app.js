@@ -13,6 +13,7 @@ import brandRoutes from "./routes/brandRoutes.js"
 import creatorRoutes from "./routes/creatorRoutes.js"
 import swyptRoutes from "./routes/swyptRoutes.js"
 import pretiumRoutes from "./routes/pretiumRoutes.js"
+import uploadRoutes from "./routes/uploadRoutes.js"
 
 const app = express();
 app.use(express.json());
@@ -59,6 +60,7 @@ app.use('/api/brand', brandRoutes)
 app.use('/api/creator', creatorRoutes)
 app.use('/api/swypt', swyptRoutes)
 app.use('/api/pretium', pretiumRoutes)
+app.use('/api/upload', uploadRoutes)
 
 
 app.use("*", (req, res) => {

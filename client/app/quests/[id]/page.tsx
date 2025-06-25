@@ -12,9 +12,9 @@ import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
-
-import { generateMetadata } from "./../[id]/generateMetadata";
-export { generateMetadata };
+import { FaWhatsapp } from 'react-icons/fa';
+// import dynamic from 'next/dynamic';
+import ShareButtons from '@/components/ShareButtons';
 
 // components/SocialPlatformIcon.tsx
 import { 
@@ -32,7 +32,7 @@ type PlatformIconProps = {
   className?: string;
 };
 
-export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
+const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
   if (!platform) return <FaGlobe className={className} />;
   
   const platformLower = platform.toLowerCase();
@@ -55,7 +55,7 @@ interface PageProps {
 //   }
 // }
 // utils/date.ts
-export const formatDateString = (dateString?: string) => {
+const formatDateString = (dateString?: string) => {
   if (!dateString) return '';
   try {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -67,7 +67,7 @@ export const formatDateString = (dateString?: string) => {
     return dateString; // fallback to raw string if parsing fails
   }
 };
-export const shortenAddress = (address: string, chars = 4): string => {
+const shortenAddress = (address: string, chars = 4): string => {
   if (!address) return 'Anonymous';
   return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
 };
@@ -272,6 +272,10 @@ let allSubmissions: Submission[] = []
                 <Badge className="bg-brand-purple text-white">Create video</Badge>
                 <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
                 <p className="text-white/80">by {quest.brandName}</p>
+                {/* Share buttons below title */}
+                <div className="mt-2">
+                  <ShareButtons questId={quest._id} />
+                </div>
               </div>
             </div>
 
