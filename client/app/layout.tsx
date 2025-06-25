@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AppProvider } from '@/providers/AppProvider';
 import { Metadata } from "next";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
@@ -53,6 +54,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AppProvider>
+        <AuthProvider>
+
           {/* <ThemeProvider attribute="class" defaultTheme="dark"> */}
           <CurrencyProvider>
             <Navbar />
@@ -60,6 +63,8 @@ export default function RootLayout({
             <Footer />
           {/* </ThemeProvider> */}
           </CurrencyProvider>
+          </AuthProvider>
+
         </AppProvider>
       </body>
     </html>

@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 import { quests } from "@/lib/data"
 import { notFound } from "next/navigation"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
 interface EditQuestPageProps {
   params: {
@@ -100,6 +101,7 @@ export default function EditQuestPage({ params }: EditQuestPageProps) {
   }
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-brand-light">
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
@@ -323,5 +325,6 @@ export default function EditQuestPage({ params }: EditQuestPageProps) {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
