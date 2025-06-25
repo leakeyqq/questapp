@@ -18,6 +18,7 @@ import CurrencyDisplay from '@/components/CurrencyDisplay';
 import {useAlert} from "@/components/custom-popup"
 import {useConfirm} from '@/components/custom-confirm'
 import { PaymentModal } from "@/components/payment-modal"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
 
 
@@ -243,7 +244,7 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
 
   
   return (
-    // <div className="min-h-screen bg-brand-light">
+    <ProtectedRoute>
     <div className="min-h-screen bg-brand-light overflow-x-hidden"> 
 
       <AlertComponent />
@@ -697,5 +698,6 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
