@@ -3,9 +3,18 @@ interface ExchangeRateRequest {
 }
 
 interface ExchangeRateResponse {
-  rate: number;
-  currency_code: string;
+  success: boolean;
+  data: {
+    code: number;
+    message: string;
+    data: {
+      buying_rate: number;
+      selling_rate: number;
+      quoted_rate: number;
+    };
+  };
 }
+
 
 interface ValidationRequest {
   type: 'MOBILE' | 'PAYBILL' | 'BUY_GOODS';
@@ -93,12 +102,14 @@ class PretiumAPI {
     return response.json();
   }
 
-  async getExchangeRate(currencyCode: string): Promise<ExchangeRateResponse> {
-    const data: ExchangeRateRequest = {
+  async getExchangeRate(currencyCode: string): Promise<{ rate: number; currency_code: string }> {
+    const response = await this.makeRequest('/exchange-rate', { currency_code: currencyCode });
+    return {
+      rate: response.data.data.quoted_rate,
       currency_code: currencyCode,
     };
-    return this.makeRequest('/exchange-rate', data);
   }
+  
 
   async validateRecipient(validationData: ValidationRequest, currency?: string): Promise<ValidationResponse> {
     const endpoint = currency ? `/validation/${currency}` : '/validation';

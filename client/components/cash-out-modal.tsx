@@ -7,12 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Wallet, Smartphone, Building2, CheckCircle, ArrowLeft, Loader2 } from "lucide-react"
+import { Wallet, Smartphone, Building2, CheckCircle, ArrowLeft, Loader2} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import React from 'react'
 import { useWeb3 } from "@/contexts/useWeb3"
-import { pretiumAPI, SUPPORTED_COUNTRIES, MOBILE_NETWORKS, type Bank } from "@/lib/pretium-api"
+import { pretiumAPI, SUPPORTED_COUNTRIES, type Bank } from "@/lib/pretium-api"
 
 interface CashOutModalProps {
   isOpen: boolean
@@ -28,10 +27,8 @@ type CountryCode = "KES" | "UGX" | "GHS" | "NGN"
 interface FormData {
   country: CountryCode | ""
   amount: string
-  // Mobile money fields
   phoneNumber: string
   mobileNetwork: string
-  // Bank transfer fields (Nigeria)
   accountNumber: string
   bankCode: string
   bankName: string
@@ -52,7 +49,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
   const [transactionCode, setTransactionCode] = useState<string>("")
   const [currentWalletBalance, setCurrentWalletBalance] = useState<string>("0")
   
-  const { sendCUSD, checkCUSDBalance } = useWeb3()
+  const { sendCUSD, checkBalanceOfSingleAsset } = useWeb3()
 
   const [formData, setFormData] = useState<FormData>({
     country: "",
@@ -65,14 +62,12 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
     accountName: ""
   })
 
-  // Load supported banks for Nigeria
   useEffect(() => {
     if (formData.country === "NGN") {
       loadSupportedBanks()
     }
   }, [formData.country])
 
-  // Calculate fiat equivalent when amount or country changes
   useEffect(() => {
     if (formData.amount && formData.country && parseFloat(formData.amount) > 0) {
       calculateFiatEquivalent()
@@ -81,7 +76,6 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
     }
   }, [formData.amount, formData.country])
 
-  // Check wallet balance when modal opens
   useEffect(() => {
     if (isOpen) {
       checkWalletBalance()
@@ -106,23 +100,24 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
   }
 
   const calculateFiatEquivalent = async () => {
-    try {
-      if (!formData.country || !formData.amount) return
-      
-      const rate = await pretiumAPI.getExchangeRate(formData.country)
-      setExchangeRate(rate.rate)
-      setFiatEquivalent(parseFloat(formData.amount) * rate.rate)
-    } catch (error) {
-      console.error("Failed to get exchange rate:", error)
-    }
-  }
+    const rateResponse = await pretiumAPI.getExchangeRate(formData.country);
+    const rate = rateResponse.rate;
+    setExchangeRate(rate);
+    setFiatEquivalent(parseFloat(formData.amount) * rate);
+  };
+  
 
   const checkWalletBalance = async () => {
     try {
-      const balanceCheck = await checkCUSDBalance('1')
+      const balanceCheck = await checkBalanceOfSingleAsset('cUSD')
       setCurrentWalletBalance(balanceCheck.balance)
     } catch (error) {
       console.error("Failed to check wallet balance:", error)
+      toast({
+        title: "Balance check failed",
+        description: "Could not verify wallet balance. Please try again.",
+        variant: "destructive",
+      })
       setCurrentWalletBalance("0")
     }
   }
@@ -144,7 +139,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
         }
       } else if (selectedMethod === "bank" && formData.country === "NGN") {
         validationData = {
-          type: "MOBILE" as const, // Nigeria uses different validation
+          type: "MOBILE" as const,
           shortcode: formData.accountNumber,
           mobile_network: formData.mobileNetwork
         }
@@ -155,7 +150,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
         const result = await pretiumAPI.validateRecipient(validationData, currency)
         
         if (result.success && result.data.data.status === "COMPLETE") {
-          const recipientData = result.data.data;
+          const recipientData = result.data.data
           setValidationResult(recipientData.public_name || recipientData.business_name || "Valid recipient")
           setValidatedRecipient(recipientData)
           toast({
@@ -179,7 +174,9 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
   }
 
   const handleCashOut = async () => {
+    console.log('handleCashOut called', formData, validatedRecipient);
     if (!formData.amount || !formData.country) {
+      console.log("Missing info, returning");
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -191,8 +188,8 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
     const withdrawalAmount = parseFloat(formData.amount)
     const availableBalanceNum = parseFloat(availableBalance)
 
-    // Check available balance first
     if (withdrawalAmount > availableBalanceNum) {
+      console.log("Insufficient balance, returning", { withdrawalAmount, availableBalanceNum, availableBalance });
       toast({
         title: "Insufficient balance",
         description: `You can only withdraw up to ${availableBalance} cUSD from your available earnings.`,
@@ -201,8 +198,8 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
       return
     }
 
-    // Additional check: verify minimum withdrawal amount
     if (withdrawalAmount < 1) {
+      console.log("Below minimum, returning");
       toast({
         title: "Minimum withdrawal amount",
         description: "Minimum withdrawal amount is 1 cUSD",
@@ -211,15 +208,15 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
       return
     }
 
-    // Check wallet balance before proceeding
     try {
-      const walletBalanceCheck = await checkCUSDBalance('1')
-      const currentWalletBalance = parseFloat(walletBalanceCheck.balance)
+      const balanceCheck = await checkBalanceOfSingleAsset('cUSD')
+      const currentWalletBalance = parseFloat(balanceCheck.balance)
       
-      if (currentWalletBalance < withdrawalAmount) {
+      if (withdrawalAmount > availableBalanceNum) {
+        console.log("Insufficient balance, returning", { withdrawalAmount, availableBalanceNum, availableBalance });
         toast({
-          title: "Insufficient wallet balance",
-          description: `Your wallet balance (${currentWalletBalance.toFixed(2)} cUSD) is less than the withdrawal amount. Please ensure you have enough tokens in your wallet.`,
+          title: "Insufficient balance",
+          description: `You can only withdraw up to ${availableBalance} cUSD from your available earnings.`,
           variant: "destructive",
         })
         return
@@ -237,15 +234,13 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
     setIsProcessing(true)
 
     try {
-      // First, send CUSD to Pretium settlement wallet
       const settlementWallet = pretiumAPI.getSettlementWallet()
-      const txResult = await sendCUSD(formData.amount, settlementWallet)
+      const txResult = await sendCUSD(settlementWallet, formData.amount)
       
       if (!txResult.transactionHash) {
         throw new Error("Failed to send CUSD to settlement wallet")
       }
 
-      // Prepare payment data for Pretium
       let paymentData
       
       if (selectedMethod === "mobile") {
@@ -275,7 +270,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
         
         if (paymentResult.success) {
           setTransactionCode(paymentResult.transaction_code)
-          setCashOutCompleted(true)
+          setCashOutCompleted(true);
           
           toast({
             title: "Cash out initiated!",
@@ -368,7 +363,6 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
             </Button>
           </div>
         ) : !selectedMethod ? (
-          // Payment method selection
           <div className="space-y-6">
             <div>
               <Label htmlFor="country" className="text-base font-medium text-brand-dark">
@@ -450,7 +444,6 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
             )}
           </div>
         ) : (
-          // Selected method form
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={resetSelection} className="text-brand-purple hover:text-brand-purple/80">
@@ -492,7 +485,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
                       <Label htmlFor="phoneNumber">Phone Number</Label>
                       <Input
                         id="phoneNumber"
-                        placeholder="e.g., 0799770833"
+                        placeholder="e.g., 0700000000"
                         value={formData.phoneNumber}
                         onChange={(e) => updateFormData("phoneNumber", e.target.value)}
                         className="mt-1"
@@ -614,7 +607,7 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
 
                   <Button
                     onClick={handleCashOut}
-                    disabled={isProcessing || !validatedRecipient}
+                    disabled={isProcessing}
                     className="flex-1 bg-brand-purple hover:bg-brand-purple/90 text-white"
                   >
                     {isProcessing ? (
@@ -634,4 +627,4 @@ export function CashOutModal({ isOpen, onClose, onCashOutComplete, availableBala
       </DialogContent>
     </Dialog>
   )
-} 
+}
