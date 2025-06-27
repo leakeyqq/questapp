@@ -12,6 +12,8 @@ import CurrencyDisplay from '@/components/CurrencyDisplay';
 import { useWeb3 } from "@/contexts/useWeb3"
 import { CopyButton } from "@/components/copyButton"
 import { Gift, Trophy, Award } from 'lucide-react';
+import { CashOutModal } from "@/components/cash-out-modal"
+import SocialPlatformIcon from '@/components/SocialPlatformIcon';
 
 // components/SocialPlatformIcon.tsx
 import { FaYoutube, FaTwitter, FaInstagram, FaTiktok, FaTwitch, FaFacebook, FaGlobe } from 'react-icons/fa';
@@ -21,18 +23,18 @@ type PlatformIconProps = {
   className?: string;
 };
 
-export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
-  if (!platform) return <FaGlobe className={className} />;
+// export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
+//   if (!platform) return <FaGlobe className={className} />;
   
-  const platformLower = platform.toLowerCase();
+//   const platformLower = platform.toLowerCase();
   
-  if (platformLower.includes('youtube')) return <FaYoutube className={className} />;
-  if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
-  if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
-  if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
+//   if (platformLower.includes('youtube')) return <FaYoutube className={className} />;
+//   if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
+//   if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
+//   if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
   
-  return <FaGlobe className={className} />;
-};
+//   return <FaGlobe className={className} />;
+// };
 
 
 interface Quest {
@@ -79,7 +81,7 @@ export default function DashboardPage() {
     const[totalWithdrawn, setTotalWithdrawn] = useState('0')
     const[totalBalance, setTotalBalance ] = useState('0')
     const [walletBalance, setWalletBalance] = useState(0)
-    
+    const [showCashOutModal, setShowCashOutModal] = useState(false)
     const {checkCUSDBalance, isWalletReady } = useWeb3();
     
 
@@ -134,9 +136,17 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold text-brand-dark">Creator Dashboard</h1>
             <p className="text-gray-600">Track your quests and earnings</p>
           </div>
-          <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
-            <Link href="/quests">Find New Quests</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild className="bg-brand-purple hover:bg-brand-purple/90 text-white">
+              <Link href="/quests">Find New Quests</Link>
+            </Button>
+            <Button
+              className="bg-brand-teal hover:bg-brand-teal/90 text-white"
+              onClick={() => setShowCashOutModal(true)}
+            >
+              Cash Out
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -415,7 +425,41 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
         </Tabs> 
+        <CashOutModal
+          isOpen={showCashOutModal}
+          onClose={() => setShowCashOutModal(false)}
+          onCashOutComplete={() => {
+            // Refresh creator data after cash out
+            setLoading(true);
+            const refreshData = async() => {
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include", 
+                })
 
+                if (res.ok) {
+                  const data = await res.json();
+                  setTotalEarnings(data.creator.totalEarnings)
+                  setTotalWithdrawn(data.creator.totalWithdrawn)
+                  setTotalBalance(data.creator.earningsBalance)
+                  setQuests(data.quests)
+                } 
+              } catch(e) {
+                console.error(e)
+              } finally {
+                setLoading(false);
+              }
+            }
+            refreshData();
+          }}
+          availableBalance={totalBalance}
+          walletAddress={address || ""}
+        />
+        
         {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
