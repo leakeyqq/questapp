@@ -32,6 +32,18 @@ type PlatformIconProps = {
   className?: string;
 };
 
+
+type Platform = 'twitter' | 'tiktok' | 'instagram'; // Add other platforms as needed
+
+type SocialPlatformSettings = {
+  allowedOnCampaign: boolean;
+  minFollowers: number;
+};
+
+type SocialPlatformsAllowed = {
+  [P in Platform]?: SocialPlatformSettings;
+};
+
 export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
   if (!platform) return <FaGlobe className={className} />;
   
@@ -167,6 +179,24 @@ let allSubmissions: Submission[] = []
     return colors[category as keyof typeof colors] || "bg-brand-yellow text-brand-dark"
   }
 
+
+const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
+  const platformKey = platform.toLowerCase();
+  
+  // Type-safe check with type assertion
+  if (isPlatform(platformKey)) {
+    return quest.socialPlatformsAllowed?.[platformKey]?.minFollowers || 0;
+  }
+  
+  // Fallback to legacy minFollowerCount
+  return quest.minFollowerCount || 0;
+};
+
+// Helper type guard
+function isPlatform(key: string): key is Platform {
+  return ['twitter', 'tiktok', 'instagram'].includes(key);
+}
+
           // Helper function to format numbers
         const formatNumber = (num?: number): string => {
           if (!num) return "0"
@@ -234,7 +264,6 @@ let allSubmissions: Submission[] = []
       }
 
     
-  // console.log('on page file, quest is ', quest)
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -287,16 +316,52 @@ let allSubmissions: Submission[] = []
                   <LinkifyText text={quest.description} />
                 </p>
 
+              {/* Platform Requirements Section - Flex Wrap */}
+              <div className="mt-4">
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-brand-dark">Social requirement</h2>
+                <p className="text-sm md:text-lg text-gray-700 mt-1">
+                  You should meet <span className="font-bold">one</span> of these number of followers to participate.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(quest.socialPlatformsAllowed || {}).map(([platform, config]) => {
+                  const platformConfig = config as SocialPlatformSettings;
+                  const platformKey = platform as Platform;
+                  
+                  return platformConfig.allowedOnCampaign && (
+                    <div 
+                      key={platformKey} 
+                      className="flex items-center gap-2 p-2 pr-3 rounded-lg bg-brand-light/30 hover:bg-brand-light/40 transition-colors"
+                    >
+                      <SocialPlatformIcon platform={platformKey} className="w-5 h-5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm md:text-lg font-medium capitalize">{platformKey}</p>
+                        <p className="text-[0.80rem] text-gray-500 font-medium">
+                          {getMinFollowersForPlatform(quest, platformKey).toLocaleString()}+
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              </div>
+
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
                   <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} videos shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Reward</p>
                     <p className="text-xl font-bold text-brand-purple">{quest.pricePerVideo} <CurrencyDisplay/></p>
                   </div>
+
+
+                  
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
                     <p className="text-xl font-bold text-brand-dark">
@@ -308,10 +373,10 @@ let allSubmissions: Submission[] = []
                     <p className="text-gray-600 text-sm">Current participants</p>
                     <p className="text-xl font-bold text-brand-dark">{quest.submissions.length}</p>
                   </div>
-                  <div className="bg-brand-light p-4 rounded-lg text-center">
+                  {/* <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Min follower count</p>
                     <p className="text-xl font-bold text-brand-dark">{quest.minFollowerCount.toLocaleString()}</p>
-                  </div>
+                  </div> */}
                 </div>
               </TabsContent>
 
@@ -488,7 +553,9 @@ let allSubmissions: Submission[] = []
                   </div>
                 </div>
 
-                <SubmissionForm questId={quest._id} />
+                {/* <SubmissionForm questId={quest._id} /> */}
+                <SubmissionForm questId={quest._id} approvalNeeded={quest.approvalNeeded} minFollowers={quest.minFollowers}  allowedPlatforms={quest.socialPlatformsAllowed} // Make sure this exists in your quest object
+/>
               </div>
             </div>
           </div>

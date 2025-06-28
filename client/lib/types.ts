@@ -21,11 +21,62 @@ export interface Quest {
   requirements: string[]
   rewardCriteria: string
   featured?: boolean
+  approvalNeeded?: boolean
   recentSubmissions?: {
     username: string
     date: string
     comment: string
     link: string
   }[]
+  socialPlatformsAllowed: {
+    twitter?: {
+      allowedOnCampaign: boolean
+      minFollowers: number
+    };
+    tiktok?: {
+      allowedOnCampaign: boolean
+      minFollowers: number
+    };
+    instagram?: {
+      allowedOnCampaign: boolean
+      minFollowers: number
+    }
+  }
+  applicants: {
+    userWalletAddress: string
+    platform: string
+    approved: boolean
+    twitter?: {
+      userName?: string
+      name?: string
+      isVerified?: boolean
+      isBlueVerified?: boolean
+      profilePicture?: string
+      location?: string
+      followers?: number
+      following?: number
+      description?: string
+      createdAt?: Date
+    };
+    instagram?: {
+      userName?: string
+      name?: string
+      userId?: string
+      profilePicture?: string
+      biography?: string
+      following?: number
+      followers?: number
+    };
+    tiktok?: {
+      userId?: string
+      userName?: string
+      name?: string
+      profilePicture?: string
+      following?: number
+      followers?: number
+      createdAt?: string
+    };
+  }[];
+
   minFollowerCount: number
 }

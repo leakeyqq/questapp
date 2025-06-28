@@ -34,6 +34,7 @@ export default function ThreeQuests(){
     
             const data = await res.json()
             setQuests(data._3quests)
+            console.log('the fetched quests are ', data._3quests)
           } catch (error) {
             console.error("Failed to fetch quests:", error)
           } finally {
