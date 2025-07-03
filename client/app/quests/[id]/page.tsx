@@ -12,6 +12,8 @@ import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
+import { cookies } from 'next/headers';
+
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
@@ -151,6 +153,13 @@ interface Submission {
     statsLastUpdated?: Date
   }
 }
+interface Applicant {
+  userWalletAddress: string;
+  platform?: string;
+  approved: boolean;
+  rejected: boolean;
+  // Add other fields from your schema as needed
+}
   // const [allSubmissions, setAllSubmissions] = useState<Submission[]>([])
 
 let allSubmissions: Submission[] = []
@@ -164,6 +173,26 @@ let allSubmissions: Submission[] = []
         
   // setAllSubmissions(quest.submissions)
   allSubmissions = quest.submissions
+
+  // console.log('address is ', address)
+  const cookieStore = await cookies();
+  const userWalletAddress = cookieStore.get('userWalletAddress')?.value; 
+  const isUserLoggedIn = Boolean(cookieStore.get('userWalletAddress')?.value);
+  // const userApplication = quest.applicants.find((a: Applicant)  => a.userWalletAddress === userWalletAddress);
+
+  const userApplication = quest.applicants?.find((a: Applicant) => a.userWalletAddress === userWalletAddress) || null;
+
+  const applicationStatus = quest.approvalNeeded 
+    ? !isUserLoggedIn 
+      ? 'notLoggedIn'
+      : userApplication?.approved
+        ? 'approved'
+      : userApplication?.rejected
+        ? 'rejected'
+      : userApplication
+        ? 'pending' // Has application but neither approved nor rejected
+        : 'notApplied'
+    : 'notApplied';
 
 
   const daysLeft = Math.ceil((new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
@@ -183,31 +212,31 @@ let allSubmissions: Submission[] = []
 const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
   const platformKey = platform.toLowerCase();
   
-  // Type-safe check with type assertion
-  if (isPlatform(platformKey)) {
-    return quest.socialPlatformsAllowed?.[platformKey]?.minFollowers || 0;
+    // Type-safe check with type assertion
+    if (isPlatform(platformKey)) {
+      return quest.socialPlatformsAllowed?.[platformKey]?.minFollowers || 0;
+    }
+    
+    // Fallback to legacy minFollowerCount
+    return quest.minFollowerCount || 0;
+  };
+
+  // Helper type guard
+  function isPlatform(key: string): key is Platform {
+    return ['twitter', 'tiktok', 'instagram'].includes(key);
   }
-  
-  // Fallback to legacy minFollowerCount
-  return quest.minFollowerCount || 0;
-};
 
-// Helper type guard
-function isPlatform(key: string): key is Platform {
-  return ['twitter', 'tiktok', 'instagram'].includes(key);
-}
-
-          // Helper function to format numbers
-        const formatNumber = (num?: number): string => {
-          if (!num) return "0"
-          if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + "M"
-          }
-          if (num >= 1000) {
-            return (num / 1000).toFixed(1) + "K"
-          }
-          return num.toString()
-        }
+    // Helper function to format numbers
+  const formatNumber = (num?: number): string => {
+    if (!num) return "0"
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M"
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K"
+    }
+    return num.toString()
+  }
 
           // Helper function to get creator data
         const getCreatorData = (submission: Submission) => {
@@ -289,20 +318,50 @@ function isPlatform(key: string): key is Platform {
           </Link>
         </div>
 
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6 shadow-lg">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <div className="absolute bottom-4 left-4">
-                <Badge className="bg-brand-purple text-white">Create video</Badge>
-                <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
-                <p className="text-white/80">by {quest.brandName}</p>
-              </div>
-            </div>
+
+
+    <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6 shadow-lg">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+      
+      {/* Approval Needed Badge - Top Right */}
+      {quest.approvalNeeded && (
+        <div className="absolute top-4 left-4">
+          <Badge className="bg-brand-blue text-white">
+            Approval Needed
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white/20">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </span>
+          </Badge>
+        </div>
+      )}
+      
+      <div className="absolute bottom-4 left-4">
+        <Badge className="bg-brand-purple text-white">Create video</Badge>
+        <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
+        <p className="text-white/80">by {quest.brandName}</p>
+      </div>
+    </div>
 
             <Tabs defaultValue="details" className="mb-8">
               <TabsList className="bg-white border border-gray-200">
@@ -310,7 +369,7 @@ function isPlatform(key: string): key is Platform {
                 <TabsTrigger value="submissions">Submissions</TabsTrigger>
               </TabsList>
               <TabsContent value="details" className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md">
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Details</h2>
+                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest details</h2>
                 {/* <p className="text-gray-700 text-sm md:text-lg">{quest.description}</p> */}
                 <p className="text-gray-700 text-sm md:text-lg">
                   <LinkifyText text={quest.description} />
@@ -350,7 +409,14 @@ function isPlatform(key: string): key is Platform {
 
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
+                  {quest.approvalNeeded ? (
+                  <p className="text-gray-700 mb-4">All content creators will be rewarded with {quest.pricePerVideo}<CurrencyDisplay/> each.
+                   {/* Only  {quest.videosToBeAwarded} slots left now. */}
+                   </p>
+
+                  ):(
                   <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} videos shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
+                  )}
                 </div>
 
 
@@ -526,7 +592,7 @@ function isPlatform(key: string): key is Platform {
           <div>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-4 shadow-md">
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Status</h2>
+                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest status</h2>
 
                 <div className="space-y-4 mb-6">
                   {/* <div className="bg-brand-light p-4 rounded-lg">
@@ -554,8 +620,13 @@ function isPlatform(key: string): key is Platform {
                 </div>
 
                 {/* <SubmissionForm questId={quest._id} /> */}
-                <SubmissionForm questId={quest._id} approvalNeeded={quest.approvalNeeded} minFollowers={quest.minFollowers}  allowedPlatforms={quest.socialPlatformsAllowed} // Make sure this exists in your quest object
-/>
+                <SubmissionForm 
+                  questId={quest._id} 
+                  approvalNeeded={quest.approvalNeeded} 
+                  minFollowers={quest.minFollowers}  
+                  allowedPlatforms={quest.socialPlatformsAllowed}  
+                  applicationStatus={applicationStatus}
+                  appliedPlatform={applicationStatus === 'approved' ? userApplication?.platform : undefined} />
               </div>
             </div>
           </div>

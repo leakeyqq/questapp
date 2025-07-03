@@ -9,7 +9,7 @@ import { useConfirm } from '@/components/custom-confirm'
 import { useRouter } from 'next/navigation'
 import { useWeb3 } from "@/contexts/useWeb3"
 // import { sdk } from '@farcaster/frame-sdk'
-import { Users, UserCheck, TrendingUp, MessageCircle, Hash, AlertCircle } from "lucide-react"
+import { Users, UserCheck, TrendingUp, MessageCircle, Hash, AlertCircle, CheckCircle, XCircle } from "lucide-react"
 
 
 interface SubmissionFormProps {
@@ -17,13 +17,17 @@ interface SubmissionFormProps {
   approvalNeeded?: boolean
   minFollowers?: number
   allowedPlatforms: Record<string, { allowedOnCampaign: boolean }>
+  applicationStatus?: 'notLoggedIn' | 'approved' | 'pending' | 'rejected' | 'notApplied'
+  appliedPlatform?: string
 }
 
 export default function SubmissionForm({ 
   questId, 
   approvalNeeded = false,
   minFollowers = 0,
-  allowedPlatforms = {} 
+  allowedPlatforms = {}, 
+  applicationStatus = 'notApplied',
+  appliedPlatform 
 }: SubmissionFormProps) {
   const { showAlert, AlertComponent } = useAlert()
   const { showConfirm, ConfirmComponent } = useConfirm()
@@ -36,6 +40,53 @@ export default function SubmissionForm({
   // const [isFarcaster, setIsFarcaster] = useState(false)
   const router = useRouter()
   
+    useEffect(() => {
+    if (applicationStatus === 'approved' && appliedPlatform) {
+      setPlatform(appliedPlatform);
+    }
+  }, [applicationStatus, appliedPlatform]);
+
+
+    // Determine button text and disabled state based on status
+  const getProfileButtonState = () => {
+    switch (applicationStatus) {
+      case 'pending':
+        return {
+          text: "Waiting to be approved",
+          disabled: true,
+          className: "bg-gray-400 text-white cursor-not-allowed"
+        };
+      case 'rejected':
+        return {
+          text: "Approval denied",
+          disabled: true,
+          className: "bg-red-400 text-white cursor-not-allowed"
+        };
+      case 'approved':
+        return {
+          text: "You were approved",
+          disabled: true,
+          className: "bg-green-500 hover:bg-green-600 text-white"
+        };
+      case 'notLoggedIn':
+        return {
+          text: "Sign In first",
+          disabled: true,
+          className: "bg-gray-400 text-white cursor-not-allowed"
+        };
+      default: // notApplied
+        return {
+          text: "Submit Profile",
+          disabled: false,
+          className: "bg-brand-purple hover:bg-brand-purple/90 text-white"
+        };
+    }
+  };
+
+  console.log('')
+
+  const profileButtonState = getProfileButtonState();
+
     // Get allowed platforms list
   const getAvailablePlatforms = () => {
     return Object.entries(allowedPlatforms || {})
@@ -105,6 +156,7 @@ export default function SubmissionForm({
 
       if(data.message == 'success'){
         await showAlert('Submitted! Once you are approved we shall send you an email.')
+        
       }else{
         await showAlert(data.message)
       }
@@ -115,6 +167,7 @@ export default function SubmissionForm({
       await showAlert(`${e}`)
     } finally {
       setIsSubmitting(false)
+      router.replace(`${location.pathname}?t=${Date.now()}`)
     }
   }
 
@@ -180,32 +233,50 @@ export default function SubmissionForm({
   }
 
   return (
+
     <div>
-      {/* <h3 className="font-bold mb-4 text-brand-dark">
-        {approvalNeeded 
-          ? currentStep === 1 
-            ? "Verify your creator profile" 
-            : "Submit your video content"
-          : "Submit your short video link"
-        }
-      </h3> */}
-
-
       
       <AlertComponent />
       <ConfirmComponent />
 
       {/* Two-step form for approval-needed quests */}
       {approvalNeeded ? (
+
+
         <div>
-            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start space-x-2">
-            <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-yellow-800">
-              <strong>Appoval needed:</strong> The brand has limited this quest to only the content creators that will get approved.   </p>
+            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start space-x-2 hidden">
           </div>
-          <h3 className="font-bold mb-4 mt-3 text-brand-dark">Step 1: Get approved</h3>
+      
+        {applicationStatus === 'pending' || applicationStatus === 'notLoggedIn' || applicationStatus === 'notApplied' && (
+            <div className="mt-2 p-2  bg-yellow-50 border border-yellow-200 rounded flex items-start space-x-2">
+               <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-yellow-800">
+
+                 <strong>Appoval needed:</strong> The brand has limited this quest to only the content creators that will get approved.  </p>
+
+            </div>
+          )}
+
+          {applicationStatus === 'approved' && (
+            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded flex items-start space-x-2">
+              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-green-800">
+                <strong>Approved!</strong> You can now submit your video.
+              </p>
+            </div>
+          )}
+
+          {applicationStatus === 'rejected' && (
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start space-x-2">
+              <XCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-red-800">
+                <strong>Denied:</strong> This brand did not approve you. Please try other quests.
+              </p>
+            </div>
+          )}
+
+          <h3 className="font-bold mb-4 mt-3 text-brand-purple">Step 1: Get approved</h3>
           <h5 className="mb-4 text-brand-dark">Submit your social media profile</h5>
-          {/* {currentStep === 1 && ( */}
             <form onSubmit={handleProfileSubmit}>
               <div className="space-y-4">
                 <div>
@@ -222,10 +293,6 @@ export default function SubmissionForm({
                         {platform.charAt(0).toUpperCase() + platform.slice(1)}
                       </SelectItem>
                     ))}
-                      {/* <SelectItem value="tiktok">TikTok</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="twitter">Twitter/X</SelectItem> */}
-                      {/* {isFarcaster && <SelectItem value="farcaster">Farcaster</SelectItem>} */}
                     </SelectContent>
                   </Select>
                 </div>
@@ -244,20 +311,18 @@ export default function SubmissionForm({
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Sending profile..." : "Submit profile"}
-                </Button>
+
+              <Button
+                type="submit"
+                className={`w-full ${profileButtonState.className}`}
+                disabled={profileButtonState.disabled || isSubmitting}
+              >
+                {isSubmitting ? "Sending profile..." : profileButtonState.text}
+              </Button>
               </div>
             </form>
-           {/* )} */}
 
-          {/* Step 2: Content Submission */}
-          {/* {currentStep === 2 && ( */}
-          <h3 className="font-bold mb-4 mt-6 text-brand-dark">Step 2: Submit video</h3>
+          <h3 className="font-bold mb-4 mt-6 text-brand-purple">Step 2: Submit video</h3>
           <h5 className="mb-4 text-brand-dark">Submit your short video</h5>
             <form onSubmit={handleContentSubmit}>
               <div className="space-y-4">
@@ -269,18 +334,27 @@ export default function SubmissionForm({
                     <SelectTrigger className="bg-white border-gray-300 text-gray-800">
                       <SelectValue placeholder="Select platform" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-200 text-gray-800">
-                    {availablePlatforms.map(platform => (
-                      <SelectItem key={platform} value={platform}>
-                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                      </SelectItem>
-                    ))}
-                      {/* <SelectItem value="tiktok">TikTok</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="twitter">Twitter/X</SelectItem> */}
-                      {/* {isFarcaster && <SelectItem value="farcaster">Farcaster</SelectItem>} */}
-                    </SelectContent>
-                  </Select>
+
+
+                      {applicationStatus !== 'approved' && (
+                      <SelectContent className="bg-white border-gray-200 text-gray-800">
+                        {availablePlatforms.map(platform => (
+                          <SelectItem key={platform} value={platform}>
+                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    )}
+
+                    {applicationStatus === 'approved' && appliedPlatform && (
+                        <SelectContent className="bg-white border-gray-200 text-gray-800">
+                            <SelectItem key={appliedPlatform} value={appliedPlatform}>
+                              {appliedPlatform.charAt(0).toUpperCase() + appliedPlatform.slice(1)}
+                            </SelectItem>
+                        </SelectContent>
+                    )}
+                          
+  </Select>
                 </div>
 
                 <div>
@@ -301,7 +375,7 @@ export default function SubmissionForm({
                   <Button
                     type="submit"
                     className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || applicationStatus !== 'approved'}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Video"}
                   </Button>
@@ -328,10 +402,6 @@ export default function SubmissionForm({
                     </SelectItem>
                   ))}
 
-                  {/* <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="twitter">Twitter/X</SelectItem> */}
-                  {/* {isFarcaster && <SelectItem value="farcaster">Farcaster</SelectItem>} */}
                 </SelectContent>
               </Select>
             </div>
