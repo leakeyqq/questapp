@@ -654,6 +654,8 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                               <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent className="bg-white border-gray-200 text-gray-800">
+                              <SelectItem value="3">The best 3 creators</SelectItem>
+                              <SelectItem value="5">The best 5 creators</SelectItem>
                               <SelectItem value="10">The best 10 creators</SelectItem>
                               <SelectItem value="20">The best 20 creators</SelectItem>
                               <SelectItem value="30">The best 30 creators</SelectItem>

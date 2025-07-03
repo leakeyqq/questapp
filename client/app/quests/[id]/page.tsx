@@ -415,7 +415,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                    </p>
 
                   ):(
-                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} videos shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
+                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} content creators shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
                   )}
                 </div>
 

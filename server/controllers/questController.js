@@ -213,13 +213,54 @@ export const submitQuestByCreator = async (req, res) => {
       'submissions.submittedByAddress': walletID
     });
 
-    // if (existingQuest) {
-    //   return res.status(400).json({ 
-    //     error: { 
-    //       msg: "Oops..You cannot submit a single quest twice😪" 
-    //     } 
-    //   });
-    // }
+    if (existingQuest) {
+      return res.status(400).json({ 
+        error: { 
+          msg: "Oops..You cannot submit a single quest twice😪" 
+        } 
+      });
+    }
+
+      if (new Date(existingQuest.endsOn) < new Date()) {
+      return res.status(400).json({ 
+        error: { 
+          msg: "This quest has already ended" 
+        } 
+      });
+    }
+
+        // Check if quest requires approval and user is approved
+    if (existingQuest.approvalNeeded) {
+      const applicant = existingQuest.applicants.find(app => app.userWalletAddress === walletID);
+      
+      if (!applicant) {
+        return res.status(403).json({ 
+          error: { 
+            msg: "Approval required: You need to apply and be approved before submitting" 
+          } 
+        });
+      }
+
+      if (!applicant.approved) {
+        return res.status(403).json({ 
+          error: { 
+            msg: applicant.rejected 
+              ? "Your application was rejected for this quest" 
+              : "Your application is still pending approval" 
+          } 
+        });
+      }
+
+      // Verify submission platform matches approved platform if specified
+      if (applicant.platform && applicant.platform !== req.body.platform) {
+        return res.status(400).json({ 
+          error: { 
+            msg: `You must submit content from ${applicant.platform} as per your approved application` 
+          } 
+        });
+      }
+    }
+
 
 
     const updatedQuest = await submitQuest(walletID, questID, req.body.platform, req.body.contentUrl)
