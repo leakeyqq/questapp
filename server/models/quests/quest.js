@@ -150,7 +150,11 @@ const questSchema = new mongoose.Schema({
                 type: Date,
                 required: false
             },
-            twitterData: {
+            socialStatsLastUpdated: {
+                type: Date,
+                required: false
+            },
+            c: {
                 id: {type: String, required: false},
                 text: {type: String, required: false},
                 retweetCount: {type: Number, required: false},

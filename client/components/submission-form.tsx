@@ -213,7 +213,7 @@ export default function SubmissionForm({
       const data = await res.json()
 
       if (!res.ok) {
-        await showAlert(`${data.error.msg || "Something went wrong"}`)
+        await showAlert(`${data.error.msg || data.error.message ||  data.error || "Something went wrong"}`)
         return
       }
 

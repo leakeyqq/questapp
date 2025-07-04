@@ -206,122 +206,101 @@ export const submitQuestByCreator = async (req, res) => {
   try {
     const questID = req.params.questID
     const walletID = req.userWalletAddress
+    let applicantUsername
 
-    // Check if user has already submitted to this quest
-    const existingQuest = await Quest.findOne({
-      _id: questID,
-      'submissions.submittedByAddress': walletID
-    });
-
-    if (existingQuest) {
-      return res.status(400).json({ 
-        error: { 
-          msg: "Oops..You cannot submit a single quest twice😪" 
-        } 
-      });
+    const quest = await Quest.findById(questID);
+    if (!quest) {
+      throw new Error('Quest not found');
     }
 
-      if (new Date(existingQuest.endsOn) < new Date()) {
-      return res.status(400).json({ 
-        error: { 
-          msg: "This quest has already ended" 
-        } 
-      });
-    }
+    // 2. Then check if user has already submitted
+    const userAlreadySubmitted = quest.submissions.some(
+      submission => submission.submittedByAddress == walletID
+    );
 
-        // Check if quest requires approval and user is approved
-    if (existingQuest.approvalNeeded) {
-      const applicant = existingQuest.applicants.find(app => app.userWalletAddress === walletID);
-      
+
+
+    // if (userAlreadySubmitted) {
+    //   return res.status(400).json({
+    //     error: {
+    //       msg: "Oops..You cannot submit a single quest twice😪"
+    //     }
+    //   });
+    // }
+
+    //   if (new Date(existingQuest.endsOn) < new Date()) {
+    //   return res.status(400).json({ 
+    //     error: { 
+    //       msg: "This quest has already ended" 
+    //     } 
+    //   });
+    // }
+
+    // Check if quest requires approval and user is approved
+    if (quest.approvalNeeded) {
+      // Also make sure the content creator is submitting from the same profile they used to apply
+      const applicant = quest.applicants.find(app => app.userWalletAddress === walletID);
+
       if (!applicant) {
-        return res.status(403).json({ 
-          error: { 
-            msg: "Approval required: You need to apply and be approved before submitting" 
-          } 
+        return res.status(403).json({
+          error: {
+            msg: "Approval required: You need to apply and be approved before submitting"
+          }
         });
       }
 
       if (!applicant.approved) {
-        return res.status(403).json({ 
-          error: { 
-            msg: applicant.rejected 
-              ? "Your application was rejected for this quest" 
-              : "Your application is still pending approval" 
-          } 
+        return res.status(403).json({
+          error: {
+            msg: applicant.rejected
+              ? "Your application was rejected for this quest"
+              : "Your application is still pending approval"
+          }
         });
       }
 
       // Verify submission platform matches approved platform if specified
       if (applicant.platform && applicant.platform !== req.body.platform) {
-        return res.status(400).json({ 
-          error: { 
-            msg: `You must submit content from ${applicant.platform} as per your approved application` 
-          } 
+        return res.status(400).json({
+          error: {
+            msg: `You must submit content from ${applicant.platform} as per your approved application`
+          }
         });
       }
+
+            // Get the username from the applicant's data
+      applicantUsername = applicant[applicant.platform]?.userName
+
+      if (!applicantUsername) {
+        throw new Error('Could not fetch the username of the applicant!')
+      }
+
+
     }
 
+    let updatedQuest
 
+    if (req.body.platform.toLowerCase() === 'twitter') {
+      if (quest.approvalNeeded) {
+        let twitterUsername = extractTwitterUsername(req.body.contentUrl)
+        if (twitterUsername != applicantUsername) {
+          throw new Error('This social media profile does not match with the one that was approved! Please use the same profile.')
+        }
+      }
 
-    const updatedQuest = await submitQuest(walletID, questID, req.body.platform, req.body.contentUrl)
+      updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
+    }
+    if (req.body.platform.toLowerCase() === 'tiktok') {
+      await pullTikTokData(contentUrl, walletID, questID)
+    }
+
     return res.status(200).json({ updatedQuest })
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ "error": error.message })
   }
 
 
-}
-
-
-async function submitQuest(walletID, questID, platform, contentUrl) {
-  try {
-    const updatedQuest = await Quest.findByIdAndUpdate(
-      questID,
-      {
-        $push: {
-          submissions: {
-            submittedByAddress: walletID,
-            socialPlatformName: platform,
-            videoLink: contentUrl,
-            submittedAtTime: new Date()
-          }
-        }
-      },
-      { new: true }
-    )
-
-
-    // Update creator profile
-    const updatedCreator = await Creator.findOneAndUpdate(
-      { creatorAddress: walletID },
-      {
-        $push: {
-          questsDone: {
-            questID: questID,
-            platformPosted: platform,
-            videoUrl: contentUrl,
-            submittedOn: new Date()
-          }
-        }
-      },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-
-
-    if (platform.toLowerCase() === 'twitter') {
-      await pullTwitterData(walletID, contentUrl, questID)
-    }
-    if (platform.toLowerCase() === 'tiktok') {
-      await pullTikTokData(contentUrl, walletID, questID)
-    }
-
-    return updatedQuest
-  } catch (error) {
-    throw error
-  }
 }
 
 
@@ -331,7 +310,8 @@ function extractTwitterUsername(url) {
     const match = cleanedUrl.match(/x\.com\/([^/]+)\/status/);
     return match ? match[1] : null;
   } catch {
-    return null;
+    throw new Error('Could not extract Twitter username!')
+    // return null;
   }
 }
 function extractTweetId(url) {
@@ -349,89 +329,118 @@ function extractTweetId(url) {
     return null;
   }
 }
-async function pullTwitterData(walletID, contentUrl, questID) {
-  // Update creator data
-  try {
-    let twitterUsername = extractTwitterUsername(contentUrl)
-    const twitterOptions = {
-      method: 'GET',
-      url: 'https://api.twitterapi.io/twitter/user/info',
-      params: { userName: twitterUsername },
+
+async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn) {
+
+  const { data } = await axios.get(
+    `https://api.scrapecreators.com/v1/twitter/tweet?url=${contentUrl}`,
+    {
       headers: {
-        'x-api-key': process.env.TWITTER_API_IO,
-      },
-    };
-
-    const twitterResponse = await axios.request(twitterOptions);
-    if (twitterResponse.data?.status === 'success') {
-      const twitterData = twitterResponse.data.data;
-      // Attach twitterData only if it exists
-      if (twitterData) {
-        // First, unset the field
-        await Creator.updateOne(
-          { creatorAddress: walletID },
-          { $unset: { twitterData: "" } }
-        );
-
-        const creatorUpdateData = {
-          $set: { twitterData }
-        };
-        const updatedCreator = await Creator.findOneAndUpdate(
-          { creatorAddress: walletID },
-          creatorUpdateData,
-          {
-            upsert: true,
-            new: true,
-          }
-        );
+        'x-api-key': process.env.SCRAPECREATOR_API_KEY
       }
     }
+  )
 
-  } catch (error) {
-    throw error
+  if(!data) throw new Error('Could not fetch data')
+
+  // Verify the video post was not created before the quest began
+  let postMadeOn = new Date(data.legacy.created_at)
+  if(postMadeOn < questCreatedOn){
+    throw new Error('This post appears to be old! Please submit a recent post')
   }
 
-  // Update submission data
-  try {
-    const tweetId = extractTweetId(contentUrl);
-    if (!tweetId) throw new Error("Invalid tweet URL");
+  
+  // Check if the tweet contains a video
+  const hasVideo = data.legacy.entities?.media?.some(media => media.type === 'video');
+  if (!hasVideo) {
+    throw new Error('No video found in this tweet. Please submit a post containing a video.');
+  }
 
-    const twitterStatsOptions = {
-      method: 'GET',
-      url: 'https://api.twitterapi.io/twitter/tweets',
-      params: { tweet_ids: tweetId },
-      headers: { 'x-api-key': process.env.TWITTER_API_IO }
+
+  const updatedCreator = await Creator.findOneAndUpdate(
+    { creatorAddress: walletID },
+    {
+      $push: {
+        questsDone: {
+          questID: questID,
+          platformPosted: 'twitter',
+          videoUrl: contentUrl,
+          submittedOn: new Date()
+        }
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+
+
+  let creatorData_twitter = {
+    name: data.core.user_results.result.core.name,
+    userName: data.core.user_results.result.core.screen_name,
+    url: `https://x.com/${data.core.user_results.result.core.screen_name}`,
+    followers: data.core.user_results.result.legacy.followers_count,
+    following: data.core.user_results.result.legacy.friends_count,
+    profilePicture: data.core.user_results.result.avatar.image_url
+  }
+
+  if (creatorData_twitter) {
+    await Creator.updateOne(
+      { creatorAddress: walletID },
+      { $unset: { twitterData: "" } }
+    );
+
+    const creatorUpdateData = {
+      $set: { twitterData: creatorData_twitter }
     };
 
-    const statsResponse = await axios.request(twitterStatsOptions);
-    const tweetData = statsResponse.data?.tweets?.[0];
-
-    if (!tweetData) throw new Error("Tweet data not found");
-
-    await Quest.updateOne(
+    const updatedCreator = await Creator.findOneAndUpdate(
+      { creatorAddress: walletID },
+      creatorUpdateData,
       {
-        _id: questID,
-        submissions: {
-          $elemMatch: {
-            submittedByAddress: walletID,
-            videoLink: contentUrl
-          }
-        }
-      },
-      {
-        $set: {
-          "submissions.$.twitterData": tweetData
-        }
+        upsert: true,
+        new: true,
       }
     );
 
+    // Update submission data
+
+    const submissionData_twitter = {
+      retweetCount: data.legacy.retweet_count,
+      replyCount: data.legacy.reply_count,
+      likeCount: data.legacy.favorite_count,
+      quoteCount: data.legacy.quote_count,
+      viewCount: data.views.count,
+      createdAt: new Date(data.legacy.created_at),
+      bookmarkCount: data.legacy.bookmark_count,
+      author: creatorData_twitter
+    }
+
+    console.log('submissionData_twitter ', submissionData_twitter)
+    const updatedQuest = await Quest.findByIdAndUpdate(
+      questID,
+      {
+        $push: {
+          submissions: {
+            submittedByAddress: walletID,
+            socialPlatformName: 'twitter',
+            videoLink: contentUrl,
+            submittedAtTime: new Date(),
+            socialStatsLastUpdated: new Date(),
+            twitterData: submissionData_twitter
+          }
+        }
+      },
+      { new: true }
+    )
+
+    return updatedQuest
 
 
-  } catch (error) {
-    throw error
   }
-
 }
+
 async function pullTikTokData(videoUrl, walletID, questID) {
   const headers = {
     'Accept-Language': 'en-US,en;q=0.9',
