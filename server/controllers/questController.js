@@ -114,7 +114,7 @@ export const handleQuestCreation = async (req, res) => {
       if (platformKey) {
         socialPlatformsAllowed[platformKey] = {
           allowedOnCampaign: req.enabled || false,
-          minFollowers:  req.enabled ? (req.minFollowers ? parseInt(req.minFollowers) : 0) : 0
+          minFollowers: req.enabled ? (req.minFollowers ? parseInt(req.minFollowers) : 0) : 0
         };
       }
     });
@@ -268,7 +268,7 @@ export const submitQuestByCreator = async (req, res) => {
         });
       }
 
-            // Get the username from the applicant's data
+      // Get the username from the applicant's data
       applicantUsername = applicant[applicant.platform]?.userName
 
       if (!applicantUsername) {
@@ -291,7 +291,15 @@ export const submitQuestByCreator = async (req, res) => {
       updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
     }
     if (req.body.platform.toLowerCase() === 'tiktok') {
-      await pullTikTokData(contentUrl, walletID, questID)
+
+      if (quest.approvalNeeded) {
+        let tiktokUsername = extractTikTokUsername(req.body.contentUrl)
+        if (tiktokUsername != applicantUsername) {
+          throw new Error('This social media profile does not match with the one that was approved! Please use the same profile.')
+
+        }
+      }
+      await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
     }
 
     return res.status(200).json({ updatedQuest })
@@ -314,21 +322,6 @@ function extractTwitterUsername(url) {
     // return null;
   }
 }
-function extractTweetId(url) {
-  try {
-    const urlObj = new URL(url);
-    const validHosts = ['twitter.com', 'www.twitter.com', 'x.com', 'www.x.com'];
-    if (!validHosts.includes(urlObj.hostname)) {
-      return null;
-    }
-
-    const match = urlObj.pathname.match(/status\/(\d+)/);
-    return match ? match[1] : null;
-  } catch (err) {
-    console.error("Invalid URL format:", url);
-    return null;
-  }
-}
 
 async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn) {
 
@@ -341,15 +334,15 @@ async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn)
     }
   )
 
-  if(!data) throw new Error('Could not fetch data')
+  if (!data) throw new Error('Could not fetch data')
 
   // Verify the video post was not created before the quest began
   let postMadeOn = new Date(data.legacy.created_at)
-  if(postMadeOn < questCreatedOn){
+  if (postMadeOn < questCreatedOn) {
     throw new Error('This post appears to be old! Please submit a recent post')
   }
 
-  
+
   // Check if the tweet contains a video
   const hasVideo = data.legacy.entities?.media?.some(media => media.type === 'video');
   if (!hasVideo) {
@@ -440,91 +433,77 @@ async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn)
 
   }
 }
+async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) {
 
-async function pullTikTokData(videoUrl, walletID, questID) {
-  const headers = {
-    'Accept-Language': 'en-US,en;q=0.9',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
-  };
+let tiktokUsername = extractTikTokUsername(contentUrl)
 
-  try {
-    const response = await axios.get(videoUrl, { headers });
-
-    if (response.status !== 200) {
-      throw new Error(`Request blocked for ${videoUrl}`);
+  const { data } = await axios.get(
+  `https://api.scrapecreators.com/v2/tiktok/video?url=${contentUrl}`,
+  {
+    headers: {
+      'x-api-key': process.env.SCRAPECREATOR_API_KEY
     }
+  }
+);
 
-    const $ = cheerio.load(response.data);
-    const scriptTag = $('#__UNIVERSAL_DATA_FOR_REHYDRATION__').html();
 
-    if (!scriptTag) {
-      throw new Error(`No data script tag found for ${videoUrl}`);
+const { data: profileData } = await axios.get(
+  `https://api.scrapecreators.com/v1/tiktok/profile?handle=${tiktokUsername}`,
+  {
+    headers: {
+      'x-api-key': process.env.SCRAPECREATOR_API_KEY
     }
+  }
+);
 
-    const rawJson = JSON.parse(scriptTag);
-    const videoData = rawJson.__DEFAULT_SCOPE__?.['webapp.video-detail']?.itemInfo?.itemStruct;
 
-    if (!videoData) {
-      throw new Error(`Video info not found in JSON for ${videoUrl}`);
+  if (!data) throw new Error('Could not fetch data')
+  if (!profileData) throw new Error('Could not fetch profile data')
+  
+
+  // Verify the video post was not created before the quest began
+  let unixTimestamp = data.aweme_detail.create_time
+  let postMadeOn = new Date(unixTimestamp * 1000); 
+  if (postMadeOn < questCreatedOn) {
+    throw new Error('This post appears to be old! Please submit a recent post')
+  }
+
+
+  const updatedCreator = await Creator.findOneAndUpdate(
+    { creatorAddress: walletID },
+    {
+      $push: {
+        questsDone: {
+          questID: questID,
+          platformPosted: 'tiktok',
+          videoUrl: contentUrl,
+          submittedOn: new Date()
+        }
+      }
+    },
+    {
+      upsert: true,
+      new: true,
     }
-
-    const videoInfo = {
-      id: videoData.id,
-      desc: videoData.desc,
-      createTime: videoData.createTime,
-      author: videoData.author?.uniqueId,
-      stats: videoData.stats,
-      videoUrl: videoData.video?.playAddr,
-    };
+  );
 
 
+  let creatorData_tiktok = {
+    name: data.aweme_detail.author.nickname,
+    userName: data.aweme_detail.author.unique_id,
+    followers: profileData.statsV2.followerCount,
+    following: profileData.statsV2.followingCount,
+    profilePicture: data.aweme_detail.author.avatar_thumb.uri
+  }
 
-    // First, unset the field
-
-    // Map TikTok data from API to your schema
-    const tiktokData_author = {
-      id: videoData.author?.id,
-      uniqueId: videoData.author?.uniqueId,
-      nickname: videoData.author?.nickname,
-      avatarThumb: videoData.author?.avatarThumb,
-      createTime: videoData.createTime
-        ? new Date(parseInt(videoData.createTime) * 1000)
-        : undefined,
-      verified: videoData.author?.verified,
-      followerCount: videoData.authorStatsV2?.followerCount,
-      followingCount: videoData.authorStatsV2?.followingCount,
-      heartCount: videoData.authorStatsV2?.heartCount,
-      videoCount: videoData.authorStatsV2?.videoCount,
-      diggCount: videoData.authorStatsV2?.diggCount,
-      friendCount: videoData.authorStatsV2?.friendCount,
-    };
-
-    const tiktokData = {
-      id: videoData?.id,
-      createTime: videoData?.createTime
-        ? new Date(parseInt(videoData.createTime) * 1000)
-        : undefined,
-      author: tiktokData_author,
-      diggCount: videoData?.statsV2?.diggCount,
-      shareCount: videoData?.statsV2?.shareCount,
-      commentCount: videoData?.statsV2?.commentCount,
-      playCount: videoData?.statsV2?.playCount,
-      collectCount: videoData?.statsV2?.collectCount,
-      repostCount: videoData?.statsV2?.repostCount,
-      locationCreated: videoData?.locationCreated || null // if present
-    }
-
-
-
+  if (creatorData_tiktok) {
     await Creator.updateOne(
       { creatorAddress: walletID },
       { $unset: { tiktokData: "" } }
     );
 
     const creatorUpdateData = {
-      $set: { tiktokData: tiktokData_author }
+      $set: { tiktokData: creatorData_tiktok }
     };
 
     const updatedCreator = await Creator.findOneAndUpdate(
@@ -536,27 +515,49 @@ async function pullTikTokData(videoUrl, walletID, questID) {
       }
     );
 
-    await Quest.updateOne(
+    // Update submission data
+
+    const submissionData_tiktok = {
+      replyCount: data.aweme_detail.statistics.comment_count,
+      likeCount: data.aweme_detail.statistics.digg_count,
+      viewCount: data.aweme_detail.statistics.play_count,
+      createdAt: postMadeOn,
+      bookmarkCount: data.aweme_detail.statistics.collect_count,
+      author: creatorData_tiktok
+    }
+
+
+    const updatedQuest = await Quest.findByIdAndUpdate(
+      questID,
       {
-        _id: questID,
-        submissions: {
-          $elemMatch: {
+        $push: {
+          submissions: {
             submittedByAddress: walletID,
-            videoLink: videoUrl
+            socialPlatformName: 'tiktok',
+            videoLink: contentUrl,
+            submittedAtTime: new Date(),
+            socialStatsLastUpdated: new Date(),
+            tiktokData: submissionData_tiktok
           }
         }
       },
-      {
-        $set: {
-          "submissions.$.tiktokData": tiktokData
-        }
-      }
-    );
+      { new: true }
+    )
 
-    return videoInfo;
-  } catch (error) {
-    console.error(chalk.red(`❌ Error scraping video ${videoUrl}: ${error.message}`));
-    return null;
+    return updatedQuest
+
+
+  }
+}
+
+
+function extractTikTokUsername(url) {
+  // Regular expression to match TikTok username
+  const usernameMatch = url.match(/tiktok\.com\/@([^/?]+)/);
+  
+  if (!usernameMatch || !usernameMatch[1]) {
+    throw new Error('Invalid TikTok URL: Could not extract username');
   }
 
+  return usernameMatch[1];
 }
