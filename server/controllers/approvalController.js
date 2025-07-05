@@ -57,10 +57,9 @@ async function applyAsInstagramCreator(questId, profile, res, minFollowers, user
 
     let IG_User = {
         userName: userData.username,
-        profileName: userData.bio_links[0].title,
+        name: userData.full_name,
         userId: userData.id,
-        profilePic: userData.profile_pic_url,
-        biography: userData.biography,
+        profilePicture: userData.profile_pic_url,
         following: userData.edge_follow.count,
         followers: userData.edge_followed_by.count
     }
@@ -78,15 +77,7 @@ async function applyAsInstagramCreator(questId, profile, res, minFollowers, user
                     userWalletAddress,
                     platform: 'instagram',
                     approved: false,
-                    instagram: {
-                        userName: userData.username,
-                        name: userData.bio_links[0]?.title || userData.full_name || '',
-                        userId: userData.id,
-                        profilePicture: userData.profile_pic_url,
-                        biography: userData.biography,
-                        following: userData.edge_follow?.count || 0,
-                        followers: userData.edge_followed_by?.count || 0
-                    }
+                    instagram: IG_User
                 }
             }
         },

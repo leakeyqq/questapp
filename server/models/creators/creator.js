@@ -94,6 +94,14 @@ const creatorSchema = new mongoose.Schema({
         videoCount: {type: Number, required: false},
         diggCount: {type: Number, required: false},
         friendCount: {type: Number, required: false}
+    },
+    instagramData: {
+        name: {type: String, required: false},
+        userName: {type: String, required: false},
+        profilePicture: {type: String, required: false},
+        createTime: {type: Date, required: false},
+        followers: {type: Number, required: false},
+        following: {type: Number, required: false},
     }
 }, {timestamps: true})
 

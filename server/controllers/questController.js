@@ -289,8 +289,7 @@ export const submitQuestByCreator = async (req, res) => {
       }
 
       updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
-    }
-    if (req.body.platform.toLowerCase() === 'tiktok') {
+    }else if (req.body.platform.toLowerCase() === 'tiktok') {
 
       if (quest.approvalNeeded) {
         let tiktokUsername = extractTikTokUsername(req.body.contentUrl)
@@ -300,6 +299,8 @@ export const submitQuestByCreator = async (req, res) => {
         }
       }
       await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
+    }else if(req.body.platform.toLowerCase() === 'instagram'){
+      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
     }
 
     return res.status(200).json({ updatedQuest })
@@ -549,6 +550,130 @@ const { data: profileData } = await axios.get(
 
   }
 }
+async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn) {
+
+// let tiktokUsername = extractTikTokUsername(contentUrl)
+let video_view_count
+
+const { data } = await axios.get(
+  `https://api.scrapecreators.com/v1/instagram/post?url=${contentUrl}`,
+  {
+    headers: {
+      'x-api-key': process.env.SCRAPECREATOR_API_KEY
+    }
+  }
+);
+
+  if (!data) throw new Error('Could not fetch data')
+
+
+  // Check for presence of video
+  if (!data.data.xdt_shortcode_media.is_video) {
+    // Check for video in the post
+    const hasVideo = data.data?.xdt_shortcode_media?.edge_sidecar_to_children?.edges?.some(
+      edge => edge.node.__typename === 'XDTGraphVideo'
+    );
+    if (!hasVideo) {
+      throw new Error('No video found in this Instagram post. Please submit a post containing a video.');
+    }
+
+        // Get view count from carousel video
+    const videoNode = data.data.xdt_shortcode_media.edge_sidecar_to_children.edges.find(edge => edge.node.__typename === 'XDTGraphVideo').node;
+    
+    video_view_count = videoNode.video_view_count
+  }else{
+    video_view_count = data.data.xdt_shortcode_media.video_play_count
+  }
+
+
+  // Verify the video post was not created before the quest began
+  let unixTimestamp = data.data.xdt_shortcode_media.taken_at_timestamp
+  let postMadeOn = new Date(unixTimestamp * 1000); 
+
+  if (postMadeOn < questCreatedOn) {
+    throw new Error('This post appears to be old! Please submit a recent post')
+  }
+
+
+  const updatedCreator = await Creator.findOneAndUpdate(
+    { creatorAddress: walletID },
+    {
+      $push: {
+        questsDone: {
+          questID: questID,
+          platformPosted: 'instagram',
+          videoUrl: contentUrl,
+          submittedOn: new Date()
+        }
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+
+
+  let creatorData_instagram = {
+    name: data.data.xdt_shortcode_media.owner.full_name,
+    userName: data.data.xdt_shortcode_media.owner.username,
+    followers: data.data.xdt_shortcode_media.owner.edge_followed_by.count,
+    profilePicture: data.data.xdt_shortcode_media.owner.profile_pic_url
+  }
+
+  if (creatorData_instagram) {
+    await Creator.updateOne(
+      { creatorAddress: walletID },
+      { $unset: { instagramData: "" } }
+    );
+
+    const creatorUpdateData = {
+      $set: { instagramData: creatorData_instagram }
+    };
+
+    const updatedCreator = await Creator.findOneAndUpdate(
+      { creatorAddress: walletID },
+      creatorUpdateData,
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    // Update submission data
+
+    const submissionData_instagram = {
+      replyCount: data.data.xdt_shortcode_media.edge_media_preview_comment.count,
+      likeCount: data.data.xdt_shortcode_media.edge_media_preview_like.count,
+      viewCount: video_view_count,
+      createdAt: postMadeOn,
+      author: creatorData_instagram
+    }
+
+
+    const updatedQuest = await Quest.findByIdAndUpdate(
+      questID,
+      {
+        $push: {
+          submissions: {
+            submittedByAddress: walletID,
+            socialPlatformName: 'instagram',
+            videoLink: contentUrl,
+            submittedAtTime: new Date(),
+            socialStatsLastUpdated: new Date(),
+            instagramData: submissionData_instagram
+          }
+        }
+      },
+      { new: true }
+    )
+
+    return updatedQuest
+
+
+  }
+}
+
 
 
 function extractTikTokUsername(url) {

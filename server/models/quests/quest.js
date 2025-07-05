@@ -206,6 +206,23 @@ const questSchema = new mongoose.Schema({
                 bookmarkCount: {type: Number, required: false},
                 repostCount: {type: Number, required: false},
                 locationCreated: {type: String, required: false}
+            },
+            instagramData: {
+                createdAt: {type: Date, required: false},
+                author: {
+                    id: {type: String, required: false},
+                    name: {type: String, required: false},
+                    userName: {type: String, required: false},
+                    profilePicture: {type: String, required: false},
+                    createTime: {type: Date, required: false},
+                    followers: {type: Number, required: false},
+                    following: {type: Number, required: false},
+                },
+                likeCount: {type: Number, required: false},
+                shareCount: {type: Number, required: false},
+                replyCount: {type: Number, required: false},
+                viewCount: {type: Number, required: false},
+                locationCreated: {type: String, required: false}
             }
         }
     ],
