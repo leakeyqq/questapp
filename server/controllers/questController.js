@@ -140,8 +140,8 @@ export const handleQuestCreation = async (req, res) => {
       approvalNeeded,
       socialPlatformsAllowed,
       visibleOnline: true,
-      // applicants: [],
-      // submissions: []
+      applicants: [],
+      submissions: []
     });
 
 
@@ -289,7 +289,7 @@ export const submitQuestByCreator = async (req, res) => {
       }
 
       updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
-    }else if (req.body.platform.toLowerCase() === 'tiktok') {
+    } else if (req.body.platform.toLowerCase() === 'tiktok') {
 
       if (quest.approvalNeeded) {
         let tiktokUsername = extractTikTokUsername(req.body.contentUrl)
@@ -299,8 +299,8 @@ export const submitQuestByCreator = async (req, res) => {
         }
       }
       await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
-    }else if(req.body.platform.toLowerCase() === 'instagram'){
-      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
+    } else if (req.body.platform.toLowerCase() === 'instagram') {
+      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, applicantUsername, quest.approvalNeeded)
     }
 
     return res.status(200).json({ updatedQuest })
@@ -411,7 +411,6 @@ async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn)
       author: creatorData_twitter
     }
 
-    console.log('submissionData_twitter ', submissionData_twitter)
     const updatedQuest = await Quest.findByIdAndUpdate(
       questID,
       {
@@ -436,35 +435,35 @@ async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn)
 }
 async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) {
 
-let tiktokUsername = extractTikTokUsername(contentUrl)
+  let tiktokUsername = extractTikTokUsername(contentUrl)
 
   const { data } = await axios.get(
-  `https://api.scrapecreators.com/v2/tiktok/video?url=${contentUrl}`,
-  {
-    headers: {
-      'x-api-key': process.env.SCRAPECREATOR_API_KEY
+    `https://api.scrapecreators.com/v2/tiktok/video?url=${contentUrl}`,
+    {
+      headers: {
+        'x-api-key': process.env.SCRAPECREATOR_API_KEY
+      }
     }
-  }
-);
+  );
 
 
-const { data: profileData } = await axios.get(
-  `https://api.scrapecreators.com/v1/tiktok/profile?handle=${tiktokUsername}`,
-  {
-    headers: {
-      'x-api-key': process.env.SCRAPECREATOR_API_KEY
+  const { data: profileData } = await axios.get(
+    `https://api.scrapecreators.com/v1/tiktok/profile?handle=${tiktokUsername}`,
+    {
+      headers: {
+        'x-api-key': process.env.SCRAPECREATOR_API_KEY
+      }
     }
-  }
-);
+  );
 
 
   if (!data) throw new Error('Could not fetch data')
   if (!profileData) throw new Error('Could not fetch profile data')
-  
+
 
   // Verify the video post was not created before the quest began
   let unixTimestamp = data.aweme_detail.create_time
-  let postMadeOn = new Date(unixTimestamp * 1000); 
+  let postMadeOn = new Date(unixTimestamp * 1000);
   if (postMadeOn < questCreatedOn) {
     throw new Error('This post appears to be old! Please submit a recent post')
   }
@@ -550,22 +549,26 @@ const { data: profileData } = await axios.get(
 
   }
 }
-async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn) {
+async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn, applicantUsername, approvalNeeded) {
 
-// let tiktokUsername = extractTikTokUsername(contentUrl)
-let video_view_count
+  let video_view_count
 
-const { data } = await axios.get(
-  `https://api.scrapecreators.com/v1/instagram/post?url=${contentUrl}`,
-  {
-    headers: {
-      'x-api-key': process.env.SCRAPECREATOR_API_KEY
+  const { data } = await axios.get(
+    `https://api.scrapecreators.com/v1/instagram/post?url=${contentUrl}`,
+    {
+      headers: {
+        'x-api-key': process.env.SCRAPECREATOR_API_KEY
+      }
     }
-  }
-);
+  );
 
   if (!data) throw new Error('Could not fetch data')
 
+  if (approvalNeeded) {
+    if (data.data.xdt_shortcode_media.owner.username != applicantUsername) {
+      throw new Error('This social media profile does not match with the one that was approved! Please use the same profile.')
+    }
+  }
 
   // Check for presence of video
   if (!data.data.xdt_shortcode_media.is_video) {
@@ -577,18 +580,18 @@ const { data } = await axios.get(
       throw new Error('No video found in this Instagram post. Please submit a post containing a video.');
     }
 
-        // Get view count from carousel video
+    // Get view count from carousel video
     const videoNode = data.data.xdt_shortcode_media.edge_sidecar_to_children.edges.find(edge => edge.node.__typename === 'XDTGraphVideo').node;
-    
+
     video_view_count = videoNode.video_view_count
-  }else{
+  } else {
     video_view_count = data.data.xdt_shortcode_media.video_play_count
   }
 
 
   // Verify the video post was not created before the quest began
   let unixTimestamp = data.data.xdt_shortcode_media.taken_at_timestamp
-  let postMadeOn = new Date(unixTimestamp * 1000); 
+  let postMadeOn = new Date(unixTimestamp * 1000);
 
   if (postMadeOn < questCreatedOn) {
     throw new Error('This post appears to be old! Please submit a recent post')
@@ -641,7 +644,6 @@ const { data } = await axios.get(
     );
 
     // Update submission data
-
     const submissionData_instagram = {
       replyCount: data.data.xdt_shortcode_media.edge_media_preview_comment.count,
       likeCount: data.data.xdt_shortcode_media.edge_media_preview_like.count,
@@ -679,7 +681,7 @@ const { data } = await axios.get(
 function extractTikTokUsername(url) {
   // Regular expression to match TikTok username
   const usernameMatch = url.match(/tiktok\.com\/@([^/?]+)/);
-  
+
   if (!usernameMatch || !usernameMatch[1]) {
     throw new Error('Invalid TikTok URL: Could not extract username');
   }
