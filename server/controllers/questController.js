@@ -325,7 +325,7 @@ function extractTwitterUsername(url) {
 }
 
 async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn) {
-
+  validateTwitterUrl(contentUrl)
   const { data } = await axios.get(
     `https://api.scrapecreators.com/v1/twitter/tweet?url=${contentUrl}`,
     {
@@ -687,4 +687,32 @@ function extractTikTokUsername(url) {
   }
 
   return usernameMatch[1];
+}
+function validateTwitterUrl(url) {
+  // Basic URL validation
+  if (!url || typeof url !== 'string') {
+    throw new Error('Invalid input: URL must be a string');
+  }
+
+  // Standard Twitter/X URL patterns
+  const twitterUrlPatterns = [
+    /^https?:\/\/(www\.)?x\.com\/[a-zA-Z0-9_]+\/status\/\d+/i,       // New X.com format
+    /^https?:\/\/(www\.)?twitter\.com\/[a-zA-Z0-9_]+\/status\/\d+/i,  // Legacy Twitter format
+    /^https?:\/\/(www\.)?x\.com\/i\/web\/status\/\d+/i,               // Mobile share format
+  ];
+
+  // Check if URL matches any valid pattern
+  const isValid = twitterUrlPatterns.some(pattern => pattern.test(url));
+
+  if (!isValid) {
+    throw new Error('We detected that the link you submitted is not a valid X URL.')
+    // throw new Error(
+    //   'Invalid Twitter/X URL. Expected formats:\n' +
+    //   '- https://x.com/username/status/123456789\n' +
+    //   '- https://twitter.com/username/status/123456789\n' +
+    //   '- https://x.com/i/web/status/123456789'
+    // );
+  }
+
+  return true;
 }

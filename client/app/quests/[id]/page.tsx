@@ -101,56 +101,46 @@ interface Submission {
   rewarded?: boolean
   rewardAmountUsd?: string
   submissionRead?: boolean
-  rewardedAtTime?: Date,
+  rewardedAtTime?: Date
+  socialStatsLastUpdated?: Date
   twitterData?: {
-    id?: string
-    text?: string
-    retweetCount?: number
     replyCount?: number
     likeCount?: number
-    quoteCount?: number
     viewCount?: number
     createdAt?: Date
-    lang?: string
-    bookmarkCount?: number
-    statsLastUpdated?: Date,
+    statsLastUpdated?: Date
     author?: {
       userName?: string
-      id?: string
       name?: string
-      isVerified?: boolean
-      isBlueVerified?: boolean
       profilePicture?: string
-      location?: string
       followers?: number
-      following?: number
     }
   }
   tiktokData?: {
-    id?: string
-    createTime?: Date
-    author?: {
-      id?: string
-      uniqueId?: string
-      nickname?: string
-      avatarThumb?: string
-      createTime?: Date
-      verified?: boolean
-      followerCount?: number
-      followingCount?: number
-      heartCount?: number
-      videoCount?: number
-      diggCount?: number
-      friendCount?: number
-    }
-    diggCount?: number
-    shareCount?: number
-    commentCount?: number
-    playCount?: number
-    collectCount?: number
-    repostCount?: number
-    locationCreated?: string
+    replyCount?: number
+    likeCount?: number
+    viewCount?: number
+    createdAt?: Date
     statsLastUpdated?: Date
+    author?: {
+      userName?: string
+      name?: string
+      profilePicture?: string
+      followers?: number
+    }
+  }
+  instagramData?: {
+    replyCount?: number
+    likeCount?: number
+    viewCount?: number
+    createdAt?: Date
+    statsLastUpdated?: Date
+    author?: {
+      userName?: string
+      name?: string
+      profilePicture?: string
+      followers?: number
+    }
   }
 }
 interface Applicant {
@@ -246,50 +236,64 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
               username: submission.twitterData.author.userName || "",
               profilePic: submission.twitterData.author.profilePicture || "",
               followers: submission.twitterData.author.followers || 0,
-              following: submission.twitterData.author.following || 0,
-              verified: submission.twitterData.author.isVerified || submission.twitterData.author.isBlueVerified || false,
               platform: "Twitter",
             }
           }
 
         if (submission.tiktokData?.author) {
           return {
-            name: submission.tiktokData.author.nickname || submission.tiktokData.author.uniqueId || "Unknown",
-            username: submission.tiktokData.author.uniqueId || "",
-            profilePic: submission.tiktokData.author.avatarThumb || "",
-            followers: submission.tiktokData.author.followerCount || 0,
-            following: submission.tiktokData.author.followingCount || 0,
-            verified: submission.tiktokData.author.verified || false,
+            name: submission.tiktokData.author.name || "Unknown",
+            username: submission.tiktokData.author.userName || "",
+            profilePic: submission.tiktokData.author.profilePicture || "",
+            followers: submission.tiktokData.author.followers || 0,
             platform: "TikTok",
           }
     }
+
+        if (submission.instagramData?.author) {
+          return {
+            name: submission.instagramData.author.name || "Unknown",
+            username: submission.instagramData.author.userName || "",
+            profilePic: submission.instagramData.author.profilePicture || "",
+            followers: submission.instagramData.author.followers || 0,
+            platform: "Instagram",
+          }
+    }
+    
 
     return null
         }
 
         // Helper function to get video metrics
       const getVideoMetrics = (submission: Submission) => {
+        // console.log('Full submission object:', JSON.stringify(submission, null, 2));
         if (submission.twitterData) {
           return {
             views: submission.twitterData.viewCount || 0,
             likes: submission.twitterData.likeCount || 0,
             comments: submission.twitterData.replyCount || 0,
             platform: "Twitter",
-            lastUpdated: submission.twitterData.statsLastUpdated || new Date()
+            lastUpdated: submission.socialStatsLastUpdated || submission.twitterData.statsLastUpdated || new Date()
           }
-        }
-
-        if (submission.tiktokData) {
+        }else if (submission.tiktokData) {
           return {
-            views: submission.tiktokData.playCount || 0,
-            likes: submission.tiktokData.diggCount || 0,
-            comments: submission.tiktokData.commentCount || 0,
+            views: submission.tiktokData.viewCount || 0,
+            likes: submission.tiktokData.likeCount || 0,
+            comments: submission.tiktokData.replyCount || 0,
             platform: "TikTok",
-            lastUpdated: submission.tiktokData.statsLastUpdated || new Date()
+            lastUpdated: submission.socialStatsLastUpdated || submission.tiktokData.statsLastUpdated || new Date()
           }
+        }else if (submission.instagramData) {
+          return {
+            views: submission.instagramData.viewCount || 0,
+            likes: submission.instagramData.likeCount || 0,
+            comments: submission.instagramData.replyCount || 0,
+            platform: "Instagram",
+            lastUpdated: submission.socialStatsLastUpdated || submission.instagramData.statsLastUpdated || new Date()
+          }
+        }else{
+          return null
         }
-
-        return null
       }
 
     
@@ -455,18 +459,20 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                   return (
                     <div key={submission._id} className="bg-white rounded-md p-3 border border-gray-100 shadow-sm">
                         {/* Reward Banner */}
-  {submission.rewardAmountUsd && (
-    <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-      Reward: {submission.rewardAmountUsd} USD
-    </div>
-  )}
+                      {submission.rewardAmountUsd && (
+                        <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                          Reward: {submission.rewardAmountUsd} USD
+                        </div>
+                      )}
                       {/* Header: Profile + Buttons */}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-start gap-3">
                           {creatorData?.profilePic ? (
                             <img
-                              src={creatorData.profilePic || "/placeholder.svg"}
+                              // src={creatorData.profilePic || "/human-avatar.jpg"}
+                              src={"/human-avatar.jpg"}
                               alt={creatorData.name}
+                              referrerPolicy="no-referrer"
                               className="w-10 h-10 rounded-full object-cover border"
                             />
                           ) : (
@@ -478,12 +484,6 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                           <div className="text-sm">
                             <div className="flex items-center gap-1 font-semibold text-brand-dark text-base">
                               {creatorData?.name || shortenAddress(submission.submittedByAddress)}
-                              {creatorData?.verified && (
-                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                              )}
                             </div>
                             {creatorData?.username && (
                               <p className="text-gray-600 text-xs">@{creatorData.username}</p>
@@ -527,7 +527,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
 
 
                       {/* Video Metrics */}
-                      {videoMetrics && submission.socialPlatformName?.toLowerCase() === 'twitter' && (
+                      {videoMetrics && (
                         <div className="bg-brand-light p-2 rounded-md mb-2">
                           <div className="grid grid-cols-3 gap-2 text-center text-xs">
                             <div>
