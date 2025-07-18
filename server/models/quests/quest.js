@@ -154,6 +154,10 @@ const questSchema = new mongoose.Schema({
                 type: Date,
                 required: false
             },
+            rejected: {
+                type: Boolean,
+                required: false
+            },
             twitterData: {
                 id: {type: String, required: false},
                 text: {type: String, required: false},

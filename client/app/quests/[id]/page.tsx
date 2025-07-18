@@ -414,7 +414,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
                   {quest.approvalNeeded ? (
-                  <p className="text-gray-700 mb-4">All content creators will be rewarded with {quest.pricePerVideo}<CurrencyDisplay/> each.
+                  <p className="text-gray-700 mb-4">All participating content creators will be rewarded with {quest.pricePerVideo}<CurrencyDisplay/> each.
                    {/* Only  {quest.videosToBeAwarded} slots left now. */}
                    </p>
 

@@ -313,18 +313,23 @@ export const submitQuestByCreator = async (req, res) => {
 }
 
 
-function extractTwitterUsername(url) {
-  try {
-    const cleanedUrl = url.split('?')[0]; // Remove query parameters
-    const match = cleanedUrl.match(/x\.com\/([^/]+)\/status/);
-    return match ? match[1] : null;
-  } catch {
-    throw new Error('Could not extract Twitter username!')
-    // return null;
+function cleanTwitterUrl(url) {
+  if (!url) return null;
+  
+  // Remove everything after the '?' including the '?'
+  const cleanUrl = url.split('?')[0];
+  
+  // Validate the URL structure
+  if (!cleanUrl.match(/^(https?:\/\/)(x\.com|twitter\.com)\/[^/]+\/status\/\d+$/i)) {
+    throw new Error('Not sure this is an X post')
+    // return null; // or throw an error if you prefer
   }
+  
+  return cleanUrl;
 }
 
-async function pullTwitterData_v2(walletID, contentUrl, questID, questCreatedOn) {
+async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCreatedOn) {
+  let contentUrl = cleanTwitterUrl(unclean_contentUrl)
   validateTwitterUrl(contentUrl)
   const { data } = await axios.get(
     `https://api.scrapecreators.com/v1/twitter/tweet?url=${contentUrl}`,
@@ -677,7 +682,16 @@ async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedO
 }
 
 
-
+function extractTwitterUsername(url) {
+  try {
+    const cleanedUrl = url.split('?')[0]; // Remove query parameters
+    const match = cleanedUrl.match(/x\.com\/([^/]+)\/status/);
+    return match ? match[1] : null;
+  } catch {
+    throw new Error('Could not extract Twitter username!')
+    // return null;
+  }
+}
 function extractTikTokUsername(url) {
   // Regular expression to match TikTok username
   const usernameMatch = url.match(/tiktok\.com\/@([^/?]+)/);
