@@ -28,6 +28,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
+              <img src="/panda-logo.png" alt="Logo" className="w-10 mr-3"/>
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
                 Questpanda
               </span>

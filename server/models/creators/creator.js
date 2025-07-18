@@ -52,6 +52,14 @@ const creatorSchema = new mongoose.Schema({
             required: false
         }
     }],
+    myApplications: [{
+        _id: false,
+        questId: {type: String, required: false},
+        approved: {type: Boolean, default: false},
+        submittedOn: {type: Date, required: false},
+        approvedOn: {type: Date, required: false}
+    }],
+
     twitterData: {
         id: {type: String,required: false},
         name: {type: String,required: false},
@@ -75,17 +83,25 @@ const creatorSchema = new mongoose.Schema({
     },
     tiktokData: {
         id: {type: String, required: false},
-        uniqueId: {type: String, required: false},
-        nickname: {type: String, required: false},
-        avatarThumb: {type: String, required: false},
+        name: {type: String, required: false},
+        userName: {type: String, required: false},
+        profilePicture: {type: String, required: false},
         createTime: {type: Date, required: false},
         verified: {type: Boolean, required: false},
-        followerCount: {type: Number, required: false},
-        followingCount: {type: Number, required: false},
+        followers: {type: Number, required: false},
+        following: {type: Number, required: false},
         heartCount: {type: Number, required: false},
         videoCount: {type: Number, required: false},
         diggCount: {type: Number, required: false},
         friendCount: {type: Number, required: false}
+    },
+    instagramData: {
+        name: {type: String, required: false},
+        userName: {type: String, required: false},
+        profilePicture: {type: String, required: false},
+        createTime: {type: Date, required: false},
+        followers: {type: Number, required: false},
+        following: {type: Number, required: false},
     }
 }, {timestamps: true})
 

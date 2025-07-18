@@ -12,6 +12,8 @@ import LinkifyText from '@/components/LinkifyText';
 import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
+import { cookies } from 'next/headers';
+
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
@@ -30,6 +32,18 @@ import {
 type PlatformIconProps = {
   platform?: string;
   className?: string;
+};
+
+
+type Platform = 'twitter' | 'tiktok' | 'instagram'; // Add other platforms as needed
+
+type SocialPlatformSettings = {
+  allowedOnCampaign: boolean;
+  minFollowers: number;
+};
+
+type SocialPlatformsAllowed = {
+  [P in Platform]?: SocialPlatformSettings;
 };
 
 export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) => {
@@ -87,57 +101,54 @@ interface Submission {
   rewarded?: boolean
   rewardAmountUsd?: string
   submissionRead?: boolean
-  rewardedAtTime?: Date,
+  rewardedAtTime?: Date
+  socialStatsLastUpdated?: Date
   twitterData?: {
-    id?: string
-    text?: string
-    retweetCount?: number
     replyCount?: number
     likeCount?: number
-    quoteCount?: number
     viewCount?: number
     createdAt?: Date
-    lang?: string
-    bookmarkCount?: number
-    statsLastUpdated?: Date,
+    statsLastUpdated?: Date
     author?: {
       userName?: string
-      id?: string
       name?: string
-      isVerified?: boolean
-      isBlueVerified?: boolean
       profilePicture?: string
-      location?: string
       followers?: number
-      following?: number
     }
   }
   tiktokData?: {
-    id?: string
-    createTime?: Date
-    author?: {
-      id?: string
-      uniqueId?: string
-      nickname?: string
-      avatarThumb?: string
-      createTime?: Date
-      verified?: boolean
-      followerCount?: number
-      followingCount?: number
-      heartCount?: number
-      videoCount?: number
-      diggCount?: number
-      friendCount?: number
-    }
-    diggCount?: number
-    shareCount?: number
-    commentCount?: number
-    playCount?: number
-    collectCount?: number
-    repostCount?: number
-    locationCreated?: string
+    replyCount?: number
+    likeCount?: number
+    viewCount?: number
+    createdAt?: Date
     statsLastUpdated?: Date
+    author?: {
+      userName?: string
+      name?: string
+      profilePicture?: string
+      followers?: number
+    }
   }
+  instagramData?: {
+    replyCount?: number
+    likeCount?: number
+    viewCount?: number
+    createdAt?: Date
+    statsLastUpdated?: Date
+    author?: {
+      userName?: string
+      name?: string
+      profilePicture?: string
+      followers?: number
+    }
+  }
+}
+interface Applicant {
+  userWalletAddress: string;
+  platform?: string;
+  approved: boolean;
+  rejected: boolean;
+  // Add other fields from your schema as needed
 }
   // const [allSubmissions, setAllSubmissions] = useState<Submission[]>([])
 
@@ -153,6 +164,26 @@ let allSubmissions: Submission[] = []
   // setAllSubmissions(quest.submissions)
   allSubmissions = quest.submissions
 
+  // console.log('address is ', address)
+  const cookieStore = await cookies();
+  const userWalletAddress = cookieStore.get('userWalletAddress')?.value; 
+  const isUserLoggedIn = Boolean(cookieStore.get('userWalletAddress')?.value);
+  // const userApplication = quest.applicants.find((a: Applicant)  => a.userWalletAddress === userWalletAddress);
+
+  const userApplication = quest.applicants?.find((a: Applicant) => a.userWalletAddress === userWalletAddress) || null;
+
+  const applicationStatus = quest.approvalNeeded 
+    ? !isUserLoggedIn 
+      ? 'notLoggedIn'
+      : userApplication?.approved
+        ? 'approved'
+      : userApplication?.rejected
+        ? 'rejected'
+      : userApplication
+        ? 'pending' // Has application but neither approved nor rejected
+        : 'notApplied'
+    : 'notApplied';
+
 
   const daysLeft = Math.ceil((new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
@@ -167,17 +198,35 @@ let allSubmissions: Submission[] = []
     return colors[category as keyof typeof colors] || "bg-brand-yellow text-brand-dark"
   }
 
-          // Helper function to format numbers
-        const formatNumber = (num?: number): string => {
-          if (!num) return "0"
-          if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + "M"
-          }
-          if (num >= 1000) {
-            return (num / 1000).toFixed(1) + "K"
-          }
-          return num.toString()
-        }
+
+const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
+  const platformKey = platform.toLowerCase();
+  
+    // Type-safe check with type assertion
+    if (isPlatform(platformKey)) {
+      return quest.socialPlatformsAllowed?.[platformKey]?.minFollowers || 0;
+    }
+    
+    // Fallback to legacy minFollowerCount
+    return quest.minFollowerCount || 0;
+  };
+
+  // Helper type guard
+  function isPlatform(key: string): key is Platform {
+    return ['twitter', 'tiktok', 'instagram'].includes(key);
+  }
+
+    // Helper function to format numbers
+  const formatNumber = (num?: number): string => {
+    if (!num) return "0"
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M"
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K"
+    }
+    return num.toString()
+  }
 
           // Helper function to get creator data
         const getCreatorData = (submission: Submission) => {
@@ -187,54 +236,67 @@ let allSubmissions: Submission[] = []
               username: submission.twitterData.author.userName || "",
               profilePic: submission.twitterData.author.profilePicture || "",
               followers: submission.twitterData.author.followers || 0,
-              following: submission.twitterData.author.following || 0,
-              verified: submission.twitterData.author.isVerified || submission.twitterData.author.isBlueVerified || false,
               platform: "Twitter",
             }
           }
 
         if (submission.tiktokData?.author) {
           return {
-            name: submission.tiktokData.author.nickname || submission.tiktokData.author.uniqueId || "Unknown",
-            username: submission.tiktokData.author.uniqueId || "",
-            profilePic: submission.tiktokData.author.avatarThumb || "",
-            followers: submission.tiktokData.author.followerCount || 0,
-            following: submission.tiktokData.author.followingCount || 0,
-            verified: submission.tiktokData.author.verified || false,
+            name: submission.tiktokData.author.name || "Unknown",
+            username: submission.tiktokData.author.userName || "",
+            profilePic: submission.tiktokData.author.profilePicture || "",
+            followers: submission.tiktokData.author.followers || 0,
             platform: "TikTok",
           }
     }
+
+        if (submission.instagramData?.author) {
+          return {
+            name: submission.instagramData.author.name || "Unknown",
+            username: submission.instagramData.author.userName || "",
+            profilePic: submission.instagramData.author.profilePicture || "",
+            followers: submission.instagramData.author.followers || 0,
+            platform: "Instagram",
+          }
+    }
+    
 
     return null
         }
 
         // Helper function to get video metrics
       const getVideoMetrics = (submission: Submission) => {
+        // console.log('Full submission object:', JSON.stringify(submission, null, 2));
         if (submission.twitterData) {
           return {
             views: submission.twitterData.viewCount || 0,
             likes: submission.twitterData.likeCount || 0,
             comments: submission.twitterData.replyCount || 0,
             platform: "Twitter",
-            lastUpdated: submission.twitterData.statsLastUpdated || new Date()
+            lastUpdated: submission.socialStatsLastUpdated || submission.twitterData.statsLastUpdated || new Date()
           }
-        }
-
-        if (submission.tiktokData) {
+        }else if (submission.tiktokData) {
           return {
-            views: submission.tiktokData.playCount || 0,
-            likes: submission.tiktokData.diggCount || 0,
-            comments: submission.tiktokData.commentCount || 0,
+            views: submission.tiktokData.viewCount || 0,
+            likes: submission.tiktokData.likeCount || 0,
+            comments: submission.tiktokData.replyCount || 0,
             platform: "TikTok",
-            lastUpdated: submission.tiktokData.statsLastUpdated || new Date()
+            lastUpdated: submission.socialStatsLastUpdated || submission.tiktokData.statsLastUpdated || new Date()
           }
+        }else if (submission.instagramData) {
+          return {
+            views: submission.instagramData.viewCount || 0,
+            likes: submission.instagramData.likeCount || 0,
+            comments: submission.instagramData.replyCount || 0,
+            platform: "Instagram",
+            lastUpdated: submission.socialStatsLastUpdated || submission.instagramData.statsLastUpdated || new Date()
+          }
+        }else{
+          return null
         }
-
-        return null
       }
 
     
-  // console.log('on page file, quest is ', quest)
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -260,20 +322,50 @@ let allSubmissions: Submission[] = []
           </Link>
         </div>
 
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6 shadow-lg">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <div className="absolute bottom-4 left-4">
-                <Badge className="bg-brand-purple text-white">Create video</Badge>
-                <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
-                <p className="text-white/80">by {quest.brandName}</p>
-              </div>
-            </div>
+
+
+    <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6 shadow-lg">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${quest.brandImageUrl})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+      
+      {/* Approval Needed Badge - Top Right */}
+      {quest.approvalNeeded && (
+        <div className="absolute top-4 left-4">
+          <Badge className="bg-brand-blue text-white">
+            Approval Needed
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white/20">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </span>
+          </Badge>
+        </div>
+      )}
+      
+      <div className="absolute bottom-4 left-4">
+        <Badge className="bg-brand-purple text-white">Create video</Badge>
+        <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
+        <p className="text-white/80">by {quest.brandName}</p>
+      </div>
+    </div>
 
             <Tabs defaultValue="details" className="mb-8">
               <TabsList className="bg-white border border-gray-200">
@@ -281,22 +373,65 @@ let allSubmissions: Submission[] = []
                 <TabsTrigger value="submissions">Submissions</TabsTrigger>
               </TabsList>
               <TabsContent value="details" className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md">
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Details</h2>
+                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest details</h2>
                 {/* <p className="text-gray-700 text-sm md:text-lg">{quest.description}</p> */}
                 <p className="text-gray-700 text-sm md:text-lg">
                   <LinkifyText text={quest.description} />
                 </p>
 
+              {/* Platform Requirements Section - Flex Wrap */}
+              <div className="mt-4">
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-brand-dark">Social requirement</h2>
+                <p className="text-sm md:text-lg text-gray-700 mt-1">
+                  You should meet <span className="font-bold">one</span> of these number of followers to participate.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(quest.socialPlatformsAllowed || {}).map(([platform, config]) => {
+                  const platformConfig = config as SocialPlatformSettings;
+                  const platformKey = platform as Platform;
+                  
+                  return platformConfig.allowedOnCampaign && (
+                    <div 
+                      key={platformKey} 
+                      className="flex items-center gap-2 p-2 pr-3 rounded-lg bg-brand-light/30 hover:bg-brand-light/40 transition-colors"
+                    >
+                      <SocialPlatformIcon platform={platformKey} className="w-5 h-5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm md:text-lg font-medium capitalize">{platformKey}</p>
+                        <p className="text-[0.80rem] text-gray-500 font-medium">
+                          {getMinFollowersForPlatform(quest, platformKey).toLocaleString()}+
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              </div>
+
                 <div className="mt-4">
                   <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
-                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} videos shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
+                  {quest.approvalNeeded ? (
+                  <p className="text-gray-700 mb-4">All participating content creators will be rewarded with {quest.pricePerVideo}<CurrencyDisplay/> each.
+                   {/* Only  {quest.videosToBeAwarded} slots left now. */}
+                   </p>
+
+                  ):(
+                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} content creators shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
+                  )}
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Reward</p>
                     <p className="text-xl font-bold text-brand-purple">{quest.pricePerVideo} <CurrencyDisplay/></p>
                   </div>
+
+
+                  
                   <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Deadline</p>
                     <p className="text-xl font-bold text-brand-dark">
@@ -308,10 +443,10 @@ let allSubmissions: Submission[] = []
                     <p className="text-gray-600 text-sm">Current participants</p>
                     <p className="text-xl font-bold text-brand-dark">{quest.submissions.length}</p>
                   </div>
-                  <div className="bg-brand-light p-4 rounded-lg text-center">
+                  {/* <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Min follower count</p>
                     <p className="text-xl font-bold text-brand-dark">{quest.minFollowerCount.toLocaleString()}</p>
-                  </div>
+                  </div> */}
                 </div>
               </TabsContent>
 
@@ -324,18 +459,20 @@ let allSubmissions: Submission[] = []
                   return (
                     <div key={submission._id} className="bg-white rounded-md p-3 border border-gray-100 shadow-sm">
                         {/* Reward Banner */}
-  {submission.rewardAmountUsd && (
-    <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-      Reward: {submission.rewardAmountUsd} USD
-    </div>
-  )}
+                      {submission.rewardAmountUsd && (
+                        <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                          Reward: {submission.rewardAmountUsd} USD
+                        </div>
+                      )}
                       {/* Header: Profile + Buttons */}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-start gap-3">
                           {creatorData?.profilePic ? (
                             <img
-                              src={creatorData.profilePic || "/placeholder.svg"}
+                              // src={creatorData.profilePic || "/human-avatar.jpg"}
+                              src={"/human-avatar.jpg"}
                               alt={creatorData.name}
+                              referrerPolicy="no-referrer"
                               className="w-10 h-10 rounded-full object-cover border"
                             />
                           ) : (
@@ -347,12 +484,6 @@ let allSubmissions: Submission[] = []
                           <div className="text-sm">
                             <div className="flex items-center gap-1 font-semibold text-brand-dark text-base">
                               {creatorData?.name || shortenAddress(submission.submittedByAddress)}
-                              {creatorData?.verified && (
-                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                              )}
                             </div>
                             {creatorData?.username && (
                               <p className="text-gray-600 text-xs">@{creatorData.username}</p>
@@ -396,7 +527,7 @@ let allSubmissions: Submission[] = []
 
 
                       {/* Video Metrics */}
-                      {videoMetrics && submission.socialPlatformName?.toLowerCase() === 'twitter' && (
+                      {videoMetrics && (
                         <div className="bg-brand-light p-2 rounded-md mb-2">
                           <div className="grid grid-cols-3 gap-2 text-center text-xs">
                             <div>
@@ -461,7 +592,7 @@ let allSubmissions: Submission[] = []
           <div>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-4 shadow-md">
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest Status</h2>
+                <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest status</h2>
 
                 <div className="space-y-4 mb-6">
                   {/* <div className="bg-brand-light p-4 rounded-lg">
@@ -488,7 +619,14 @@ let allSubmissions: Submission[] = []
                   </div>
                 </div>
 
-                <SubmissionForm questId={quest._id} />
+                {/* <SubmissionForm questId={quest._id} /> */}
+                <SubmissionForm 
+                  questId={quest._id} 
+                  approvalNeeded={quest.approvalNeeded} 
+                  minFollowers={quest.minFollowers}  
+                  allowedPlatforms={quest.socialPlatformsAllowed}  
+                  applicationStatus={applicationStatus}
+                  appliedPlatform={applicationStatus === 'approved' ? userApplication?.platform : undefined} />
               </div>
             </div>
           </div>

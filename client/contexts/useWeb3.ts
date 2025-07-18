@@ -126,7 +126,7 @@ const approveSpending = async (amount: string, tokenSymbol: string) => {
 
                     // Specific handling for nonce-related errors
                     if(error instanceof Error){
-                        if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') || error.message.includes('block is out of range')) {
+                        if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') || error.message.includes('block is out of range') || error.message.includes('insufficient funds')) {
                             
                             // Wait with exponential backoff
                             const delay = 1000 * attempt; // 1s, 2s, 3s, etc.
@@ -264,7 +264,7 @@ const createQuest = async (prizePool: string, tokenSymbol: string) => {
 
             // Specific handling for nonce-related errors
             if(error instanceof Error){
-                if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') ||  error.message.includes('insufficient allowance')) {
+                if (error.message.includes('nonce') || error.message.includes('replacement') || error.message.includes('underpriced') ||  error.message.includes('insufficient allowance') || error.message.includes('insufficient funds') || error.message.includes('block is out of range')) {
                     
                     // Wait with exponential backoff
                     const delay = 1000 * attempt; // 1s, 2s, 3s, etc.

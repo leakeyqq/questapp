@@ -111,6 +111,7 @@ export default function ConnectWalletButton() {
           );
           const data = await res.json();
           if (data.success) {
+            document.cookie = `userWalletAddress=${address}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict}`;
             console.log("Login successful:", data);
           } else {
             console.log("Login failed:", data);
@@ -129,16 +130,6 @@ export default function ConnectWalletButton() {
     }
   }, [isConnected, address]);
 
-  // if (!mounted || hideButton) {
-  //   return (
-  //     <div className="flex justify-center items-center h-12">
-  //       <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-  //     </div>
-  //   );
-  // }
-
-  // // 🙈 Hide if MiniPay auto-connected
-  // if (hideButton) return null;
 
   if (!mounted || isMiniApp === null) {
   return null;
@@ -182,15 +173,19 @@ export default function ConnectWalletButton() {
         </button>
       )}
 
-      {/* 🔌 Disconnect Button */}
-      {isConnected && (
-        <button
-          onClick={() => disconnect()}
-          className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
-        >
-          Log Out
-        </button>
-      )}
+
+{isConnected && (
+  <button
+    onClick={() => {
+      disconnect(); 
+      // Clear the cookie
+      document.cookie = 'userWalletAddress=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }}
+    className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
+  >
+    Log Out
+  </button>
+)}
     </div>
   );
 }
