@@ -79,9 +79,14 @@ export default function DashboardPage() {
     const[totalWithdrawn, setTotalWithdrawn] = useState('0')
     const[totalBalance, setTotalBalance ] = useState('0')
     const [walletBalance, setWalletBalance] = useState(0)
+  
     
     const {checkCUSDBalance, isWalletReady } = useWeb3();
-    
+
+    // Add to your existing state declarations
+    const [isVerified, setIsVerified] = useState(false);
+    const [country, setCountry] = useState<string | null>(null);
+        
 
     useEffect(() => {
       if(isConnected && address && isWalletReady){
@@ -121,7 +126,34 @@ export default function DashboardPage() {
     }, [isConnected, address, isWalletReady])
 
 
-  
+  // Add this useEffect hook to check verification status
+useEffect(() => {
+  const checkVerificationStatus = async () => {
+    if (!address) return;
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/verification/verificationStatus`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+          setIsVerified(data.user?.selfProtocol?.verified || false);
+          setCountry(data.user?.selfProtocol?.countryOfUser || null);
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+    }
+  };
+
+  checkVerificationStatus();
+}, [address]);
+
+
   return (
     <div>
       {loading ? (
@@ -151,6 +183,8 @@ export default function DashboardPage() {
               
             </CardContent>
           </Card>
+
+          
 
           <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader className="pb-2">
@@ -197,6 +231,137 @@ export default function DashboardPage() {
             </CardContent>
           </Card> */}
         </div>
+
+
+                {/* Verification Badge Section */}
+        <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 bg-brand-purple/10 rounded-full flex items-center justify-center">
+                  {/* <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-brand-purple"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg> */}
+
+          {isVerified ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-brand-teal"
+            >
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-brand-purple"
+            >
+              <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+              <circle cx="12" cy="10" r="2"></circle>
+              <line x1="8" y1="16" x2="16" y2="16"></line>
+              <line x1="12" y1="16" x2="12" y2="14"></line>
+            </svg>
+          )}
+                </div>
+              </div>
+
+              <div className="flex-1">
+                {/* <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-bold text-brand-dark">Get Verified</h3>
+                  <Badge variant="outline" className="border-brand-purple/30 text-brand-purple bg-brand-purple/5">
+                    Optional
+                  </Badge>
+                </div>
+                <p className="text-gray-600 mb-3">
+
+                  Verify your country of residence and get access to local quests/contests from your country.
+                </p> */}
+
+                        {isVerified ? (
+          <>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-xl font-bold text-brand-dark">Verified Creator</h3>
+              <Badge className="bg-brand-teal text-white">
+                Verified
+              </Badge>
+            </div>
+            {country && (
+              <p className="text-gray-600 mb-3">
+                Verified in {country}. You have access to local quests.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-xl font-bold text-brand-dark">Get Verified</h3>
+              <Badge variant="outline" className="border-brand-purple/30 text-brand-purple bg-brand-purple/5">
+                Optional
+              </Badge>
+            </div>
+            <p className="text-gray-600 mb-3">
+              Verify your country of residence and get access to local quests from your region.
+            </p>
+          </>
+        )}
+
+              </div>
+
+{ !isVerified && (
+  <div className="flex-shrink-0">
+    <Link href="/getVerified" passHref>
+    <Button className="bg-brand-purple hover:bg-brand-purple/90 text-white">
+      Start Verification
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="ml-2"
+      >
+        <path d="M7 7h10v10"></path>
+        <path d="M7 17 17 7"></path>
+      </svg>
+    </Button>
+    </Link>
+  </div>
+)}
+
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="completed" className="mb-8">
           <TabsList className="bg-white border border-gray-200">
