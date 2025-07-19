@@ -8,6 +8,16 @@ const userSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
             required: true
+        },
+        selfProtocol: {
+            verified: {
+                type: Boolean,
+                default: false
+            },
+            countryOfUser: {
+                type: String,
+                required: false
+            }
         }
     },{timestamps: true}
 )
