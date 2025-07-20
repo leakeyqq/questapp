@@ -1,5 +1,6 @@
 import Quest from "./../models/quests/quest.js"
 import Creator from "./../models/creators/creator.js"
+import SimulatedCreator from "../models/creators/simulated-creator.js"
 
 export const creatorProfile = async(req, res)=>{
     try{
@@ -35,4 +36,14 @@ export const creatorProfile = async(req, res)=>{
         return res.status(500).json({error: e})
     }
 
+}
+
+
+export const getSimulatedCreators = async(req, res)=>{
+    try {
+        const simulatedCreators = await SimulatedCreator.find().lean().exec()
+        return res.status(200).json({simulatedCreators})
+    } catch (error) {
+        return res.status(500).json({error})
+    }
 }
