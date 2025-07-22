@@ -196,64 +196,124 @@ useEffect(() => {
               <p className="text-gray-600 text-sm mt-1"><span className="font-bold">{quests.filter(quest => quest._submissionRewarded).length}</span> rewarded</p>
             </CardContent>
           </Card>
-
-          {/* <Card className="bg-white border-gray-200 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-brand-dark">Creator Level</CardTitle>
-              <CardDescription className="text-gray-600">Based on activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <div className="text-3xl font-bold text-brand-purple">Silver</div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-gray-400"
-                >
-                  <circle cx="12" cy="8" r="6"></circle>
-                  <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
-                </svg>
-              </div>
-              <div className="mt-2">
-                <div className="flex justify-between text-xs mb-1 text-gray-600">
-                  <span>Progress to Gold</span>
-                  <span>65%</span>
-                </div>
-                <Progress value={65} className="h-2 bg-gray-200" indicatorClassName="bg-brand-purple" />
-              </div>
-            </CardContent>
-          </Card> */}
         </div>
 
 
+
+
+
+<Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-6">
+  <CardContent className="p-4 sm:p-5">
+    <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+      {/* Icon Container */}
+      <div className="flex-shrink-0">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-brand-purple/10 rounded-full flex items-center justify-center">
+          {isVerified ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-brand-teal"
+            >
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-brand-purple"
+            >
+              <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+              <circle cx="12" cy="10" r="2"></circle>
+              <line x1="8" y1="16" x2="16" y2="16"></line>
+              <line x1="12" y1="16" x2="12" y2="14"></line>
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* Text Content */}
+      <div className="flex-1 space-y-1 sm:space-y-1.5">
+        {isVerified ? (
+          <>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h3 className="text-lg sm:text-xl font-semibold text-brand-dark">Verified Creator</h3>
+              <Badge className="bg-brand-teal text-white text-xs sm:text-sm py-0.5 px-2">
+                Verified
+              </Badge>
+            </div>
+            {country && (
+              <p className="text-sm text-gray-600">
+                Verified in {country}. You have access to regional quests.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h3 className="text-lg sm:text-xl font-semibold text-brand-dark">Get Verified</h3>
+              <Badge variant="outline" className="border-brand-purple/30 text-brand-purple bg-brand-purple/5 text-xs sm:text-sm py-0.5 px-2">
+                Optional
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-600">
+              Verify your country to access regional quests.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Button */}
+      {!isVerified && (
+        <div className="flex-shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+          <Link href="/getVerified" passHref>
+            <Button size="sm" className="bg-brand-purple hover:bg-brand-purple/90 text-white w-full sm:w-auto">
+              Start
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="ml-1.5"
+              >
+                <path d="M7 7h10v10"></path>
+                <path d="M7 17 17 7"></path>
+              </svg>
+            </Button>
+          </Link>
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
+
+
+
                 {/* Verification Badge Section */}
-        <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-8">
+        {/* <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-8">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-brand-purple/10 rounded-full flex items-center justify-center">
-                  {/* <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-brand-purple"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                  </svg> */}
-
           {isVerified ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -293,17 +353,6 @@ useEffect(() => {
               </div>
 
               <div className="flex-1">
-                {/* <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-xl font-bold text-brand-dark">Get Verified</h3>
-                  <Badge variant="outline" className="border-brand-purple/30 text-brand-purple bg-brand-purple/5">
-                    Optional
-                  </Badge>
-                </div>
-                <p className="text-gray-600 mb-3">
-
-                  Verify your country of residence and get access to local quests/contests from your country.
-                </p> */}
-
                         {isVerified ? (
           <>
             <div className="flex items-center gap-2 mb-2">
@@ -361,7 +410,7 @@ useEffect(() => {
 
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Tabs defaultValue="completed" className="mb-8">
           <TabsList className="bg-white border border-gray-200">
