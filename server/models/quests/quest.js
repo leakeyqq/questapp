@@ -87,6 +87,7 @@ const questSchema = new mongoose.Schema({
             isVerified: {type: Boolean, required: false},
             isBlueVerified: {type: Boolean, required: false},
             profilePicture: {type: String, required: false},
+            cloudinary_profilePicture: {type: String, required: false},
             location: {type: String, required: false},
             followers: {type: Number, required: false},
             following: {type: Number, required: false},
@@ -98,6 +99,7 @@ const questSchema = new mongoose.Schema({
             name: {type: String, required: false},
             userId: {type: String, required: false},
             profilePicture: {type: String, required: false},
+            cloudinary_profilePicture: {type: String, required: false},
             biography: {type: String, required: false},
             following: {type: Number, required: false},
             followers: {type: Number, required: false}
@@ -107,6 +109,7 @@ const questSchema = new mongoose.Schema({
             userName: {type: String, required: false},
             name: {type: String, required: false},
             profilePicture: {type: String, required: false},
+            cloudinary_profilePicture: {type: String, required: false},
             following: {type: Number, required: false},
             followers: {type: Number, required: false},
             createdAt: {type: String, required: false}
@@ -181,6 +184,7 @@ const questSchema = new mongoose.Schema({
                     isVerified: {type: Boolean, required: false},
                     isBlueVerified: {type: Boolean, required: false},
                     profilePicture: {type: String, required: false},
+                    cloudinary_profilePicture: {type: String, required: false},
                     location: {type: String, required: false},
                     followers: {type: Number, required: false},
                     following: {type: Number, required: false}
@@ -194,6 +198,7 @@ const questSchema = new mongoose.Schema({
                     name: {type: String, required: false},
                     userName: {type: String, required: false},
                     profilePicture: {type: String, required: false},
+                    cloudinary_profilePicture: {type: String, required: false},
                     createTime: {type: Date, required: false},
                     verified: {type: Boolean, required: false},
                     followers: {type: Number, required: false},
@@ -218,6 +223,7 @@ const questSchema = new mongoose.Schema({
                     name: {type: String, required: false},
                     userName: {type: String, required: false},
                     profilePicture: {type: String, required: false},
+                    cloudinary_profilePicture: {type: String, required: false},
                     createTime: {type: Date, required: false},
                     followers: {type: Number, required: false},
                     following: {type: Number, required: false},

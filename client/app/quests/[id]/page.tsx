@@ -112,7 +112,7 @@ interface Submission {
     author?: {
       userName?: string
       name?: string
-      profilePicture?: string
+      cloudinary_profilePicture?: string
       followers?: number
     }
   }
@@ -125,7 +125,7 @@ interface Submission {
     author?: {
       userName?: string
       name?: string
-      profilePicture?: string
+      cloudinary_profilePicture?: string
       followers?: number
     }
   }
@@ -138,7 +138,7 @@ interface Submission {
     author?: {
       userName?: string
       name?: string
-      profilePicture?: string
+      cloudinary_profilePicture?: string
       followers?: number
     }
   }
@@ -234,7 +234,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
             return {
               name: submission.twitterData.author.name || submission.twitterData.author.userName || "Unknown",
               username: submission.twitterData.author.userName || "",
-              profilePic: submission.twitterData.author.profilePicture || "",
+              profilePic: submission.twitterData.author.cloudinary_profilePicture || "",
               followers: submission.twitterData.author.followers || 0,
               platform: "Twitter",
             }
@@ -244,7 +244,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
           return {
             name: submission.tiktokData.author.name || "Unknown",
             username: submission.tiktokData.author.userName || "",
-            profilePic: submission.tiktokData.author.profilePicture || "",
+            profilePic: submission.tiktokData.author.cloudinary_profilePicture || "",
             followers: submission.tiktokData.author.followers || 0,
             platform: "TikTok",
           }
@@ -254,7 +254,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
           return {
             name: submission.instagramData.author.name || "Unknown",
             username: submission.instagramData.author.userName || "",
-            profilePic: submission.instagramData.author.profilePicture || "",
+            profilePic: submission.instagramData.author.cloudinary_profilePicture || "",
             followers: submission.instagramData.author.followers || 0,
             platform: "Instagram",
           }
@@ -469,8 +469,8 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                         <div className="flex items-start gap-3">
                           {creatorData?.profilePic ? (
                             <img
-                              // src={creatorData.profilePic || "/human-avatar.jpg"}
-                              src={"/human-avatar.jpg"}
+                              src={creatorData.profilePic || "/human-avatar.jpg"}
+                              // src={"/human-avatar.jpg"}
                               alt={creatorData.name}
                               referrerPolicy="no-referrer"
                               className="w-10 h-10 rounded-full object-cover border"
@@ -502,7 +502,8 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">
                         <span>{creatorData?.platform}</span>
 
-                        <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
+                      <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
+                         {/*
                         <a
                           href={submission.videoLink}
                           target="_blank"
@@ -520,14 +521,14 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                           className={`text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${
                             submission.rewardAmountUsd == '0' ? 'bg-brand-purple' : 'bg-brand-teal'}`}>
                           + {submission.rewardAmountUsd} USD
-                        </span>
+                        </span> */}
 
                       </div>
   
 
 
                       {/* Video Metrics */}
-                      {videoMetrics && (
+                      {/* {videoMetrics && (
                         <div className="bg-brand-light p-2 rounded-md mb-2">
                           <div className="grid grid-cols-3 gap-2 text-center text-xs">
                             <div>
@@ -562,10 +563,9 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                             </div>
                           </div>
                         </div>
-                      )}
+                      )} */}
 
-                      {/* No Metrics Message */}
-                      {!videoMetrics && !creatorData && (
+                      {/* {!videoMetrics && !creatorData && (
                         <div className="bg-gray-50 p-2 rounded-md text-center text-sm text-gray-600">
                           <svg
                             className="inline w-4 h-4 mr-1 text-gray-400"
@@ -579,7 +579,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                           </svg>
                           Social media metrics not available
                         </div>
-                      )}
+                      )} */}
                     </div>
                   )
                 })}

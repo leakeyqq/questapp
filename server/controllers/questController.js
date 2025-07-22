@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import chalk from 'chalk';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config()
 
@@ -220,21 +221,21 @@ export const submitQuestByCreator = async (req, res) => {
 
 
 
-    // if (userAlreadySubmitted) {
-    //   return res.status(400).json({
-    //     error: {
-    //       msg: "Oops..You cannot submit a single quest twice😪"
-    //     }
-    //   });
-    // }
+    if (userAlreadySubmitted) {
+      return res.status(400).json({
+        error: {
+          msg: "Oops..You cannot submit a single quest twice😪"
+        }
+      });
+    }
 
-    //   if (new Date(existingQuest.endsOn) < new Date()) {
-    //   return res.status(400).json({ 
-    //     error: { 
-    //       msg: "This quest has already ended" 
-    //     } 
-    //   });
-    // }
+      if (new Date(existingQuest.endsOn) < new Date()) {
+      return res.status(400).json({ 
+        error: { 
+          msg: "This quest has already ended" 
+        } 
+      });
+    }
 
     // Check if quest requires approval and user is approved
     if (quest.approvalNeeded) {
@@ -374,6 +375,9 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
     }
   );
 
+  console.log('raw photo ', data.core.user_results.result.avatar.image_url )
+  const displayPhoto = await processProfilePictureOnCloudy(data.core.user_results.result.avatar.image_url)
+  console.log('cloudy photo ', displayPhoto)
 
   let creatorData_twitter = {
     name: data.core.user_results.result.core.name,
@@ -381,7 +385,7 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
     url: `https://x.com/${data.core.user_results.result.core.screen_name}`,
     followers: data.core.user_results.result.legacy.followers_count,
     following: data.core.user_results.result.legacy.friends_count,
-    profilePicture: data.core.user_results.result.avatar.image_url
+    cloudinary_profilePicture: displayPhoto
   }
 
   if (creatorData_twitter) {
@@ -492,13 +496,16 @@ async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) 
     }
   );
 
+  console.log('raw photo ', data.aweme_detail.author.avatar_thumb.uri)
+   const displayPhoto = await processProfilePictureOnCloudy(profileData.user.avatarThumb)
+   console.log('final photo ', displayPhoto)
 
   let creatorData_tiktok = {
     name: data.aweme_detail.author.nickname,
     userName: data.aweme_detail.author.unique_id,
     followers: profileData.statsV2.followerCount,
     following: profileData.statsV2.followingCount,
-    profilePicture: data.aweme_detail.author.avatar_thumb.uri
+    cloudinary_profilePicture: displayPhoto
   }
 
   if (creatorData_tiktok) {
@@ -621,12 +628,14 @@ async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedO
     }
   );
 
+   const displayPhoto = await processProfilePictureOnCloudy(data.data.xdt_shortcode_media.owner.profile_pic_url)
+
 
   let creatorData_instagram = {
     name: data.data.xdt_shortcode_media.owner.full_name,
     userName: data.data.xdt_shortcode_media.owner.username,
     followers: data.data.xdt_shortcode_media.owner.edge_followed_by.count,
-    profilePicture: data.data.xdt_shortcode_media.owner.profile_pic_url
+    cloudinary_profilePicture: displayPhoto
   }
 
   if (creatorData_instagram) {
@@ -729,4 +738,46 @@ function validateTwitterUrl(url) {
   }
 
   return true;
+}
+
+
+async function processProfilePictureOnCloudy(imageUrl) {
+
+  // Configure Cloudinary
+  cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+  });
+
+  if (!imageUrl) return null;
+
+  try {
+    // Download the image
+    const response = await axios({
+      method: 'GET',
+      url: imageUrl,
+      responseType: 'arraybuffer'
+    });
+
+    // Convert to base64 for Cloudinary
+    const imageBase64 = Buffer.from(response.data, 'binary').toString('base64');
+    const dataUri = `data:${response.headers['content-type']};base64,${imageBase64}`;
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: 'creator_profile_pictures',
+      use_filename: true,
+      unique_filename: true,
+      quality: 'auto:good',
+      width: 300,
+      height: 300,
+      crop: 'fill'
+    });
+
+    return result.secure_url;
+  } catch (error) {
+    console.error(`Failed to process image ${imageUrl}:`, error);
+    return null;
+  }
 }
