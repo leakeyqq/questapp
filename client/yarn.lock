@@ -2239,7 +2239,7 @@
 
 "@solana/web3.js@^1.98.2":
   version "1.98.2"
-  resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.98.2.tgz#45167a5cfb64436944bf4dc1e8be8482bd6d4c14"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.98.2.tgz#45167a5cfb64436944bf4dc1e8be8482bd6d4c14"
   integrity sha512-BqVwEG+TaG2yCkBMbD3C4hdpustR4FpuUFRPUmqRZYYlPI9Hg4XMWxHWOWRzHE9Lkc9NDjzXFX7lDXSgzC7R1A==
   dependencies:
     "@babel/runtime" "^7.25.0"
@@ -2373,6 +2373,13 @@
     elliptic "^6.5.5"
     ethereum-cryptography "^2.2.0"
     json-stable-stringify "^1.1.1"
+
+"@toruslabs/openlogin-ed25519@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@toruslabs/openlogin-ed25519/-/openlogin-ed25519-8.1.0.tgz#02db909a65a18f50d4500d7a4e1910bdff4431d7"
+  integrity sha512-s36rFdrV8b99y7YlCbjaMaO+zbolzTLe2DKItUd0MhXJoJhcTMrgssM2yZRE+9sH3i2RocfbEmtwhVyfeQ2V9Q==
+  dependencies:
+    "@toruslabs/tweetnacl-js" "^1.0.4"
 
 "@toruslabs/secure-pub-sub@^1.1.0":
   version "1.1.0"
@@ -3305,6 +3312,20 @@
     "@web3auth/base-provider" "^9.7.0"
     deepmerge "^4.3.1"
 
+"@web3auth/solana-provider@^9.7.0":
+  version "9.7.0"
+  resolved "https://registry.yarnpkg.com/@web3auth/solana-provider/-/solana-provider-9.7.0.tgz#039309e5cc27ce574ecb200e63e768bf2c241a5f"
+  integrity sha512-IgWYwpR0sOQT1lRTSrLEiDhAONFA64ULf9L90Ui9j91K/252LweUXYN8EPMlQsA9BEgEZFwgntP2htndANCzaA==
+  dependencies:
+    "@toruslabs/base-controllers" "^7.2.1"
+    "@toruslabs/tweetnacl-js" "^1.0.4"
+    "@web3auth/auth" "^9.6.4"
+    "@web3auth/base" "^9.7.0"
+    "@web3auth/base-provider" "^9.7.0"
+    bn.js "^5.2.1"
+    bs58 "^5.0.0"
+    json-rpc-random-id "^1.0.1"
+
 "@web3auth/ui@^9.7.0":
   version "9.7.0"
   resolved "https://registry.npmjs.org/@web3auth/ui/-/ui-9.7.0.tgz#b8aac4c26432eeecf3350a957b6eea9e8a73f727"
@@ -3725,6 +3746,11 @@ base-x@^3.0.2:
   dependencies:
     safe-buffer "^5.0.1"
 
+base-x@^4.0.0:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/base-x/-/base-x-4.0.1.tgz#817fb7b57143c501f649805cb247617ad016a885"
+  integrity sha512-uAZ8x6r6S3aUM9rbHGVOIsR15U/ZSc82b3ymnCPsT45Gk1DDvhDPdIgB5MrhirZWt+5K0EEPQH985kNqZgNPFw==
+
 base-x@^5.0.0:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/base-x/-/base-x-5.0.1.tgz#16bf35254be1df8aca15e36b7c1dda74b2aa6b03"
@@ -3881,7 +3907,7 @@ browserslist@^4.24.0, browserslist@^4.24.4, browserslist@^4.25.0:
     node-releases "^2.0.19"
     update-browserslist-db "^1.1.3"
 
-bs58@6.0.0:
+bs58@6.0.0, bs58@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/bs58/-/bs58-6.0.0.tgz#a2cda0130558535dd281a2f8697df79caaf425d8"
   integrity sha512-PD0wEnEYg6ijszw/u8s+iI3H17cTymlrwkKhDhPZq+Sokl3AU4htyBFTjAeNAlCCmg0f53g6ih3jATyCKftTfw==
@@ -3894,6 +3920,13 @@ bs58@^4.0.0, bs58@^4.0.1:
   integrity sha512-Ok3Wdf5vOIlBrgCvTq96gBkJw+JUEzdBgyaza5HLtPm7yTHkjRy8+JzNyHF7BHa0bNWOQIp3m5YF0nnFcOIKLw==
   dependencies:
     base-x "^3.0.2"
+
+bs58@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/bs58/-/bs58-5.0.0.tgz#865575b4d13c09ea2a84622df6c8cbeb54ffc279"
+  integrity sha512-r+ihvQJvahgYT50JD05dyJNKlmmSlMoOGwn1lCcEzanPglg7TxYjioQUYehQ9mAR/+hOSd2jRc/Z2y5UxBymvQ==
+  dependencies:
+    base-x "^4.0.0"
 
 bs58check@^2.1.2:
   version "2.1.2"

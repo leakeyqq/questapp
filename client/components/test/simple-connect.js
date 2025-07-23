@@ -5,6 +5,9 @@ import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { useSearchParams } from 'next/navigation';
 import { sdk } from '@farcaster/frame-sdk';
+import { getSolanaPrivateKey } from "../../lib/getSolanaPrivateKey"; // adjust the path if needed
+import { getWeb3AuthInstance } from "../../lib/web3AuthConnector"
+
 
 let hasConnectedMiniPay = false;
 let hasConnectedFarcaster = false;
@@ -24,6 +27,7 @@ export default function ConnectWalletButton() {
   const searchParams = useSearchParams();
 
   const [isSigningIn, setIsSigningIn] = useState(false);
+const [solanaAddress, setSolanaAddress] = useState(null);
   
 
 
@@ -129,6 +133,46 @@ export default function ConnectWalletButton() {
       login();
     }
   }, [isConnected, address]);
+
+
+  // ✅ Separate useEffect to fetch Solana Address (after Web3Auth is ready)
+useEffect(() => {
+  const fetchSolanaAddress = async () => {
+    try {
+      const web3auth = getWeb3AuthInstance();
+
+      // 🔐 Wait until Web3Auth is connected
+      if (!web3auth.connected) {
+        console.warn("⏳ Waiting for Web3Auth to connect...");
+        await new Promise((resolve, reject) => {
+          const interval = setInterval(() => {
+            if (web3auth.connected && web3auth.provider) {
+              clearInterval(interval);
+              resolve(true);
+            }
+          }, 100);
+
+          // Optional: timeout after 5 seconds
+          setTimeout(() => {
+            clearInterval(interval);
+            reject("Web3Auth connection timeout");
+          }, 5000);
+        });
+      }
+
+      const solanaAddr = await getSolanaPrivateKey();
+      setSolanaAddress(solanaAddr);
+      console.log("✅ Leakey Solana Address:", solanaAddr);
+    } catch (err) {
+      console.error("❌ Failed to fetch Solana address:", err);
+    }
+  };
+
+  if (isConnected) {
+    fetchSolanaAddress();
+  }
+}, [isConnected]);
+
 
 
   if (!mounted || isMiniApp === null) {

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import StableTokenABI from "./cusd-abi.json";
 import QuestPandaABI from "./questpanda-abi.json"
 // import MinipayNFTABI from "./minipay-nft.json";
+import { getSolanaPrivateKey } from "../lib/getSolanaPrivateKey";
+
 import {
     createPublicClient,
     createWalletClient,
@@ -434,6 +436,15 @@ const sendCUSD = async (to: string, amount: string) => {
         throw e;
     }
 };
+const handleGetSolKey = async () => {
+  try {
+    const solPk = await getSolanaPrivateKey();
+    console.log("🔐 Solana Private Key:", solPk);
+    return solPk;
+  } catch (err) {
+    console.error("❌ Error retrieving Solana key", err);
+  }
+};
 // Add this to your existing useWeb3 hook
 const checkTokenBalances = async (): Promise<{
   cUSDBalance: string;
@@ -625,6 +636,7 @@ const prefillGas = async (gasEstimate: bigint) => {
         rewardCreator,
         isWalletReady,
         checkTokenBalances,
-        checkBalanceOfSingleAsset
+        checkBalanceOfSingleAsset,
+        handleGetSolKey
     };
 };
