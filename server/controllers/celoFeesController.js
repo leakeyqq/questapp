@@ -19,12 +19,9 @@ export const fundFeesOnWallet = async(req, res)=>{
 
 export const customFundFeesOnWallet = async(req, res) => {
       try {
-        console.log('custom fees')
         const beneficiary_address = req.userWalletAddress
         const amountInCelo = req.body.estimatedCostCELO
-        console.log('waiting for tx')
         const txHash = await customSendCelo(beneficiary_address, amountInCelo )
-        console.log('got tx for custom fees')
         return res.status(200).json({txHash})
     } catch (error) {
       console.log('error is ', error)
@@ -69,14 +66,14 @@ async function customSendCelo(toAddress, celoAmount){
     // Create wallet
     const wallet = new ethers.Wallet(process.env.CELO_FEES_KEY, provider);
     
-    console.log(`🟡 Sending 0.001 CELO from ${wallet.address} to ${toAddress}`);
+    console.log(`🟡 Sending ${Number(celoAmount)} CELO from ${wallet.address} to ${toAddress}`);
 
     const amountString = typeof celoAmount === 'number' ? celoAmount.toString() : String(celoAmount);
     
     while(attempt < MAX_RETRIES){
       try {
           console.log(`🟡 Attempt ${attempt + 1}: Sending ${amountString} CELO to ${toAddress}`);
-
+          
           // Send transaction (0.01 CELO)
           const tx = await wallet.sendTransaction({
             to: toAddress,
@@ -86,6 +83,13 @@ async function customSendCelo(toAddress, celoAmount){
           console.log("🟢 Transaction sent:", tx.hash);
           console.log(`🔗 Explorer: https://celoscan.io/tx/${tx.hash}`);
       
+          // Wait for confirmation (this is what you're missing)
+          console.log("⏳ Waiting for transaction confirmation...");
+          const receipt = await tx.wait(); // This waits for mining
+
+          console.log("✅ Transaction confirmed in block:", receipt.blockNumber);
+          console.log(`🔗 Confirmed at: https://celoscan.io/tx/${tx.hash}`);
+
           return tx.hash;
       } catch (error) {
         console.log('error is ', error)

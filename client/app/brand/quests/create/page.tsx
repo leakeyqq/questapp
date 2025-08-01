@@ -22,7 +22,7 @@ import {useConfirm} from '@/components/custom-confirm'
 import { PaymentModal } from "@/components/payment-modal"
 import { Users, UserCheck, TrendingUp, MessageCircle, Hash, AlertCircle } from "lucide-react"
 import { FaTiktok, FaInstagram, FaTwitter } from 'react-icons/fa';
-
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 interface PlatformRequirement {
   platform: string
@@ -33,9 +33,6 @@ interface PlatformRequirement {
 }
 
 
-
-
-
 let hasConnectedMiniPay = false;
 
 export default function CreateQuestPage() {
@@ -43,6 +40,7 @@ const router = useRouter()
 
 const { showAlert, AlertComponent } = useAlert()
 const { showConfirm, ConfirmComponent } = useConfirm()
+const { address, isConnected } = useAccount();
 
     // 🚀 Auto-connect MiniPay if detected
     useEffect(() => {
@@ -55,9 +53,8 @@ const { showConfirm, ConfirmComponent } = useConfirm()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest, checkTokenBalances } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest, checkTokenBalances, checkCombinedTokenBalances, depositToEscrowOnSolana } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
-
 
   // Form state
   const [title, setTitle] = useState("")
@@ -194,7 +191,13 @@ const handleVideosToRewardChange = (value: string) => {
 
 const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const value = e.target.value;
-  setRewardPerVideo(value);
+
+    // Allow only numbers and an optional single dot for decimals
+  if (/^\d*\.?\d*$/.test(value)) {
+    setRewardPerVideo(value);
+  }else{
+    return;
+  }
 
     // Hide budget if value is empty, zero, or invalid
   if (!value || parseFloat(value) <= 0 || !videosToReward) {
@@ -207,6 +210,16 @@ const handleRewardPerVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const budget = parseFloat(videosToReward) * parseFloat(value);
     setPrizePool(budget.toString());
     setShowBudgetInput(true);
+  }
+};
+const handlePaymentPerCreatorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value;
+
+    // Allow only numbers and an optional single dot for decimals
+  if (/^\d*\.?\d*$/.test(value)) {
+    setPaymentPerCreator(value);
+  }else{
+    return;
   }
 };
 
@@ -265,17 +278,24 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
   if(!confirmDeposit){
   return
   }
-  // Show modal first, then wait for user to complete
-        // Check the which asset to deduct from the user. by checking the balance of all their tokens
-      const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
-      
-      console.log('USDT balance is ', USDTBalance)
-      if(Number(cUSDBalance) >= Number(prizePool)){
-        await completeQuestCreation('cusd')
-      }else if(Number(USDTBalance) >= Number(prizePool)){
-        await completeQuestCreation('usdt')
-      }else if(Number(USDCBalance) >= Number(prizePool)){
-        await completeQuestCreation('usdc')
+
+
+const {
+  celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
+  solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+} = await checkCombinedTokenBalances();
+
+      // Check across all tokens (priority order)
+if (Number(cUSDBalance) >= Number(prizePool)) {
+  await completeQuestCreation("cusd", 'celo');
+} else if (Number(celoUSDTBalance) >= Number(prizePool)) {
+  await completeQuestCreation("usdt", 'celo');
+} else if (Number(celoUSDCBalance) >= Number(prizePool)) {
+  await completeQuestCreation("usdc", 'celo');
+} else if (Number(solUSDTBalance) >= Number(prizePool)) {
+  await completeQuestCreation("usdt", 'solana');
+} else if (Number(solUSDCBalance) >= Number(prizePool)) {
+  await completeQuestCreation("usdc", 'solana');
       }else{
         // If user show them a warning and a deep link to go and deposit funds
         // If user in on a different wallet then pop up the deposit modal
@@ -296,18 +316,24 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
       }
 };
 
-const completeQuestCreation = async (tokenForPayment: string)=>{
+const completeQuestCreation = async (tokenForPayment: string, network: string | null)=>{
   try{
     // First handle payment
     setPaymentProcessing(true);
     
   try {
 
+    let onchainQuestId;
+    let solanaTxId;
       // Test approval
       // let _tokenName = 'cUSD'
-      await approveSpending(prizePool, tokenForPayment)
-      let onchainQuestId = await createQuest(prizePool, tokenForPayment)
-      console.log('platformRequirements ', platformRequirements)
+      if(network == 'celo'){
+        await approveSpending(prizePool, tokenForPayment)
+        onchainQuestId = await createQuest(prizePool, tokenForPayment)
+      }else if(network == 'solana'){
+        console.log('going to pay to solana escorow')
+        solanaTxId = await depositToEscrowOnSolana(prizePool, tokenForPayment)
+      }
 
         setIsSubmitting(true);
 
@@ -331,7 +357,9 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
               onchainQuestId,
               rewardToken: tokenForPayment,
               platformRequirements: platformRequirements.map(({ icon, ...rest }) => rest),
-              participationType
+              participationType,
+              solanaTxId,
+              network
             }),
           });
       
@@ -567,7 +595,7 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                               <div className="flex items-center space-x-2 mb-2">
                                 <Users className="h-5 w-5 text-brand-purple" />
                                 <div className="text-brand-dark font-medium">
-                                  Open to all creators
+                                  Open to all creators (Recommended)
                                 </div>
                               </div>
                               <p className="text-sm text-gray-600">
@@ -658,8 +686,8 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                               <SelectItem value="5">The best 5 creators</SelectItem>
                               <SelectItem value="10">The best 10 creators</SelectItem>
                               <SelectItem value="20">The best 20 creators</SelectItem>
-                              <SelectItem value="30">The best 30 creators</SelectItem>
-                              <SelectItem value="50">The best 50 creators</SelectItem>
+                              {/* <SelectItem value="30">The best 30 creators</SelectItem>
+                              <SelectItem value="50">The best 50 creators</SelectItem> */}
                             </SelectContent>
                           </Select>
                         </div>
@@ -723,11 +751,12 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                               <SelectValue placeholder="Select number of creators" />
                             </SelectTrigger>
                             <SelectContent className="bg-white border-gray-200 text-gray-800">
+                              <SelectItem value="3">3 creators</SelectItem>
                               <SelectItem value="5">5 creators</SelectItem>
                               <SelectItem value="10">10 creators</SelectItem>
                               <SelectItem value="15">15 creators</SelectItem>
-                              <SelectItem value="20">20 creators</SelectItem>
-                              <SelectItem value="30">30 creators</SelectItem>
+                              {/* <SelectItem value="20">20 creators</SelectItem>
+                              <SelectItem value="30">30 creators</SelectItem> */}
                             </SelectContent>
                           </Select>
                         </div>
@@ -740,7 +769,7 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                             id="paymentPerCreator"
                             placeholder="e.g., 20 USD"
                             value={paymentPerCreator}
-                            onChange={(e) => setPaymentPerCreator(e.target.value)}
+                            onChange={handlePaymentPerCreatorChange}
                             className="bg-white border-gray-300 text-gray-800"
                             type="text"
                             required
@@ -822,7 +851,7 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="imageUrl" className="text-brand-dark">
-                      Cover Image
+                      Brand logo/Image
                     </Label>
                     <Input
                       id="imageUrl"
@@ -908,7 +937,7 @@ const completeQuestCreation = async (tokenForPayment: string)=>{
                        isSubmitting ? "Creating..." : "Create Quest"}
                 </Button>
 
-                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={(tokenSymbol) => completeQuestCreation(tokenSymbol)} prizePool={prizePool} paymentAddress={paymentAddress}/>
+                <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} onPaymentComplete={(tokenSymbol, network) => completeQuestCreation(tokenSymbol, network)} prizePool={prizePool} paymentAddress={paymentAddress} isConnected={isConnected} />
 
               </div>
             </div>

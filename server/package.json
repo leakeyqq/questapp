@@ -27,7 +27,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "morgan": "~1.9.1",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "web3": "^4.16.0"
   },
   "type": "module"
 }

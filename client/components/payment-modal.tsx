@@ -17,19 +17,24 @@ import { RefreshCw } from 'lucide-react'
 import {useAlert} from "@/components/custom-popup"
 import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
+import { getWeb3AuthInstance } from "../lib/web3AuthConnector"
+import { getSolanaAddress } from "../lib/getSolanaKey";
 
 import Cookies from 'js-cookie';
 
 
 
+// Update the PaymentMethod type to include networks
+type PaymentNetwork = "celo" | "solana" | null;
 
 
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
-  onPaymentComplete: (tokenSymbol: string) => void
+  onPaymentComplete: (tokenSymbol: string, network: PaymentNetwork) => void
   prizePool: string,
   paymentAddress:  `0x${string}` | null;
+  isConnected: boolean;
 }
 
 interface ExchangeRateResponse {
@@ -39,14 +44,14 @@ interface ExchangeRateResponse {
 
 type PaymentMethod = "cUSD" | "USDT" | "USDC" | "mpesa" | "mtn" | "bank" | null
 
-export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, paymentAddress }: PaymentModalProps) {
+export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, paymentAddress, isConnected }: PaymentModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentCompleted, setPaymentCompleted] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [paymentCoin, setPaymentCoin] = useState("")
   const [bankDetails, setBankDetails] = useState({ accountNumber: "", bankName: "" })
-  const { checkTokenBalances, checkBalanceOfSingleAsset } = useWeb3();
+  const { checkTokenBalances, checkBalanceOfSingleAsset, checkCombinedTokenBalances } = useWeb3();
   const [walletBalance, setWalletBalance] = useState('0.00')
   const [isLoading, setIsLoading] = useState(false);
   const { showAlert, AlertComponent } = useAlert()
@@ -54,6 +59,9 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
   const [exchangeRate, setExchangeRate] = useState<ExchangeRateResponse | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'initiated' | 'pending' | 'success' | 'failed' | 'cancelled'>('initiated');
+  // Add this near your other state declarations
+  const [selectedNetwork, setSelectedNetwork] = useState<PaymentNetwork>(null);
+  const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
    
 useEffect(() => {
   if (isOpen && selectedMethod === "mpesa") {
@@ -78,6 +86,54 @@ useEffect(() => {
     Cookies.remove('SwyptOnrampOrderId');
   }
 }, [paymentStatus, isOpen]);
+
+  // ✅ Separate useEffect to fetch Solana Address (after Web3Auth is ready)
+useEffect(() => {
+  const fetchSolanaAddress = async () => {
+    try {
+
+      // 🧁 Step 1: Try to get address from cookie
+      const cookieAddress = Cookies.get('solanaWalletAddress'); // or manually parse document.cookie
+
+      if (cookieAddress) {
+        setSolanaAddress(cookieAddress);
+        return; // ✅ Done
+      }
+
+      const web3auth = getWeb3AuthInstance();
+
+      // 🔐 Wait until Web3Auth is connected
+      if (!web3auth.connected) {
+        console.warn("⏳ Waiting for Web3Auth to connect...");
+        await new Promise((resolve, reject) => {
+          const interval = setInterval(() => {
+            if (web3auth.connected && web3auth.provider) {
+              clearInterval(interval);
+              resolve(true);
+            }
+          }, 100);
+
+          // Optional: timeout after 5 seconds
+          setTimeout(() => {
+            clearInterval(interval);
+            reject("Web3Auth connection timeout");
+          }, 5000);
+        });
+      }
+
+      const solanaAddr = await getSolanaAddress();
+      setSolanaAddress(solanaAddr);
+    } catch (err) {
+      console.error("❌ Failed to fetch Solana address:", err);
+    }
+  };
+
+  if (isConnected) {
+    fetchSolanaAddress();
+  }
+}, [isConnected]);
+
+
 
 // Add these mutation hooks
 const fetchExchangeRate = useMutation({
@@ -171,6 +227,7 @@ const startPolling = (orderId: string) => {
         
         if (orderStatus === 'success') {
           setPaymentCompleted(true);
+          setSelectedNetwork('celo')
         } else {
           await showAlert(reason || "Payment could not be completed");
         }
@@ -312,17 +369,29 @@ const startPolling = (orderId: string) => {
       }
     }
 
+    if ((selectedMethod === "USDT" || selectedMethod === "USDC") && !selectedNetwork) {
+      await showAlert("Please select a network (Celo or Solana)");
+      return;
+    }
+
     setIsProcessing(true)
 
-      const {cUSDBalance, USDTBalance, USDCBalance} = await checkTokenBalances()
+      const {
+          celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
+          solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+        } = await checkCombinedTokenBalances();
 
       let isBalanceSufficient;
 
       if(Number(cUSDBalance) >= Number(prizePool)){
         isBalanceSufficient = true
-      }else if(Number(USDTBalance) >= Number(prizePool)){
+      }else if(Number(celoUSDTBalance) >= Number(prizePool)){
         isBalanceSufficient = true
-      }else if(Number(USDCBalance) >= Number(prizePool)){
+      }else if(Number(celoUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(solUSDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(solUSDCBalance) >= Number(prizePool)){
         isBalanceSufficient = true
       }else{
         isBalanceSufficient = false
@@ -346,7 +415,7 @@ const startPolling = (orderId: string) => {
     if (!selectedMethod) return; // Add type guard
     // const tokenSymbol = selectedMethod.toLowerCase();
     // onPaymentComplete(tokenSymbol)
-    onPaymentComplete(paymentCoin)
+    onPaymentComplete(paymentCoin, selectedNetwork)
 
     onClose()
   }
@@ -355,11 +424,13 @@ const startPolling = (orderId: string) => {
     setSelectedMethod(null)
     setPhoneNumber("")
     setBankDetails({ accountNumber: "", bankName: "" })
+    setSelectedNetwork(null); // Add this line
   }
 
   const fetchBalance = async(tokenName: string)=>{
   try{
-    const bal = await checkBalanceOfSingleAsset(tokenName)
+    console.log('selectedNetwork ', selectedNetwork)
+    const bal = await checkBalanceOfSingleAsset(tokenName, selectedNetwork)
     setWalletBalance(Number(bal.balance).toFixed(2))
   }catch(e){
     throw e
@@ -374,13 +445,22 @@ const startPolling = (orderId: string) => {
       setIsLoading(false);
     }
   };
+  
   const selectedOption = paymentOptions.find((option) => option.id === selectedMethod)
 
-  useEffect(() => {
+
+useEffect(() => {
   if (selectedOption?.type === "crypto" && selectedOption?.name) {
-    fetchBalance(selectedOption.name)
+    // For cUSD, we don't need network selection
+    if (selectedOption.id === "cUSD") {
+      fetchBalance(selectedOption.name)
+    } 
+    // For USDT/USDC, only fetch if network is selected
+    else if (selectedNetwork) {
+      fetchBalance(selectedOption.name)
+    }
   }
-}, [selectedOption])
+}, [selectedOption, selectedNetwork]) // Add selectedNetwork to dependencies
 
 
   return (
@@ -421,89 +501,105 @@ const startPolling = (orderId: string) => {
               </CardHeader>
 
             <CardContent className="space-y-1 text-md">
-              {["cUSD", "USDT", "USDC"].includes(selectedMethod) && (
-                <div className="space-y-3">
-                  <div className="bg-brand-light p-2 rounded border border-gray-200">
-                    <Label className="flex items-center gap-2 text-xs font-medium text-brand-dark">
-                      Send to wallet address on Celo
-                      <img src="/crypto/celo.png" alt={selectedOption?.name} className="w-5 h-5" />
-                    </Label>
+{["cUSD", "USDT", "USDC"].includes(selectedMethod) && (
+  <div className="space-y-3">
+    {/* Network Selection (only for USDT/USDC) */}
+    {selectedMethod !== "cUSD" && !selectedNetwork && (
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-brand-dark">
+          Select Network
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setSelectedNetwork("celo")}
+            className="flex items-center gap-2"
+          >
+            <img src="/crypto/celo.png" alt="Celo" className="w-5 h-5" />
+            Celo
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setSelectedNetwork("solana")}
+            className="flex items-center gap-2"
+          >
+            <img src="/crypto/solana.png" alt="Solana" className="w-5 h-5" />
+            Solana 
+          </Button>
+        </div>
+      </div>
+    )}
 
-                    <div className="flex items-center gap-2 mt-2">
-                      <code className="bg-white px-2 py-1 rounded border text-xs flex-1 break-all">
-                        {walletAddress}
-                      </code>
-                      <CopyButton text={walletAddress || ''} />
-                    </div>
-                  </div>
+    {/* Payment details (shown after network selection or for cUSD) */}
+    {(selectedNetwork || selectedMethod === "cUSD") && (
+      
+      <>
+        <div className="bg-brand-light p-2 rounded border border-gray-200">
+          <Label className="flex items-center gap-2 text-xs font-medium text-brand-dark">
+            Send to wallet address on {selectedMethod === "cUSD" ? "Celo" : selectedNetwork === "celo" ? "Celo" : "Solana"}
+            <img 
+              src={selectedMethod === "cUSD" || selectedNetwork === "celo" ? "/crypto/celo.png" : "/crypto/solana.png"} 
+              className="w-5 h-5" 
+            />
+          </Label>
 
-                  <div className="flex justify-between items-center p-2 bg-white rounded border text-xs">
-                    <span className="text-brand-dark font-medium">Amount to send:</span>
-                    <Badge variant="secondary" className="text-sm">
-                      {prizePool} {selectedMethod}
-                    </Badge>
-                  </div>
+          <div className="flex items-center gap-2 mt-2">
+            <code className="bg-white px-2 py-1 rounded border text-xs flex-1 break-all">
+              {selectedMethod === "cUSD" || selectedNetwork === "celo" 
+                ? walletAddress 
+                : solanaAddress /* Mock Solana address */}
+            </code>
+            <CopyButton text={
+              selectedMethod === "cUSD" || selectedNetwork === "celo" 
+                ? walletAddress || '' 
+                : solanaAddress || 'InvalidAddress'
+            } />
+          </div>
+        </div>
 
-                      {/* Wallet Balance with Refresh */}
-                  <div className="flex items-center justify-between text-xs bg-white rounded px-2 py-1">
-                    <span className="text-brand-dark">My balance:</span>
-                    <div className="flex items-center gap-1">
-                     <span className="font-semibold">{walletBalance} {selectedMethod}</span>
-                      <button onClick={() => handleRefresh(selectedMethod)} className="flex items-center gap-2 text-brand-purple hover:opacity-75">Refresh
-                        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}/>
-                      </button>
-                    </div>
-                  </div>
+        <div className="flex justify-between items-center p-2 bg-white rounded border text-xs">
+          <span className="text-brand-dark font-medium">Amount to send:</span>
+          <Badge variant="secondary" className="text-sm">
+            {prizePool} {selectedMethod}
+          </Badge>
+        </div>
 
-                  <div>
-                    <p className="font-semibold text-xs mb-1">Or scan to Pay</p>
-                    <QRCodeComponent text={`ethereum:${walletAddress}`} />
-                  </div>
+        {/* Wallet Balance with Refresh */}
+        <div className="flex items-center justify-between text-xs bg-white rounded px-2 py-1">
+          <span className="text-brand-dark">My balance:</span>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold">{walletBalance} {selectedMethod}</span>
+            <button 
+              onClick={() => handleRefresh(selectedMethod)} 
+              className="flex items-center gap-2 text-brand-purple hover:opacity-75"
+            >
+              Refresh
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}/>
+            </button>
+          </div>
+        </div>
 
-                  {/* <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
-                    <strong>Important:</strong> Send the exact amount shown to the wallet address above.
-                  </div> */}
+        <div>
+          <p className="font-semibold text-xs mb-1">Or scan to Pay</p>
+          <QRCodeComponent text={
+            selectedMethod === "cUSD" || selectedNetwork === "celo"
+              ? `ethereum:${walletAddress}`
+              : `solana:${solanaAddress}?amount=${prizePool}`
+          } />
+        </div>
 
-                  <Button
-                      onClick={handlePayment}
-                      disabled={isProcessing}
-                      className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
-                    >
-                      {/* {isProcessing ? "Processing..." : `Pay $${prizePool} with ${selectedOption?.name}`} */}
-                      {isProcessing ? "Processing..." : `Confirm I have sent ${selectedMethod}!`}
+        <Button
+          onClick={handlePayment}
+          disabled={isProcessing}
+          className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+        >
+          {isProcessing ? "Processing..." : `Confirm I have sent ${selectedMethod}!`}
+        </Button>
+      </>
+    )}
+  </div>
+)}
 
-                </Button>
-
-                </div>
-              )}
-
-              {/* {(selectedMethod === "mpesa" || selectedMethod === "mtn") && (
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <Label htmlFor="phone" className="text-xs">Mpesa Number</Label>
-                    <Input
-                      id="phone"
-                      placeholder={selectedMethod === "mpesa" ? "254712345678" : "+256712345678"}
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="bg-white border-gray-300 text-sm" minLength={12} maxLength={12}
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
-                    You will receive a payment prompt on your phone.
-                  </div>
-
-                <Button
-                  onClick={handlePayment}
-                  disabled={isProcessing}
-                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
-                >
-                  {isProcessing ? "Processing..." : `Send STK Push!`}
-
-              </Button>
-                </div>
-              )} */}
 
             {(selectedMethod === "mpesa") && (
               <div className="space-y-4">
@@ -597,12 +693,6 @@ const startPolling = (orderId: string) => {
                 </div>
               )}
 
-              {/* <Button
-                onClick={handlePayment}
-                disabled={isProcessing}
-                className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2">
-                {isProcessing ? "Processing..." : `Confirm I have paid!`}
-              </Button> */}
             </CardContent>
           </Card>
 
@@ -624,13 +714,6 @@ const startPolling = (orderId: string) => {
               >
                 <CardContent className="p-4 text-center">
                   <div className="relative">
-                    {/* Recommended Badge */}
-                    {option.id === "mpesa" && (
-                      <span className="absolute top-0 right-0 bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full z-10 -translate-y-1/2">
-                        Recommended
-                      </span>
-                    )}
-
                     <div
                       className={`w-12 h-12 rounded-lg ${option.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
                     >
@@ -646,14 +729,6 @@ const startPolling = (orderId: string) => {
                 )
               })}
             </div>
-
-            {/* <div className="bg-brand-light p-4 rounded-lg border border-dashed border-brand-purple/30">
-              <div className="flex items-center justify-center gap-2 text-brand-dark">
-                <div className="w-2 h-2 bg-brand-purple rounded-full"></div>
-                <span className="text-sm font-medium">Deposits are not withdrawable. You can only use the funds to pay creators.</span>
-                <div className="w-2 h-2 bg-brand-purple rounded-full"></div>
-              </div>
-            </div> */}
           </div>
         )}
       <AlertComponent/>

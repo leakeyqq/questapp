@@ -3,9 +3,9 @@ import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { sdk } from '@farcaster/frame-sdk';
-import { getSolanaPrivateKey } from "../../lib/getSolanaPrivateKey"; // adjust the path if needed
+import { getSolanaAddress } from "../../lib/getSolanaKey"; // adjust the path if needed
 import { getWeb3AuthInstance } from "../../lib/web3AuthConnector"
 
 
@@ -27,7 +27,14 @@ export default function ConnectWalletButton() {
   const searchParams = useSearchParams();
 
   const [isSigningIn, setIsSigningIn] = useState(false);
-const [solanaAddress, setSolanaAddress] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false); // 👈 Add this state
+
+
+  const pathname = usePathname();
+  const [isRedirectFromAuth, setIsRedirectFromAuth] = useState(false);
+
+
+// const [solanaAddress, setSolanaAddress] = useState(null);
   
 
 
@@ -46,6 +53,30 @@ const [solanaAddress, setSolanaAddress] = useState(null);
   //     /valora/i.test(navigator.userAgent)
   //   ));
   // }, []);
+
+    // Detect if we're coming back from Web3Auth redirect
+  useEffect(() => {
+    if (mounted && typeof window !== "undefined") {
+      const url = window.location.href;
+      const isAuthRedirect = url.includes('/#b64Params=');
+      
+      if (isAuthRedirect) {
+        setIsRedirectFromAuth(true);
+        setIsSigningIn(true);
+        
+        // Clean up the URL
+        // const cleanUrl = url.split('#')[0];
+        // window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+  }, [mounted]);
+
+  
+
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Detect Valora
   useEffect(() => {
@@ -120,6 +151,9 @@ const [solanaAddress, setSolanaAddress] = useState(null);
           } else {
             console.log("Login failed:", data);
           }
+          // Update signing in state
+          setIsSigningIn(false);
+          setIsRedirectFromAuth(false);
 
           if(refreshPage){
             setRefreshpage(false)
@@ -127,12 +161,14 @@ const [solanaAddress, setSolanaAddress] = useState(null);
           }
         } catch (err) {
           console.error("Login error:", err);
+          setIsSigningIn(false);
+          setIsRedirectFromAuth(false);
         }
       };
 
       login();
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, refreshPage]);
 
 
   // ✅ Separate useEffect to fetch Solana Address (after Web3Auth is ready)
@@ -160,9 +196,9 @@ useEffect(() => {
         });
       }
 
-      const solanaAddr = await getSolanaPrivateKey();
-      setSolanaAddress(solanaAddr);
-      console.log("✅ Leakey Solana Address:", solanaAddr);
+      const solanaAddr = await getSolanaAddress();
+      // setSolanaAddress(solanaAddr);
+      document.cookie = `solanaWalletAddress=${solanaAddr}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict}`;
     } catch (err) {
       console.error("❌ Failed to fetch Solana address:", err);
     }
@@ -208,30 +244,49 @@ useEffect(() => {
   return (
     <div className="flex flex-col items-center gap-4">
       {/* ✅ Web3Auth Connect Button */}
-      {web3authConnector && !isConnected && (
-        <button
-          onClick={() => connect({ connector: web3authConnector })}
-          className="px-4 py-2 rounded-lg bg-brand-purple text-white hover:bg-opacity-90 hover:bg-brand-purple  transition"
-        >
-          Sign in
-        </button>
-      )}
-
-
-{isConnected && (
+{/* ✅ Web3Auth Connect Button */}
+{web3authConnector && !isConnected && (
   <button
     onClick={() => {
-      disconnect(); 
-      // Clear the cookie
-      document.cookie = 'userWalletAddress=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      connect({ connector: web3authConnector });
     }}
-    className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
+    className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
+      isSigningIn 
+        ? 'bg-gray-400 cursor-not-allowed' 
+        : 'bg-brand-purple hover:bg-opacity-90 hover:bg-brand-purple'
+    } text-white transition`}
+    disabled={isSigningIn}
   >
-    Log Out
+    {isSigningIn ? (
+      <>
+        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Syncing...
+      </>
+    ) : (
+      'Sign in'
+    )}
   </button>
 )}
+
+
+      {isConnected && (
+        <button
+          onClick={() => {
+            disconnect(); 
+            document.cookie = 'userWalletAddress=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            document.cookie = 'solanaWalletAddress=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          }}
+          className="px-4 py-2 rounded-lg text-red font-medium hover:text-light hover:bg-red-700 transition"
+        >
+          Log Out
+        </button>
+      )}
     </div>
   );
 }
 
 export { ConnectWalletButton };
+

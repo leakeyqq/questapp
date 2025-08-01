@@ -76,17 +76,21 @@ export const validate_createQuest = [
   check("rewardPerVideo")
     .notEmpty()
     .withMessage('The reward per video cannot be empty!'),
-
   check("onchainQuestId")
-    .notEmpty()
-    .withMessage('Onchain quest ID is missing!'),
+    .optional(),
+  check('solanaTxId')
+    .optional(),
   check("rewardToken")
     .notEmpty()
     .withMessage("Reward token missing!"),
+  check('network')
+    .notEmpty()
+    .withMessage("Blockchain network is not specified")
 ];
 
 
 export const handleQuestCreation = async (req, res) => {
+  // console.log('req.body ', req.body)
   const errors = validationResult(req)
 
   if (!errors.isEmpty()) {
@@ -142,15 +146,22 @@ export const handleQuestCreation = async (req, res) => {
       socialPlatformsAllowed,
       visibleOnline: true,
       applicants: [],
-      submissions: []
+      submissions: [],
+      network: req.body.network
     });
 
+    if(req.body.network == 'solana'){
+      quest.solanaNetwork.usedSolana = true
+      quest.solanaNetwork.txId = req.body.solanaTxId
+    }
+
+    // throw new Error('cancelled quest creation intentionally!')
 
     await quest.save();
     res.status(201).json({ message: "Quest created successfully", quest });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error while creating quest" });
+    res.status(500).json({ message: "Server error while creating quest", error: err.message });
   }
 }
 
