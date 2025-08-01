@@ -49,6 +49,16 @@ const questSchema = new mongoose.Schema({
         type: Boolean, 
         default: false
     },
+    solanaNetwork: {
+        usedSolana: {
+            type: Boolean,
+            required: false
+        },
+        txId: {
+            type: String,
+            required: false
+        }
+    },
     socialPlatformsAllowed:{
         twitter: {
             allowedOnCampaign: {type: Boolean, required: false},
@@ -247,6 +257,11 @@ const questSchema = new mongoose.Schema({
     endsOn: {
         type: Date,
         required: true
+    },
+    network: {
+        type: String,
+        enum: ['celo', 'solana'],
+        default: false
     }
 }, {timestamps: true})
 
