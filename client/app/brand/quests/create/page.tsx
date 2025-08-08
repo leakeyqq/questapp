@@ -23,6 +23,7 @@ import { PaymentModal } from "@/components/payment-modal"
 import { Users, UserCheck, TrendingUp, MessageCircle, Hash, AlertCircle } from "lucide-react"
 import { FaTiktok, FaInstagram, FaTwitter } from 'react-icons/fa';
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import AuthGuard from "@/components/AuthGuard";
 
 interface PlatformRequirement {
   platform: string
@@ -392,7 +393,8 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
 
   
   return (
-    // <div className="min-h-screen bg-brand-light">
+       <AuthGuard>
+    {/* <div className="min-h-screen bg-brand-light"> */}
     <div className="min-h-screen bg-brand-light overflow-x-hidden"> 
       <AlertComponent />
       <div className="container mx-auto px-4 py-12">
@@ -945,5 +947,6 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
         </div>
       </div>
     </div>
+    </AuthGuard>
   )
 }

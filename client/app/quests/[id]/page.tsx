@@ -13,6 +13,7 @@ import { CopyButton } from "@/components/copyButton"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
 import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
 import { cookies } from 'next/headers';
+import ShareButton from "@/components/ShareButton"
 
 
 import { generateMetadata } from "./../[id]/generateMetadata";
@@ -364,6 +365,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
         <Badge className="bg-brand-purple text-white">Create video</Badge>
         <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
         <p className="text-white/80">by {quest.brandName}</p>
+             <ShareButton />
       </div>
     </div>
 

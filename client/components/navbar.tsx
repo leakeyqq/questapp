@@ -69,7 +69,7 @@ export default function Navbar() {
                   : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
               }`}
             >
-              Dashboard
+              Creators
             </Link>
             {/* <Link
               href="/leaderboard"
@@ -90,7 +90,7 @@ export default function Navbar() {
                   : "text-fuchsia-700 hover:text-fuchsia-700 hover:bg-brand-light/50"
               }`}
             >
-              Am a brand
+              Brands
             </Link>
 
             {/* <div className="items-center space-x-4">
@@ -210,7 +210,7 @@ export default function Navbar() {
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Dashboard
+              Creators
             </Link>
 
             {/* <Link
@@ -234,7 +234,7 @@ export default function Navbar() {
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Am a brand
+              Brands
             </Link>
 
             <div className="items-center space-x-4">
