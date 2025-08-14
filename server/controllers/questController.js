@@ -240,7 +240,7 @@ export const submitQuestByCreator = async (req, res) => {
       });
     }
 
-      if (new Date(existingQuest.endsOn) < new Date()) {
+      if (new Date(quest.endsOn) < new Date()) {
       return res.status(400).json({ 
         error: { 
           msg: "This quest has already ended" 

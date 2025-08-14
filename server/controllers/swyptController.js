@@ -2,20 +2,34 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 dotenv.config()
 import axios from "axios"
+import {ethers} from 'ethers';
 import SwyptOnrampOrder from "./../models/swypt/swypt-onramps.js"
+import PretiumOnrampOrder from "./../models/swypt/pretium-onramp.js"
 
 export const getSwyptExchangeRate = async(req, res)=>{
     try {
+
+        // Get Pretium exchange
+            const response_rates = await fetch(`${process.env.PRETIUM_BASE_URI}/v1/exchange-rate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': `${process.env.PRETIUM_API_KEY}` 
+                },
+                body: JSON.stringify({
+                    currency_code: 'KES'
+                })
+            });
+
+                const data_rates = await response_rates.json();
+                let kesRate = Number(data_rates.data.selling_rate) * 1.001
+
+
         const amountInUsd = Number(req.query.amountInUsd)
-        const KesRate = Number(process.env.USD_TO_KES)
-        // Estimate amount needed in Kshs
-        let Kes_amount_estimate = amountInUsd * KesRate
-        // Fetch exchange rate from Swypt
-        let swypt_exchange_rate = await swyptUsdtRate(Kes_amount_estimate)
 
         // Accurate amount in Kshs
-        let Kes_amount_accurate = Math.ceil(amountInUsd * swypt_exchange_rate)
-        let roundedRate = parseFloat(swypt_exchange_rate.toFixed(2));
+        let Kes_amount_accurate = Math.ceil(amountInUsd * kesRate)
+        let roundedRate = parseFloat(kesRate.toFixed(2));
 
         return res.status(200).json({KES_RATE: roundedRate, amountInKes: Kes_amount_accurate})
 
@@ -29,32 +43,55 @@ export const onRampUserWithMpesa = async(req, res)=>{
     try{
         const amountInUsd = Number(req.body.amountInUsd)
         const mpesaNumber = req.body.mpesaNumber
-        console.log('req.body ', req.body)
-        // Fetch rates
-        const KesRate = Number(process.env.USD_TO_KES)
 
-        // Estimate amount needed in Kshs
-        let Kes_amount_estimate = amountInUsd * KesRate
+        // Get Pretium exchange
+            const response_rates = await fetch(`${process.env.PRETIUM_BASE_URI}/v1/exchange-rate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': `${process.env.PRETIUM_API_KEY}` 
+                },
+                body: JSON.stringify({
+                    currency_code: 'KES'
+                })
+            });
 
-        // Fetch exchange rate from Swypt
-        let swypt_exchange_rate = await swyptUsdtRate(Kes_amount_estimate)
+            const data_rates = await response_rates.json();
+            let kesRate = Number(data_rates.data.selling_rate) * 1.001
 
         // Accurate amount in Kshs
-        let Kes_amount_accurate = Math.ceil(amountInUsd * swypt_exchange_rate)
+        let Kes_amount_accurate = Math.ceil(amountInUsd * kesRate)
 
-        // Finished fetching rate
-        // Now send STK Push
-        let orderId = await initiateStkPush(Kes_amount_accurate, mpesaNumber, req.userWalletAddress )
 
-        // Store the order id on the db
-        const newSwyptOrder = new SwyptOnrampOrder({
-            userAddress: req.userWalletAddress,
-            orderId: orderId
-        })
-        await newSwyptOrder.save()
+  const postData = {
+    shortcode: mpesaNumber,
+    amount: Kes_amount_accurate,
+    mobile_network: "Safaricom",
+    chain: "CELO",
+    asset: "USDT",
+    address: req.userWalletAddress,
+    callback_url: "https://questpanda.xyz"
+  };
 
-        
-        return res.status(200).json({stkSent: true, orderId})
+const response = await fetch(`${process.env.PRETIUM_BASE_URI}/v1/onramp/KES`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': `${process.env.PRETIUM_API_KEY}` 
+      },
+      body: JSON.stringify(postData)
+    });
+
+    const data = await response.json();
+    console.log('Success:', data);
+
+    const pretiumOnrampOrder = new PretiumOnrampOrder({
+        userAddress: req.userWalletAddress,
+        transactionCode: data.data.transaction_code
+    })
+    pretiumOnrampOrder.save()
+
+    return res.status(200).json({stkSent: true})
 
     }catch(e){
         console.log(e)
@@ -118,7 +155,6 @@ export const transferFundsAfterMpesaPayment = async(req, res)=>{
 
 
 }
-
 async function swyptUsdtRate(amountKes){
     const response = await axios.post('https://pool.swypt.io/api/swypt-quotes', {
         type: "onramp",

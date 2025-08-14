@@ -18,7 +18,11 @@ export default function Home() {
             <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 w-6 h-6 md:w-8 md:h-8 bg-brand-teal rounded-full opacity-70 blur-sm"></div>
           </div>
           <p className="text-base text-gray-600 max-w-2xl mx-auto">
-            Are you a content creator? Create short promotional videos for brands, share on social media and earn
+            Are you a content creator? Create promo videos for brands, share on social media and earn rewards
+
+            {/* Are you a content creator? Create short promotional videos for brands, share on social media and earn */}
+            {/* Are you a content creator? Join brand contests, make fun videos, share online, and earn rewards! */}
+
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="sm" className="bg-brand-purple hover:bg-opacity-90 hover:bg-brand-purple text-white">

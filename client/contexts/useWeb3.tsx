@@ -4,7 +4,7 @@ import QuestPandaABI from "./questpanda-abi.json"
 // import MinipayNFTABI from "./minipay-nft.json";
 import { getSolanaAddress, getEthereumPrivateKey, getSolanaPrivateKey } from "../lib/getSolanaKey";
 import { getWeb3AuthInstance } from '../lib/web3AuthConnector'; // adjust this import path
-import { getOrCreateAssociatedTokenAccount, transfer } from "@solana/spl-token";
+import { getOrCreateAssociatedTokenAccount, transfer, TokenAccountNotFoundError } from "@solana/spl-token";
 import bs58 from "bs58";
 
 import Web3 from 'web3';
@@ -971,15 +971,13 @@ async function getSolanaTokenBalance(walletAddress: string, tokenMintAddress: st
     const tokenAccount = await getAccount(solanaConnection, associatedTokenAddress);
     const rawAmount = Number(tokenAccount.amount);
     return rawAmount / Math.pow(10, decimals);
+
   } catch (error: any) {
-    console.log('error happenned when getting solana balance')
-    console.log('error is ', error)
+    if (error instanceof TokenAccountNotFoundError) {
+      return 0;
+    }else{
         throw error
-    // if (error.message.includes('Failed to find account')) {
-    //   return 0;
-    // } else {
-    //   throw new Error(`Solana balance error: ${error.message}`);
-    // }
+    }
   }
 }
 

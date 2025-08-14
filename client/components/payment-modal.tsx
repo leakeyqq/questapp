@@ -62,6 +62,8 @@ export function PaymentModal({ isOpen, onClose, onPaymentComplete, prizePool, pa
   // Add this near your other state declarations
   const [selectedNetwork, setSelectedNetwork] = useState<PaymentNetwork>(null);
   const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
+  const [activeButton, setActiveButton] = useState(''); // 'stk' or 'confirmation'
+
    
 useEffect(() => {
   if (isOpen && selectedMethod === "mpesa") {
@@ -165,16 +167,18 @@ const initiatePayment = useMutation({
     return response.data;
   },
   onSuccess: (data) => {
-    setOrderId(data.orderId);
+    setIsProcessing(false)
+    // setOrderId(data.orderId);
       // Save to cookie with 1 day expiration (adjust as needed)
-    Cookies.set('SwyptOnrampOrderId', data.orderId, { 
-      expires: 3, // 1 day
-      secure: true, 
-      sameSite: 'strict' 
-    });
+    // Cookies.set('SwyptOnrampOrderId', data.orderId, { 
+    //   expires: 3, // 1 day
+    //   secure: true, 
+    //   sameSite: 'strict' 
+    // });
 
-    setPaymentStatus('pending');
-    startPolling(data.orderId); // Start polling for payment status
+    // setPaymentStatus('pending');
+    // startPolling(data.orderId); // Start polling for payment status
+    return
   },
   onError: async (error) => {
     await showAlert('Could not send payment request. Please try again.')
@@ -206,7 +210,7 @@ const startPolling = (orderId: string) => {
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/swypt/completeMpesaPayment`, 
-        { orderId },
+        { orderId, prizePool },
         {
           withCredentials: true,
           headers: {'Content-Type': 'application/json'}
@@ -335,6 +339,7 @@ const startPolling = (orderId: string) => {
       }
 
       setIsProcessing(true);
+      setActiveButton('stk');
 
       try {
         // First fetch the exchange rate if not already done
@@ -352,6 +357,8 @@ const startPolling = (orderId: string) => {
         
       } catch (error) {
         setIsProcessing(false);
+      }finally{
+      setActiveButton('');
       }
 
       return
@@ -408,6 +415,45 @@ const startPolling = (orderId: string) => {
     setPaymentCompleted(true)
 
     const isCrypto = ["cUSD", "USDT", "USDC"].includes(selectedMethod)
+  }
+   const handleMpesaPaymentConfirmation = async () => {
+    if (!selectedMethod) return
+
+
+    setIsProcessing(true)
+    setActiveButton('confirmation');
+      const {
+          celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
+          solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+        } = await checkCombinedTokenBalances();
+
+      let isBalanceSufficient;
+
+      if(Number(cUSDBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(celoUSDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(celoUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(solUSDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(solUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else{
+        isBalanceSufficient = false
+      }
+
+      if (!isBalanceSufficient) {
+      setIsProcessing(false)
+      await showAlert(`Your balance is insufficient to cover the ${prizePool} USD payment. Please deposit funds and try again`)
+      setActiveButton('');
+      return;
+    }
+
+    setPaymentCoin('USDT')
+    setIsProcessing(false)
+    setPaymentCompleted(true)
+    setSelectedNetwork('celo')
   }
 
 
@@ -607,54 +653,75 @@ useEffect(() => {
                   <Label htmlFor="phone" className="text-xs">M-Pesa Number</Label>
                   <Input
                     id="phone"
-                    placeholder="254712345678"
+                    placeholder="0712345678"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="bg-white border-gray-300 text-sm" 
-                    minLength={12} 
-                    maxLength={12}
+                    minLength={10} 
+                    maxLength={10}
                   />
                 </div>
 
                 {exchangeRate && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    {/* <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Amount in USD:</span>
                       <span className="font-medium">${prizePool}</span>
-                    </div>
+                    </div> */}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Exchange Rate:</span>
                       <span className="font-medium">1 USD = {exchangeRate.KES_RATE} KES</span>
                     </div>
                     <div className="flex justify-between text-sm font-semibold">
                       <span className="text-gray-600">Amount to Pay:</span>
-                      <span className="text-brand-purple">{exchangeRate.amountInKes} KES</span>
+                      <span className="text-brand-purple">KES {exchangeRate.amountInKes?.toLocaleString()}</span>
                     </div>
                   </div>
                 )}
 
-                <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+                {/* <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
                   You will receive a payment prompt on your phone for {exchangeRate?.amountInKes || '___'} KES.
-                </div>
+                </div> */}
 
-                <Button
-                  onClick={handlePayment}
-                  disabled={isProcessing || initiatePayment.isPending}
-                  className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
-                >
-                  {isProcessing || initiatePayment.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {paymentStatus === 'pending' ? 'Waiting for payment...' : 'Sending payment request...'}
-                    </div>
-                  ) : (
-                    'Send Payment Request'
-                  )}
-                </Button>
+      {activeButton !== 'confirmation' && (
+        <Button
+          onClick={handlePayment}
+          disabled={isProcessing}
+          className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+        >
+          {isProcessing ? (
+            <div className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Send STK Push
+            </div>
+          ) : (
+            'Send STK Push'
+          )}
+        </Button>
+      )}
 
+      {activeButton !== 'stk' && (
+        <Button
+          onClick={handleMpesaPaymentConfirmation}
+          disabled={isProcessing || initiatePayment.isPending}
+          className="w-full bg-brand-purple hover:bg-brand-purple/90 text-white text-sm py-2"
+        >
+          {isProcessing || initiatePayment.isPending ? (
+            <div className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {paymentStatus === 'pending' ? 'Waiting for payment...' : 'Confirming Mpesa payment...'}
+            </div>
+          ) : (
+            `I have already paid!`
+          )}
+        </Button>
+      )}
                 {paymentStatus === 'pending' && (
                   <div className="text-center text-sm text-gray-600">
                     <p>Please complete the payment on your phone.</p>

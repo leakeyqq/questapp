@@ -23,6 +23,7 @@ import { PaymentModal } from "@/components/payment-modal"
 import { Users, UserCheck, TrendingUp, MessageCircle, Hash, AlertCircle } from "lucide-react"
 import { FaTiktok, FaInstagram, FaTwitter } from 'react-icons/fa';
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import AuthGuard from "@/components/AuthGuard";
 
 interface PlatformRequirement {
   platform: string
@@ -89,21 +90,21 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [platformRequirements, setPlatformRequirements] = useState<PlatformRequirement[]>([
     {
       platform: "TikTok",
-      minFollowers: 1000,
+      minFollowers: 50,
       enabled: false,
       icon: <FaTiktok className="h-4 w-4 text-gray-900" />,
       color: "text-pink-600",
     },
     {
       platform: "Instagram",
-      minFollowers: 1000,
+      minFollowers: 50,
       enabled: false,
       icon: <FaInstagram className="h-4 w-4 text-gray-900" />,
       color: "text-purple-600",
     },
     {
       platform: "X (Twitter)",
-      minFollowers: 1000,
+      minFollowers: 50,
       enabled: false,
       icon: <FaTwitter className="h-4 w-4 text-gray-900" />,
       color: "text-blue-600",
@@ -392,7 +393,8 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
 
   
   return (
-    // <div className="min-h-screen bg-brand-light">
+       <AuthGuard>
+    {/* <div className="min-h-screen bg-brand-light"> */}
     <div className="min-h-screen bg-brand-light overflow-x-hidden"> 
       <AlertComponent />
       <div className="container mx-auto px-4 py-12">
@@ -945,5 +947,6 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
         </div>
       </div>
     </div>
+    </AuthGuard>
   )
 }
