@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SubmissionForm from "@/components/submission-form"
 import { quests } from "@/lib/data"
 import type { Quest } from "@/lib/types"
-import { notFound, useParams, useRouter  } from "next/navigation"
+import { notFound  } from "next/navigation"
 // import { useEffect, useState } from "react"
 import { getSingleQuest } from "@/lib/quest";
 import LinkifyText from '@/components/LinkifyText';
@@ -414,23 +414,89 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
               </div>
 
                 <div className="mt-4">
-                  <h2 className="text-xl font-bold mb-4 text-brand-dark">Reward criteria</h2>
+                  <h2 className="text-xl font-bold mb-4 text-brand-dark">Rewards</h2>
                   {quest.approvalNeeded ? (
                   <p className="text-gray-700 mb-4">All participating content creators will be rewarded with {quest.pricePerVideo}<CurrencyDisplay/> each.
                    {/* Only  {quest.videosToBeAwarded} slots left now. */}
                    </p>
 
                   ):(
-                  <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} content creators shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p>
+                  <div>
+                      {/* <p className="text-gray-700 mb-4">The best {quest.videosToBeAwarded} content creators shall earn {quest.pricePerVideo}<CurrencyDisplay/> each.</p> */}
+
+
+
+
+
+
+
+        
+                  <div className="bg-gradient-to-r from-brand-purple/10 to-brand-pink/10 p-4 rounded-lg mb-4 border border-brand-purple/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-brand-purple rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm sm:text-lg text-brand-dark">For all participants</h3>
+                        {/* <p className="text-sm text-gray-600">For all participants</p> */}
+                      </div>
+                    </div>
+                    <p className="text-gray-700 font-medium text-sm sm:text-lg">
+                      🎉 <span className="text-brand-purple font-bold">100 points</span> automatically earned upon completing
+                      quest!
+                    </p>
+                  </div>
+
+                  {/* Additional Prize */}
+                  <div className="bg-gradient-to-r from-brand-pink/10 to-brand-purple/10 p-4 rounded-lg border border-brand-pink/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-brand-pink rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-brand-dark text-sm sm:text-lg">For Top performers</h3>
+                        {/* <p className="text-sm text-gray-600">For top performers</p> */}
+                      </div>
+                    </div>
+                      <p className="text-gray-700 text-sm sm:text-lg">
+                        💰 <span className="font-bold">Additional {quest.pricePerVideo}<CurrencyDisplay/> </span> each for the
+                        <span> best {quest.videosToBeAwarded}</span> videos!
+                      </p>
+                
+                  </div>
+
+
+</div>
+
+
+
+
+
+
+                      
                   )}
                 </div>
 
 
       <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-brand-light p-4 rounded-lg text-center">
+                  {/* <div className="bg-brand-light p-4 rounded-lg text-center">
                     <p className="text-gray-600 text-sm">Reward</p>
                     <p className="text-xl font-bold text-brand-purple">{quest.pricePerVideo} <CurrencyDisplay/></p>
-                  </div>
+                  </div> */}
 
 
                   

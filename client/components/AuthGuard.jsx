@@ -1,7 +1,7 @@
 "use client";
 import { useAccount } from "wagmi";
 import { useState, useEffect } from "react";
-import { ConnectWalletButton } from "./test/simple-connect"; // adjust path
+import { ConnectWalletButton } from "./test/simple-connect-popup"; // adjust path
 
 export default function AuthGuard({ children }) {
   const { isConnected, address } = useAccount();
