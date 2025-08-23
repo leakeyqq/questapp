@@ -678,7 +678,7 @@ export default function DashboardPage() {
               </Dialog>
 
 
-              <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-6 hidden">
+              <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-6">
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                     {/* Icon Container */}
