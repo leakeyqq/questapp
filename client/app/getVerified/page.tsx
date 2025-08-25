@@ -10,34 +10,89 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Shield, Star, Users, TrendingUp, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { useAccount } from "wagmi";
+import { useWeb3 } from "@/contexts/useWeb3"
 
 
 export default function Home() {
   const router = useRouter();
   const [selfApp, setSelfApp] = useState<SelfApp | null>(null);
   const [universalLink, setUniversalLink] = useState("");
+  const { address } = useAccount();
+  const { address: web3Address } = useWeb3();
   const [userId, setUserId] = useState(ethers.ZeroAddress);
   const excludedCountries = useMemo(() => [countries.NORTH_KOREA], []);
   const [isVerified, setIsVerified] = useState(false)
 
 
+  // Function to check verification status from API
+  const checkVerificationStatus = async (walletAddress: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/verification/verificationStatus?address=${walletAddress}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const verified = data.user?.selfProtocol?.verified || false;
+        setIsVerified(verified);
+        
+        if (verified && typeof window !== 'undefined') {
+          sessionStorage.setItem('isVerified', 'true');
+          sessionStorage.setItem('verifiedAddress', walletAddress);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+    }
+  };
+
+  // Check if user is already verified from sessionStorage
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedVerification = sessionStorage.getItem('isVerified');
+      if (savedVerification === 'true') {
+        setIsVerified(true);
+      } else if (address) {
+        // Check API for verification if not in sessionStorage
+        checkVerificationStatus(address);
+      }
+    }
+  }, [address]);
+
+  // Set userId from connected wallet address
+  useEffect(() => {
+    const walletAddress = address || web3Address;
+    if (walletAddress) {
+      setUserId(walletAddress);
+    }
+  }, [address, web3Address]);
+
+  useEffect(() => {
+    if (!userId || userId === ethers.ZeroAddress) return;
+    
     try {
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || "Questpanda",
-        scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "myservice-prod",
-        endpoint: `${process.env.NEXT_PUBLIC_URL}/api/verify`,
+        scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "questapp-by-leakey",
+        // endpoint: `${process.env.NEXT_PUBLIC_URL}/api/verify`,
+        endpoint: process.env.NEXT_PUBLIC_SELF_ENDPOINT || "",
         logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png",
         userId: userId,
-        endpointType: "staging_https",
+        endpointType: "staging_celo",
         userIdType: "hex",
-        userDefinedData: "Bonjour Cannes!",
+        userDefinedData: "lets get verified Panda🐼",
         disclosures: {
           minimumAge: 18,
           nationality: true,
           // gender: true,
-        }
+        },
+        devMode: true
       }).build();
 
       setSelfApp(app);
@@ -45,10 +100,15 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to initialize Self app:", error);
     }
-  }, []);
+  }, [userId]);
 
   const handleSuccessfulVerification = () => {
     setIsVerified(true)
+    // Store verification status in sessionStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('isVerified', 'true');
+      sessionStorage.setItem('verifiedAddress', userId);
+    }
     setTimeout(() => {
       router.push("/dashboard")
     }, 3000)
@@ -254,7 +314,9 @@ export default function Home() {
                   {selfApp ? (
                     <SelfQRcodeWrapper
                       selfApp={selfApp}
+                      type="deeplink"
                       onSuccess={handleSuccessfulVerification}
+
                       onError={(error) => {
                         const errorCode = error.error_code || "Unknown"
                         const reason = error.reason || "Unknown error"

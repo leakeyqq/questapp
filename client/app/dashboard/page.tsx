@@ -193,6 +193,19 @@ export default function DashboardPage() {
     const checkVerificationStatus = async () => {
       if (!address) return;
 
+      // First check sessionStorage for verification status
+      if (typeof window !== 'undefined') {
+        const savedVerification = sessionStorage.getItem('isVerified');
+        const savedAddress = sessionStorage.getItem('verifiedAddress');
+        
+        // If the user is verified in sessionStorage and it's the same address
+        if (savedVerification === 'true' && savedAddress === address) {
+          setIsVerified(true);
+          return; // Skip API call if already verified in sessionStorage
+        }
+      }
+
+      // If not verified in sessionStorage, check the API
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/verification/verificationStatus`, {
           method: "GET",
@@ -204,8 +217,15 @@ export default function DashboardPage() {
 
         if (response.ok) {
           const data = await response.json();
-          setIsVerified(data.user?.selfProtocol?.verified || false);
+          const verified = data.user?.selfProtocol?.verified || false;
+          setIsVerified(verified);
           setCountry(data.user?.selfProtocol?.countryOfUser || null);
+          
+          // Store in sessionStorage if verified
+          if (verified && typeof window !== 'undefined') {
+            sessionStorage.setItem('isVerified', 'true');
+            sessionStorage.setItem('verifiedAddress', address);
+          }
         }
       } catch (error) {
         console.error("Error checking verification status:", error);
