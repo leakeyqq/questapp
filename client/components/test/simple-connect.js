@@ -146,7 +146,7 @@ export default function ConnectWalletButton() {
           );
           const data = await res.json();
           if (data.success) {
-            document.cookie = `userWalletAddress=${address}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict}`;
+            document.cookie = `userWalletAddress=${address}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict}`; // 7 days
             console.log("Login successful:", data);
           } else {
             console.log("Login failed:", data);
