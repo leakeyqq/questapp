@@ -52,6 +52,10 @@ const creatorSchema = new mongoose.Schema({
             required: false
         }
     }],
+    questsDoneCount: {
+        type: Number,
+        required: false
+    },
     myApplications: [{
         _id: false,
         questId: {type: String, required: false},
@@ -59,7 +63,6 @@ const creatorSchema = new mongoose.Schema({
         submittedOn: {type: Date, required: false},
         approvedOn: {type: Date, required: false}
     }],
-
     twitterData: {
         id: {type: String,required: false},
         name: {type: String,required: false},
@@ -105,6 +108,16 @@ const creatorSchema = new mongoose.Schema({
         createTime: {type: Date, required: false},
         followers: {type: Number, required: false},
         following: {type: Number, required: false},
+    },
+    points: {
+        pointsEarned: {
+            type: Number,
+            default: 50
+        },
+        pointsRedeemed: {
+            type: Number,
+            default: 0
+        }
     }
 }, {timestamps: true})
 

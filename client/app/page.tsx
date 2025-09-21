@@ -11,9 +11,15 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <header className="mb-8 text-center">
           <div className="inline-block mb-4 relative">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
+            {/* <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
               Questpanda
-            </h1>
+            </h1> */}
+            <h1 className="text-4xl md:text-6xl font-bold text-brand-dark mb-6 leading-tight">
+              Connecting creators{" "}
+            <span className="bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent">
+              with brands
+            </span>
+          </h1>
             <div className="absolute -top-4 -right-4 md:-top-6 md:-right-6 w-8 h-8 md:w-12 md:h-12 bg-brand-yellow rounded-full opacity-70 blur-sm"></div>
             <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 w-6 h-6 md:w-8 md:h-8 bg-brand-teal rounded-full opacity-70 blur-sm"></div>
           </div>
@@ -40,7 +46,7 @@ Are you a content creator? Create fun videos about products, share online and ea
 
                     {/* Fancy Discover Creators Text */}
           <div className="mt-12">
-            <Link href="/discover" className="group inline-block">
+            <Link href="/leaderboard" className="group inline-block">
               <div className="relative">
                 {/* Background glow effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
@@ -76,10 +82,12 @@ Are you a content creator? Create fun videos about products, share online and ea
                     {/* Text content */}
                     <div className="text-left">
                       <div className="text-md sm:text-2xl font-bold bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent group-hover:from-brand-teal group-hover:via-brand-purple group-hover:to-brand-pink transition-all duration-500">
-                        Discover 3,000+ Creators
+                        {/* Discover 3,000+ Creators */}
+                        Leaderboard
                       </div>
                       <div className="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors">
-                        Find the perfect creator for your brand
+                        {/* Find the perfect creator for your brand */}
+                    Top creators in our community
                       </div>
                     </div>
 

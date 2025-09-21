@@ -22,6 +22,7 @@ import { FaYoutube, FaTwitter, FaInstagram, FaTiktok, FaTwitch, FaFacebook, FaGl
 import { useAlert } from "@/components/custom-popup"
 import AuthGuard from "@/components/AuthGuard";
 import { useRouter } from 'next/navigation'
+import { WithdrawalModal } from "@/components/withdrawal-modal"
 
 
 
@@ -108,6 +109,7 @@ export default function DashboardPage() {
       tiktok: null,
       instagram: null
       });
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false)
 
   // Add to your existing state declarations
   const [isVerified, setIsVerified] = useState(false);
@@ -134,7 +136,6 @@ export default function DashboardPage() {
 
           if (res.ok) {
             const data = await res.json();
-            console.log('Creator data:', data);
 
             setTotalEarnings(data.creator.totalEarnings)
             setTotalWithdrawn(data.creator.totalWithdrawn)
@@ -185,7 +186,7 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
-  console.log('Linked accounts state:', linkedAccounts);
+
 }, [linkedAccounts]);
 
   // Add this useEffect hook to check verification status
@@ -264,9 +265,6 @@ export default function DashboardPage() {
 
       const data = await response.json();
 
-      console.log('data is ', data)
-
-
       if (data.message == 'failed') {
         setIsLinkModalOpen(false)
         setProfileUrl("")
@@ -302,6 +300,10 @@ export default function DashboardPage() {
       [platform]: ""
     }))
   }
+
+  const handleWithdrawalComplete = () => {
+  // You can add logic here to refresh balances or update UI
+}
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -434,7 +436,7 @@ export default function DashboardPage() {
                         <div className="w-2 h-2 bg-white/60 rounded-full mr-2"></div>
                         ${walletBalance} balance
                       </div>
-                      <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
+                      <Button size="sm"  onClick={() => setIsWithdrawalModalOpen(true)} className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
                         <Wallet className="w-4 h-4 mr-1" />
                         Withdraw
                       </Button>
@@ -623,14 +625,14 @@ export default function DashboardPage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                   <div className="relative flex items-center justify-center gap-2">
                     <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                      <Zap className="w-3 h-3 text-white animate-pulse" />
+                      {/* <Zap className="w-3 h-3 text-white animate-pulse" /> */}
                     </div>
                     <span className="font-bold">Connect & Earn 100 points</span>
-                    <div className="flex items-center gap-1">
+                    {/* <div className="flex items-center gap-1">
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                    </div>
+                    </div> */}
                   </div>
                 </Button>
               </div>
@@ -696,6 +698,13 @@ export default function DashboardPage() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+
+        {/* Withdrawal Modal */}
+        <WithdrawalModal
+          isOpen={isWithdrawalModalOpen}
+          onClose={() => setIsWithdrawalModalOpen(false)}
+          onWithdrawalComplete={handleWithdrawalComplete} />
 
 
               <Card className="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 border-brand-purple/20 shadow-sm mb-6">
