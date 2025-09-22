@@ -102,6 +102,9 @@ export default function DashboardPage() {
   const [totalWithdrawn, setTotalWithdrawn] = useState('0')
   const [totalBalance, setTotalBalance] = useState('0')
   const [walletBalance, setWalletBalance] = useState(0)
+  const [pointsEarned, setPointsEarned] = useState(50)
+  const [pointsBalance, setPointsBalance] = useState(50)
+  
   const { showAlert, AlertComponent } = useAlert()
   const { checkCUSDBalance, isWalletReady } = useWeb3();
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccounts>({
@@ -140,6 +143,8 @@ export default function DashboardPage() {
             setTotalEarnings(data.creator.totalEarnings)
             setTotalWithdrawn(data.creator.totalWithdrawn)
             setTotalBalance(data.creator.earningsBalance)
+            setPointsEarned(data.creator.points.pointsEarned)
+            setPointsBalance(Number(data.creator.points.pointsEarned) - Number(data.creator.points.pointsRedeemed))
 
             // Filter out duplicate quests before setting state
             const uniqueQuests = data.quests.filter((quest: Quest, index: any, self: Quest[]) => 
@@ -469,12 +474,12 @@ export default function DashboardPage() {
                       </div>
                       <Gift className="w-5 h-5 text-white/70" />
                     </div>
-                    <div className="text-3xl font-bold mb-1">50 points</div>
+                    <div className="text-3xl font-bold mb-1">{pointsEarned} points</div>
                     <p className="text-white/90 text-sm mb-3">Total extra points earned</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-sm text-white/80">
                         <div className="w-2 h-2 bg-white/60 rounded-full mr-2"></div>
-                        50 points balance
+                        {pointsBalance} points balance
                       </div>
                       <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
                         <Gift className="w-4 h-4 mr-1" />
