@@ -23,7 +23,7 @@ import { useAlert } from "@/components/custom-popup"
 import AuthGuard from "@/components/AuthGuard";
 import { useRouter } from 'next/navigation'
 import { WithdrawalModal } from "@/components/withdrawal-modal"
-
+import { getWeb3AuthInstance } from "../../lib/web3AuthConnector"
 
 
 type PlatformIconProps = {
@@ -104,9 +104,15 @@ export default function DashboardPage() {
   const [walletBalance, setWalletBalance] = useState(0)
   const [pointsEarned, setPointsEarned] = useState(50)
   const [pointsBalance, setPointsBalance] = useState(50)
+  const [userInfo, setUserInfo] = useState({
+  name: "Creator",
+  profilePhoto: "/human-avatar.jpg", // You can add a default avatar image
+  email: ""
+});
+
   
   const { showAlert, AlertComponent } = useAlert()
-  const { checkCUSDBalance, isWalletReady } = useWeb3();
+  const { checkCUSDBalance, checkCombinedTokenBalances, isWalletReady } = useWeb3();
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccounts>({
       twitter: null,
       tiktok: null,
@@ -117,6 +123,7 @@ export default function DashboardPage() {
   // Add to your existing state declarations
   const [isVerified, setIsVerified] = useState(false);
   const [country, setCountry] = useState<string | null>(null);
+
   const router = useRouter()
 
 
@@ -124,10 +131,25 @@ export default function DashboardPage() {
     if (isConnected && address && isWalletReady) {
       setLoading(true);
       try {
+
+
         const getCreatorDetails = async () => {
-          let fake_amount = '1'
-          const balanceCheck = await checkCUSDBalance(fake_amount);
-          setWalletBalance(Number(balanceCheck.balance))
+          const calculateTotalBalance = (balances: any) => {
+            let total = 0;
+
+            // Celo balances
+            total += Number(balances.celo.cUSDBalance) || 0;
+            total += Number(balances.celo.USDTBalance) || 0;
+            total += Number(balances.celo.USDCBalance) || 0;
+
+            return total;
+          };
+
+          // Usage:
+          const balanceCheck = await checkCombinedTokenBalances();
+          let totalBalance = calculateTotalBalance(balanceCheck);
+          totalBalance = Number(totalBalance.toFixed(2))
+          setWalletBalance(totalBalance);
 
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator`, {
             method: "GET",
@@ -147,7 +169,7 @@ export default function DashboardPage() {
             setPointsBalance(Number(data.creator.points.pointsEarned) - Number(data.creator.points.pointsRedeemed))
 
             // Filter out duplicate quests before setting state
-            const uniqueQuests = data.quests.filter((quest: Quest, index: any, self: Quest[]) => 
+            const uniqueQuests = data.quests.filter((quest: Quest, index: any, self: Quest[]) =>
               index === self.findIndex((q: Quest) => q._id === quest._id)
             );
             setQuests(uniqueQuests)
@@ -188,6 +210,37 @@ export default function DashboardPage() {
       }
     }
   }, [isConnected, address, isWalletReady])
+
+
+  useEffect(() => {
+
+    const fetchUserInfo = async () => {
+      try {
+        const web3auth = getWeb3AuthInstance();
+
+        // After successful login
+        if(web3auth.connected){
+          const userInfo = await web3auth.getUserInfo();
+          setUserInfo({
+            name: userInfo.name || "Creator",
+            profilePhoto: userInfo.profileImage || "/human-avatar.jpg",
+            email: ""
+
+          });
+          console.log('userinfo is ', userInfo);
+          console.log('profile image is ', userInfo.profileImage);
+
+        }
+      } catch (error) {
+        throw error
+      }
+
+    }
+    fetchUserInfo()
+
+  }, [isConnected, address, isWalletReady])
+
+
 
 
   useEffect(() => {
@@ -294,8 +347,9 @@ export default function DashboardPage() {
     // setProfileUrl("")
     // setCurrentPlatform("")
     await showAlert("Profile was linked successfully😛");
-    router.replace(`${location.pathname}?t=${Date.now()}`)
+    // router.replace(`${location.pathname}?t=${Date.now()}`)
 
+      window.location.reload(); // Full page reload (simplest)
 
   }
 
@@ -402,10 +456,11 @@ export default function DashboardPage() {
                   <div className="text-brand-dark">
                     <div className="flex items-center gap-3 mb-0">
                       <div className="w-12 h-12 bg-brand-purple/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                        <Star className="w-6 h-6 text-brand-purple" />
+                        {/* <Star className="w-6 h-6 text-brand-purple" /> */}
+                          <img  src={userInfo.profilePhoto} alt={userInfo.name} className="w-full h-full object-cover rounded-[50%]" />
                       </div>
                       <div>
-                        <h1 className="text-xl sm:text-4xl font-bold text-brand-dark">Welcome back, Creator!</h1>
+                        <h1 className="text-xl sm:text-4xl font-bold text-brand-dark">Welcome back, {userInfo.name.split(' ')[0]}!</h1>
                         <p className="text-gray-600 text-lg">Track your earnings & quests done</p>
                       </div>
                     </div>
@@ -475,16 +530,29 @@ export default function DashboardPage() {
                       <Gift className="w-5 h-5 text-white/70" />
                     </div>
                     <div className="text-3xl font-bold mb-1">{pointsEarned} points</div>
+                    {/* <p className="text-white/90 text-sm mb-3">Total extra points earned</p> */}
                     <p className="text-white/90 text-sm mb-3">Total extra points earned</p>
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-sm text-white/80">
                         <div className="w-2 h-2 bg-white/60 rounded-full mr-2"></div>
                         {pointsBalance} points balance
                       </div>
-                      <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
+                      {/* <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
                         <Gift className="w-4 h-4 mr-1" />
                         Redeem
-                      </Button>
+                      </Button> */}
+
+      <Button 
+        size="sm" 
+        className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm"
+        onClick={async () => {
+          await showAlert("🎁 Coming Soon! You'll be able to redeem at the rate of \n1000 points = 1 USD");
+        }}
+      >
+        <Gift className="w-4 h-4 mr-1" />
+        Redeem
+      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -614,13 +682,13 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-500">Not connected</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-brand-purple/20 via-brand-pink/20 to-brand-purple/20 border border-brand-purple/30 rounded-full px-3 py-1.5 shadow-sm">
+                  {/* <div className="flex items-center gap-1 bg-gradient-to-r from-brand-purple/20 via-brand-pink/20 to-brand-purple/20 border border-brand-purple/30 rounded-full px-3 py-1.5 shadow-sm">
                     <div className="w-4 h-4 bg-gradient-to-r from-brand-purple to-brand-pink rounded-full flex items-center justify-center">
                       <Zap className="w-2.5 h-2.5 text-white" />
                     </div>
                     <span className="text-sm font-bold text-brand-purple">+100 XP</span>
                     <div className="w-1 h-1 bg-brand-purple/60 rounded-full animate-pulse"></div>
-                  </div>
+                  </div> */}
                 </div>
                 <Button
                   size="sm"
@@ -629,9 +697,8 @@ export default function DashboardPage() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                   <div className="relative flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                      {/* <Zap className="w-3 h-3 text-white animate-pulse" /> */}
-                    </div>
+                    {/* <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                    </div> */}
                     <span className="font-bold">Connect & Earn 100 points</span>
                     {/* <div className="flex items-center gap-1">
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
