@@ -179,6 +179,7 @@ useEffect(() => {
 
       // 🔐 Wait until Web3Auth is connected
       if (!web3auth.connected) {
+        console.log('web3auth is ', web3auth)
         console.warn("⏳ Waiting for Web3Auth to connect...");
         await new Promise((resolve, reject) => {
           const interval = setInterval(() => {
