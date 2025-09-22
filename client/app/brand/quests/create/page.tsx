@@ -90,23 +90,30 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [platformRequirements, setPlatformRequirements] = useState<PlatformRequirement[]>([
     {
       platform: "TikTok",
-      minFollowers: 50,
+      minFollowers: 10,
       enabled: false,
       icon: <FaTiktok className="h-4 w-4 text-gray-900" />,
       color: "text-pink-600",
     },
     {
       platform: "Instagram",
-      minFollowers: 50,
+      minFollowers: 10,
       enabled: false,
       icon: <FaInstagram className="h-4 w-4 text-gray-900" />,
       color: "text-purple-600",
     },
     {
       platform: "X (Twitter)",
-      minFollowers: 50,
+      minFollowers: 10,
       enabled: false,
       icon: <FaTwitter className="h-4 w-4 text-gray-900" />,
+      color: "text-blue-600",
+    },
+    {
+      platform: "Farcaster",
+      minFollowers: 10,
+      enabled: false,
+      icon: <img src="/farcaster.webp" alt="Farcaster" className="h-4 w-4" />,
       color: "text-blue-600",
     },
   ])

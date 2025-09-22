@@ -36,7 +36,7 @@ type PlatformIconProps = {
 };
 
 
-type Platform = 'twitter' | 'tiktok' | 'instagram'; // Add other platforms as needed
+type Platform = 'twitter' | 'tiktok' | 'instagram' | 'farcaster'; // Add other platforms as needed
 
 type SocialPlatformSettings = {
   allowedOnCampaign: boolean;
@@ -56,6 +56,8 @@ export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) =
   if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
   if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
   if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
+  if (platformLower.includes('farcaster')) return <img src="/farcaster.webp" alt="Farcaster"  className={className} />;
+
   
   return <FaGlobe className={className} />;
 };

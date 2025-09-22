@@ -31,7 +31,7 @@ type WithdrawalStep =
   | "success"
 type CryptoToken = "USDT" | "USDC" | "cUSD"
 // type Network = "CELO" | "ETHEREUM" | "POLYGON"
-type Network = "celo"
+type Network = "celo" | "scroll"
 
 
 interface TokenBalance {
@@ -48,6 +48,8 @@ interface TokenBalance {
 
 const networks: { name: Network; displayName: string; isDefault?: boolean }[] = [
   { name: "celo", displayName: "Celo network", isDefault: true },
+  { name: "scroll", displayName: "Scroll network" }
+  
   // { name: "ETHEREUM", displayName: "Ethereum" },
   // { name: "POLYGON", displayName: "Polygon" },
 ]
@@ -60,6 +62,8 @@ const tokenIcons: Record<CryptoToken, string> = {
 
 const networkIcons: Record<Network, string> = {
   celo: "/CELO.jpg",
+  scroll: "/scroll.png",
+
   // ETHEREUM: "/images/networks/ethereum-icon.png",
   // POLYGON: "/images/networks/polygon-icon.png",
 };
@@ -474,7 +478,7 @@ export function WithdrawalModal({ isOpen, onClose, onWithdrawalComplete }: Withd
                 <p className="text-xs text-blue-600">Select network for withdrawal</p>
               </div>
 
-              {networks.map((network) => (
+              {/* {networks.map((network) => (
                 <Button
                   key={network.name}
                   variant="outline"
@@ -482,12 +486,11 @@ export function WithdrawalModal({ isOpen, onClose, onWithdrawalComplete }: Withd
                   className="w-full h-12 justify-between border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
                 >
 
-                      {/* Network Icon with colored background */}
     <div className={`w-8 h-8  rounded-full flex items-center justify-center`}>
       <img
         src={networkIcons[network.name]}
         alt={network.displayName}
-        className="h-4 w-4 object-contain"
+        className="h-6 w-6 object-contain"
       />
     </div>
 
@@ -501,7 +504,42 @@ export function WithdrawalModal({ isOpen, onClose, onWithdrawalComplete }: Withd
                     </div>
                   </div>
                 </Button>
-              ))}
+              ))} */}
+
+              {networks.map((network) => {
+  // If selected token is cUSD, only show celo network
+  if (selectedToken === 'cUSD' && network.name !== 'celo') {
+    return null;
+  }
+  
+  return (
+    <Button
+      key={network.name}
+      variant="outline"
+      onClick={() => handleNetworkSelect(network.name)}
+      className="w-full h-12 justify-between border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
+    >
+      {/* Network Icon with colored background */}
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center`}>
+        <img
+          src={networkIcons[network.name]}
+          alt={network.displayName}
+          className="h-6 w-6 object-contain"
+        />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="text-left">
+          <div className="font-semibold text-gray-600 flex items-center gap-2">
+            {network.displayName}
+            {network.isDefault}
+          </div>
+        </div>
+      </div>
+    </Button>
+  );
+})}
+
             </div>
           )}
 
@@ -526,14 +564,14 @@ export function WithdrawalModal({ isOpen, onClose, onWithdrawalComplete }: Withd
       <div className="flex items-center gap-2 mb-1">
         {/* Token Icon */}
         <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-          <img src={tokenIcons[selectedToken!]} alt={selectedToken!} className="h-4 w-4 object-contain" />
+          <img src={tokenIcons[selectedToken!]} alt={selectedToken!} className="h-5 w-5 object-contain" />
         </div>
         <span className="text-sm font-medium text-blue-700">
-          {selectedToken} on {selectedNetwork}
+          {selectedToken} on {selectedNetwork.toUpperCase()}
         </span>
         {/* Network Icon */}
         <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-          <img src={networkIcons[selectedNetwork]} alt={selectedNetwork} className="h-4 w-4 object-contain" />
+          <img src={networkIcons[selectedNetwork]} alt={selectedNetwork} className="h-6 w-6 object-contain" />
         </div>
 
       </div>

@@ -44,7 +44,7 @@ const publicClient = createPublicClient({
 
 const cUSDTokenAddress = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
 // const MINIPAY_NFT_CONTRACT = "0xE8F4699baba6C86DA9729b1B0a1DA1Bd4136eFeF";
-type SupportedNetwork = "celo" | "solana" | null;
+type SupportedNetwork = "celo" | "solana" | "scroll" | null;
 
 
 export const useWeb3 = () => {
@@ -977,7 +977,7 @@ export const useWeb3 = () => {
 
                 const tokenContractAddress = checkContractAddress(tokenSymbol); // your function
                 const decimals = checkDecimals(tokenSymbol); // your function
-                const amount = Number(_amount) * 1.01;
+                const amount = Number(_amount);
                 const amountInWei = BigInt(Math.floor(amount * 10 ** decimals)).toString();
 
                 const contract = new web3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
@@ -1110,7 +1110,7 @@ export const useWeb3 = () => {
 
                 const tokenContractAddress = checkContractAddress(tokenSymbol); // your function
                 const decimals = checkDecimals(tokenSymbol); // your function
-                const amount = Number(_amount) * 1.01;
+                const amount = Number(_amount);
                 const amountInWei = BigInt(Math.floor(amount * 10 ** decimals)).toString();
 
                 const contract = new web3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
