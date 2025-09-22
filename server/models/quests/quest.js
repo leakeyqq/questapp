@@ -71,6 +71,10 @@ const questSchema = new mongoose.Schema({
         instagram: {
             allowedOnCampaign: {type: Boolean, required: false},
             minFollowers: {type: Number, required: false}
+        },
+        farcaster: {
+            allowedOnCampaign: {type: Boolean, required: false},
+            minFollowers: {type: Number, required: false}
         }
     }, 
     applicants: [{

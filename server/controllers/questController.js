@@ -105,7 +105,9 @@ export const handleQuestCreation = async (req, res) => {
     const socialPlatformsAllowed = {
       twitter: { allowedOnCampaign: false, minFollowers: 0 },
       tiktok: { allowedOnCampaign: false, minFollowers: 0 },
-      instagram: { allowedOnCampaign: false, minFollowers: 0 }
+      instagram: { allowedOnCampaign: false, minFollowers: 0 },
+      farcaster: { allowedOnCampaign: false, minFollowers: 0 }
+      
     };
 
 
@@ -113,8 +115,9 @@ export const handleQuestCreation = async (req, res) => {
       if (!req.platform) return;
 
       const platformKey = req.platform.includes('TikTok') ? 'tiktok' :
-        req.platform.includes('Instagram') ? 'instagram' :
-          req.platform.includes('Twitter') ? 'twitter' : null;
+          req.platform.includes('Instagram') ? 'instagram' :
+          req.platform.includes('Twitter') ? 'twitter' :
+          req.platform.includes('Farcaster') ? 'farcaster'  : null;
 
       if (platformKey) {
         socialPlatformsAllowed[platformKey] = {

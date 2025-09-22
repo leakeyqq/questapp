@@ -81,6 +81,28 @@ export const linkProfile = async(req, res)=>{
     }
 
 }
+export const getAllCreators = async(req, res) => {
+    console.log('get all creators')
+    // const creators = await Creator.find({}, {creatorAddress: 1, questsDone: 1, points: 1, twitterData: 1, tiktokData: 1, instagramData: 1 }).lean().exec()
+
+    const creators = await Creator.aggregate([
+  {
+    $project: {
+      creatorAddress: 1,
+      questsDoneCount: { $size: { $ifNull: ["$questsDone", []] } },
+      // Include other fields you want to return
+      twitterData: 1,
+      tiktokData: 1,
+      instagramData: 1,
+      points: 1
+    }
+  }
+]).exec();
+
+
+    return res.status(200).json({creators})
+
+}
 async function extractTikTokData(profileUrl, req, res) {
 
     try {

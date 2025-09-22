@@ -98,15 +98,14 @@ export default function QuestCardV2({ quest }: QuestCardProps) {
                     100 XP
                   </div> */}
 
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-brand-purple/20 via-brand-pink/20 to-brand-purple/20 border border-brand-purple/30 rounded-full px-1 sm:px-3 py-1 shadow-sm">
+                  {/* <div className="flex items-center gap-1 bg-gradient-to-r from-brand-purple/20 via-brand-pink/20 to-brand-purple/20 border border-brand-purple/30 rounded-full px-1 sm:px-3 py-1 shadow-sm">
                     <div className="w-4 h-4 bg-gradient-to-r from-brand-purple to-brand-pink rounded-full flex items-center justify-center">
                       <Zap className="w-2.5 h-2.5 text-white" />
                     </div>
                     <span className="text-xs sm:text-sm font-bold text-brand-purple">100 points</span>
-                    {/* <div className="w-1 h-1 bg-brand-purple/60 rounded-full animate-pulse"></div> */}
                   </div>
 
-                  <span className="text-brand-purple text-lg">+</span>
+                  <span className="text-brand-purple text-lg">+</span> */}
                   <div className="flex items-center text-brand-purple font-bold">
                     <Gift className="w-4 h-4 mr-1" />
                     {quest.pricePerVideo}
@@ -223,16 +222,15 @@ export default function QuestCardV2({ quest }: QuestCardProps) {
           <CardHeader className="p-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1 text-sm font-bold text-brand-purple">
-
+{/* 
                 <div className="flex items-center gap-1 bg-gradient-to-r from-brand-purple/20 via-brand-pink/20 to-brand-purple/20 border border-brand-purple/30 rounded-full px-1 sm:px-3 py-1 shadow-sm">
                   <div className="w-4 h-4 bg-gradient-to-r from-brand-purple to-brand-pink rounded-full flex items-center justify-center">
                     <Zap className="w-2.5 h-2.5 text-white" />
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-brand-purple">100 points</span>
-                  {/* <div className="w-1 h-1 bg-brand-purple/60 rounded-full animate-pulse"></div> */}
                 </div>
 
-                <span className="text-brand-purple text-lg">+</span>
+                <span className="text-brand-purple text-lg">+</span> */}
 
                 <Gift className="w-4 h-4" />
                 <span>{quest.pricePerVideo}<CurrencyDisplay /></span>

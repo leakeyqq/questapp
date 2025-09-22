@@ -13,6 +13,7 @@ import brandRoutes from "./routes/brandRoutes.js"
 import creatorRoutes from "./routes/creatorRoutes.js"
 import swyptRoutes from "./routes/swyptRoutes.js"
 import verificationRoutes from "./routes/selfProtocolRoutes.js"
+import walletRoutes from "./routes/walletRoutes.js"
 
 const app = express();
 app.use(express.json());
@@ -59,6 +60,7 @@ app.use('/api/brand', brandRoutes)
 app.use('/api/creator', creatorRoutes)
 app.use('/api/swypt', swyptRoutes)
 app.use('/api/verification', verificationRoutes)
+app.use('/api/wallet', walletRoutes)
 
 
 app.use("*", (req, res) => {

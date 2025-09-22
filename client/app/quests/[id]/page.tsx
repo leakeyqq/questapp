@@ -36,7 +36,7 @@ type PlatformIconProps = {
 };
 
 
-type Platform = 'twitter' | 'tiktok' | 'instagram'; // Add other platforms as needed
+type Platform = 'twitter' | 'tiktok' | 'instagram' | 'farcaster'; // Add other platforms as needed
 
 type SocialPlatformSettings = {
   allowedOnCampaign: boolean;
@@ -56,6 +56,8 @@ export const SocialPlatformIcon = ({ platform, className }: PlatformIconProps) =
   if (platformLower.includes('twitter') || platformLower.includes('x.com')) return <FaTwitter className={className} />;
   if (platformLower.includes('instagram')) return <FaInstagram className={className} />;
   if (platformLower.includes('tiktok')) return <FaTiktok className={className} />;
+  if (platformLower.includes('farcaster')) return <img src="/farcaster.webp" alt="Farcaster"  className={className} />;
+
   
   return <FaGlobe className={className} />;
 };
@@ -427,11 +429,31 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
 
 
 
-
+                  {/* Additional Prize */}
+                  <div className="bg-gradient-to-r from-brand-pink/10 to-brand-purple/10 p-4 rounded-lg border mb-4 border-brand-pink/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-brand-pink rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-brand-dark text-sm sm:text-lg">For top {quest.videosToBeAwarded} creators</h3>
+                      </div>
+                    </div>
+                      <p className="text-gray-700 text-sm sm:text-lg">
+                        💰 <span className="font-bold">{quest.pricePerVideo}<CurrencyDisplay/> </span> each after the brand does their selection
+                      </p>
+                  </div>
 
 
         
-                  <div className="bg-gradient-to-r from-brand-purple/10 to-brand-pink/10 p-4 rounded-lg mb-4 border border-brand-purple/20">
+                  <div className="bg-gradient-to-r from-brand-purple/10 to-brand-pink/10 p-4 rounded-lg border border-brand-purple/20">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 bg-brand-purple rounded-full flex items-center justify-center">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -449,34 +471,9 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                       </div>
                     </div>
                     <p className="text-gray-700 font-medium text-sm sm:text-lg">
-                      🎉 <span className="text-brand-purple font-bold">100 points</span> automatically earned upon completing
+                      🎉 <span className="text-brand-purple font-bold">100 points</span> automatically earned upon submitting
                       quest!
                     </p>
-                  </div>
-
-                  {/* Additional Prize */}
-                  <div className="bg-gradient-to-r from-brand-pink/10 to-brand-purple/10 p-4 rounded-lg border border-brand-pink/20">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-brand-pink rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-brand-dark text-sm sm:text-lg">For Top performers</h3>
-                        {/* <p className="text-sm text-gray-600">For top performers</p> */}
-                      </div>
-                    </div>
-                      <p className="text-gray-700 text-sm sm:text-lg">
-                        💰 <span className="font-bold">Additional {quest.pricePerVideo}<CurrencyDisplay/> </span> each for the
-                        <span> best {quest.videosToBeAwarded}</span> videos!
-                      </p>
-                
                   </div>
 
 
