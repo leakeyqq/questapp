@@ -235,13 +235,13 @@ export const submitQuestByCreator = async (req, res) => {
 
 
 
-    if (userAlreadySubmitted) {
-      return res.status(400).json({
-        error: {
-          msg: "Oops..You cannot submit a single quest twice😪"
-        }
-      });
-    }
+    // if (userAlreadySubmitted) {
+    //   return res.status(400).json({
+    //     error: {
+    //       msg: "Oops..You cannot submit a single quest twice😪"
+    //     }
+    //   });
+    // }
 
       if (new Date(quest.endsOn) < new Date()) {
       return res.status(400).json({ 

@@ -517,7 +517,8 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
 
             <TabsContent value="submissions" className="bg-white rounded-lg p-4 border border-gray-200 mt-2 shadow-sm">
               <div className="space-y-3">
-                {allSubmissions.reverse().map((submission: Submission) => {
+              {allSubmissions && allSubmissions.length > 0 ? (
+                allSubmissions.reverse().map((submission: Submission) => {
                   const creatorData = getCreatorData(submission)
                   const videoMetrics = getVideoMetrics(submission)
 
@@ -647,7 +648,13 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                       )} */}
                     </div>
                   )
-                })}
+                })
+              ): (
+                                  <div className="text-center py-8 text-gray-500">
+                    <p>No submissions yet. Be the first to complete this quest!</p>
+                  </div>
+              )}
+
               </div>
             </TabsContent>
 
