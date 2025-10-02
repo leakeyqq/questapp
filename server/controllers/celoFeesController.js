@@ -59,8 +59,8 @@ async function customSendCelo(toAddress, celoAmount){
     const MAX_RETRIES = 3;
     let attempt = 0;
 
-    const provider = new ethers.JsonRpcProvider("https://forno.celo.org");
-    // const provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/celo");
+    // const provider = new ethers.JsonRpcProvider("https://forno.celo.org");
+    const provider = new ethers.JsonRpcProvider("https://celo.drpc.org");
 
 
     // Create wallet
