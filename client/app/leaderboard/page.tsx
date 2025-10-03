@@ -157,7 +157,7 @@ interface LeaderboardItem {
         const transformedData: LeaderboardItem[] = data
           .filter(creator => creator.points?.pointsEarned > 0) // Only include creators with points
           .sort((a, b) => (b.points?.pointsEarned || 0) - (a.points?.pointsEarned || 0)) // Sort by points descending
-          .slice(0, 20) // Take top 10
+          // .slice(0, 20) // Take top 10
           .map((creator, index) => {
             // Get a fallback avatar based on index
             // const avatarIndex = index % fallbackAvatars.length

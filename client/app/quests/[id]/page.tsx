@@ -523,11 +523,13 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                   const videoMetrics = getVideoMetrics(submission)
 
                   return (
-                    <div key={submission._id} className="bg-white rounded-md p-3 border border-gray-100 shadow-sm">
+                    <div key={submission._id} className="relative  bg-white rounded-md p-3 border border-gray-100 shadow-sm">
                         {/* Reward Banner */}
                       {submission.rewardAmountUsd && (
-                        <div className="absolute top-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-                          Reward: {submission.rewardAmountUsd} USD
+                        <div className="absolute bottom-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                          {/* Reward: {submission.rewardAmountUsd} USD */}
+                          {submission.rewardAmountUsd} USD
+
                         </div>
                       )}
                       {/* Header: Profile + Buttons */}
