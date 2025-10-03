@@ -1052,7 +1052,9 @@ export const useWeb3 = () => {
 
 
             } else {
-                throw new Error("Network not supported yet!!")
+                // throw new Error("Network not supported yet!!")
+                throw new Error("Insufficient balance!")
+
             }
 
             // 
