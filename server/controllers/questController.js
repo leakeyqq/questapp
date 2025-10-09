@@ -421,15 +421,22 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
       }
     );
 
-  // Increment points by 100
-  Creator.findOneAndUpdate(
-    { creatorAddress: walletID },
-    { 
-      $inc: { 
-        'points.pointsEarned': 100 
-      } 
+    
+    try {
+      // Increment points by 100    
+      const _creator = await Creator.findOneAndUpdate(
+        { creatorAddress: walletID },
+        {
+          $inc: {
+            'points.pointsEarned': 100
+          }
+        },
+        { new: true }  // Add this to return the updated document
+      );
+
+    } catch (error) {
+      throw error
     }
-  );
 
 
     // Update submission data
@@ -551,6 +558,22 @@ async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) 
         new: true,
       }
     );
+
+        try {
+      // Increment points by 100    
+      const _creator = await Creator.findOneAndUpdate(
+        { creatorAddress: walletID },
+        {
+          $inc: {
+            'points.pointsEarned': 100
+          }
+        },
+        { new: true }  // Add this to return the updated document
+      );
+
+    } catch (error) {
+      throw error
+    }
 
     // Update submission data
 
@@ -682,6 +705,22 @@ async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedO
       }
     );
 
+        try {
+      // Increment points by 100    
+      const _creator = await Creator.findOneAndUpdate(
+        { creatorAddress: walletID },
+        {
+          $inc: {
+            'points.pointsEarned': 100
+          }
+        },
+        { new: true }  // Add this to return the updated document
+      );
+
+    } catch (error) {
+      throw error
+    }
+    
     // Update submission data
     const submissionData_instagram = {
       replyCount: data.data.xdt_shortcode_media.edge_media_preview_comment.count,

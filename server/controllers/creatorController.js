@@ -85,7 +85,19 @@ export const getAllCreators = async(req, res) => {
     console.log('get all creators')
     // const creators = await Creator.find({}, {creatorAddress: 1, questsDone: 1, points: 1, twitterData: 1, tiktokData: 1, instagramData: 1 }).lean().exec()
 
+        const excludedAddresses = [
+        "0x83c84E6d3a9A7483d4fbBDfaffF17C4c5002A4C1", 
+        "0x133ca7d6603961c3fE29586463Bec66a5da946d2"
+    ];
+
     const creators = await Creator.aggregate([
+    {
+        $match: {
+            creatorAddress: { 
+                $nin: excludedAddresses  // Exclude these addresses
+            }
+        }
+    },
   {
     $project: {
       creatorAddress: 1,
