@@ -568,7 +568,9 @@ export default function DashboardPage() {
                     <div>
                       <CardTitle className="text-brand-dark">My social accounts</CardTitle>
                       <CardDescription className="text-gray-600">
-                        Link your profiles and earn rewards
+                        {/* Link your soical profiles and earn rewards */}
+                        Link your social profiles
+
                       </CardDescription>
                     </div>
                   </div>
@@ -699,7 +701,9 @@ export default function DashboardPage() {
                   <div className="relative flex items-center justify-center gap-2">
                     {/* <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
                     </div> */}
-                    <span className="font-bold">Connect & Earn 100 points</span>
+                    {/* <span className="font-bold">Connect & Earn 100 points</span> */}
+                    <span className="font-bold">Link account</span>
+
                     {/* <div className="flex items-center gap-1">
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
                       <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
@@ -729,7 +733,9 @@ export default function DashboardPage() {
                       Link {getPlatformName(currentPlatform)}
                     </DialogTitle>
                     <DialogDescription>
-                      Paste your {getPlatformName(currentPlatform)} profile URL below and earn 100 points!
+                      {/* Paste your {getPlatformName(currentPlatform)} profile URL below and earn 100 points! */}
+                      Paste your {getPlatformName(currentPlatform)} profile URL below!
+
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
@@ -743,7 +749,7 @@ export default function DashboardPage() {
                         className="mt-1"
                       />
                     </div>
-                    <div className="bg-brand-yellow/10 rounded-lg p-3 flex items-center gap-2">
+                    {/* <div className="bg-brand-yellow/10 rounded-lg p-3 flex items-center gap-2">
                       <div className="w-8 h-8 bg-brand-yellow/20 rounded-full flex items-center justify-center">
                         <Zap className="w-4 h-4 text-brand-yellow" />
                       </div>
@@ -751,7 +757,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-brand-dark">XP Reward</p>
                         <p className="text-xs text-gray-600">You'll earn 100 XP for connecting this account</p>
                       </div>
-                    </div>
+                    </div> */}
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="outline"
@@ -764,7 +770,7 @@ export default function DashboardPage() {
                         disabled={!profileUrl.trim()}
                         className="bg-brand-purple hover:bg-brand-purple/90 text-white"
                       >
-                        Link Account & Earn points
+                        Link Account
                       </Button>
                     </div>
                   </div>

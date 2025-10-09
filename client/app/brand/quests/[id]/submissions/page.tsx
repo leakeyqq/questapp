@@ -104,6 +104,7 @@ interface Submission {
       isVerified?: boolean
       isBlueVerified?: boolean
       profilePicture?: string
+      cloudinary_profilePicture?: string
       location?: string
       followers?: number
       following?: number
@@ -117,6 +118,7 @@ interface Submission {
       uniqueId?: string
       nickname?: string
       avatarThumb?: string
+      cloudinary_profilePicture?: string
       createTime?: Date
       verified?: boolean
       followerCount?: number
@@ -207,7 +209,7 @@ export default function SubmissionsPage({
             return {
               name: submission.twitterData.author.name || submission.twitterData.author.userName || "Unknown",
               username: submission.twitterData.author.userName || "",
-              profilePic: submission.twitterData.author.profilePicture || "",
+              profilePic: submission.twitterData.author.cloudinary_profilePicture || "",
               followers: submission.twitterData.author.followers || 0,
               following: submission.twitterData.author.following || 0,
               verified: submission.twitterData.author.isVerified || submission.twitterData.author.isBlueVerified || false,
@@ -219,7 +221,7 @@ export default function SubmissionsPage({
           return {
             name: submission.tiktokData.author.nickname || submission.tiktokData.author.uniqueId || "Unknown",
             username: submission.tiktokData.author.uniqueId || "",
-            profilePic: submission.tiktokData.author.avatarThumb || "",
+            profilePic: submission.tiktokData.author.cloudinary_profilePicture || "",
             followers: submission.tiktokData.author.followerCount || 0,
             following: submission.tiktokData.author.followingCount || 0,
             verified: submission.tiktokData.author.verified || false,
