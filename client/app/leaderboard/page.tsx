@@ -1,8 +1,10 @@
   "use client"
 
   import { Card, CardContent, CardHeader } from "@/components/ui/card"
-  import { Trophy, Zap, Target, Medal, Crown, TrendingUp } from "lucide-react"
+  import { Trophy, Zap, Target, Medal, Crown, TrendingUp, ArrowRight, Link } from "lucide-react"
   import {useEffect, useState} from "react"
+  import { useAccount } from "wagmi";
+  
 
   interface LeaderboardCreator {
   _id: string
@@ -40,89 +42,7 @@ interface LeaderboardItem {
 }
 
 
-  // Simple leaderboard data
-  // const leaderboardData = [
-  //   {
-  //     id: 1,
-  //     rank: 1,
-  //     name: "Sarah Johnson",
-  //     avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-  //     points: 15420,
-  //     questsCompleted: 47,
-  //   },
-  //   {
-  //     id: 2,
-  //     rank: 2,
-  //     name: "Mike Chen",
-  //     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-  //     points: 14890,
-  //     questsCompleted: 43,
-  //   },
-  //   {
-  //     id: 3,
-  //     rank: 3,
-  //     name: "Emma Rodriguez",
-  //     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-  //     points: 13750,
-  //     questsCompleted: 39,
-  //   },
-  //   {
-  //     id: 4,
-  //     rank: 4,
-  //     name: "Alex Thompson",
-  //     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-  //     points: 12980,
-  //     questsCompleted: 36,
-  //   },
-  //   {
-  //     id: 5,
-  //     rank: 5,
-  //     name: "Jessica Park",
-  //     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-  //     points: 11650,
-  //     questsCompleted: 32,
-  //   },
-  //   {
-  //     id: 6,
-  //     rank: 6,
-  //     name: "David Kim",
-  //     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-  //     points: 10890,
-  //     questsCompleted: 29,
-  //   },
-  //   {
-  //     id: 7,
-  //     rank: 7,
-  //     name: "Lisa Wang",
-  //     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
-  //     points: 9750,
-  //     questsCompleted: 26,
-  //   },
-  //   {
-  //     id: 8,
-  //     rank: 8,
-  //     name: "Ryan Martinez",
-  //     avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
-  //     points: 8920,
-  //     questsCompleted: 24,
-  //   },
-  //   {
-  //     id: 9,
-  //     rank: 9,
-  //     name: "Sophia Lee",
-  //     avatar: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face",
-  //     points: 8150,
-  //     questsCompleted: 22,
-  //   },
-  //   {
-  //     id: 10,
-  //     rank: 10,
-  //     name: "James Wilson",
-  //     avatar: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face",
-  //     points: 7680,
-  //     questsCompleted: 20,
-  //   },
-  // ]
+
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -139,6 +59,9 @@ interface LeaderboardItem {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { address, isConnected } = useAccount();
+  const [userPoints, setUserPoints] = useState(0)
+  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
     const fetchLeaderboardData = async () => {
@@ -202,7 +125,35 @@ interface LeaderboardItem {
 
     fetchLeaderboardData()
   }, [])
+  // Fetch user points
+useEffect(() => {
+    if(isConnected && address){
+      const fetchPoints = async () => {
+        try {
+           const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator/getPoints`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            }
+          );
+          const data = await res.json();
+          if (data.success) {
+            setUserPoints(data.points)
+          } else {
+            console.log("Fetching points failed:", data.error);
+          }
+        } catch (error) {
+            console.log("Fetching points failed:", error);
+          
+        }
+      }
 
+      fetchPoints()
+    }
+  
+}, [isConnected])
   const getRankIcon = (rank: number) => {
   // if (rank === 1) return <Crown className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
   if (rank === 1) return "🥇"
@@ -267,17 +218,172 @@ const getRankBg = (rank: number) => {
                 <Trophy className="w-7 h-7 md:w-8 md:h-8 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold mb-2">Creator Leaderboard</h1>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">Creator leaderboard</h1>
             <p className="text-white/90 text-sm md:text-base max-w-2xl mx-auto">
               Celebrating our top-performing creators and their achievements
             </p>
+
+
+                  {/* Fancy Discover Creators Text */}
+      <div className="mt-2">
+
+        {/* Compact Leaderboard Component */}
+        <div className="mt-12 mb-12">
+          <div className="relative max-w-xl mx-auto">
+            {/* Background glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal rounded-xl blur opacity-25"></div>
+
+            {/* Main content */}
+            <div className="relative bg-white rounded-xl p-6 border border-gray-200/50 shadow-lg">
+              {/* Points Display */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10  rounded-lg flex items-center justify-center">
+  {imgError ? (
+  <span className="text-2xl">🐼</span>
+) : (
+  <img 
+    src="smallpanda.png"
+    alt="Icon"
+    className="w-10 h-10 object-cover"
+    onError={() => setImgError(true)}
+  />
+)}
+                    {/* <Zap className="w-5 h-5 text-white" /> */}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm text-gray-500">Your Points</p>
+                    <p className="text-2xl font-bold text-gray-900">{userPoints.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Airdrop Allocation */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl">🎁</span>
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Your Airdrop allocation</p>
+                    <p className="text-xs text-gray-600">
+                      You'll receive{" "}
+                      <span className="font-bold text-brand-purple">
+                        {(userPoints).toLocaleString()} coins
+                      </span>{" "}
+                      when we launch!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+          {/* <p className="text-xs text-gray-500 mt-3 font-medium">Do quests, earn points & rank higher</p> */}
+              
+
+
+            </div>
+          </div>
+        </div>
+
+        <Link href="/leaderboard" className="group inline-block hidden">
+          <div className="relative">
+            {/* Background glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+
+            {/* Main content */}
+            <div className="relative bg-white rounded-lg p-4 sm:p-6 border border-gray-200/50 shadow-lg group-hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-center space-x-3">
+                {/* Animated icon */}
+                <div className="relative">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-white"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                  {/* Pulse animation */}
+                  <div className="absolute inset-0 w-12 h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full animate-ping opacity-20"></div>
+                </div>
+
+
+
+                {/* Text content */}
+                <div className="text-left">
+                  <div className="text-md sm:text-2xl font-bold bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent group-hover:from-brand-teal group-hover:via-brand-purple group-hover:to-brand-pink transition-all duration-500">
+                    {/* Discover 3,000+ Creators */}
+                    Leaderboard
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors">
+                    {/* Find the perfect creator for your brand */}
+                    Top creators in our community
+                  </div>
+
+                  {/* Call to Action */}
+                  {/* <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">🎁</span>
+                          </div>
+                          <div className="text-left flex-1">
+                            <p className="text-sm font-semibold text-gray-900">
+                              Collect points for our upcoming token airdrop!
+                            </p>
+                            <p className="text-xs text-gray-600">1 point = 1 token when we launch</p>
+                          </div>
+                        </div>
+                      </div> */}
+
+                </div>
+
+
+                {/* Arrow icon */}
+                <div className="ml-4 group-hover:translate-x-1 transition-transform duration-300">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-brand-purple"
+                  >
+                    <path d="M7 7h10v10"></path>
+                    <path d="M7 17 17 7"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
           </div>
         </div>
       </div>
 
+      
+
       <div className="container mx-auto px-4 py-6 md:py-8 -mt-6 relative z-10 mb-8">
         {/* Top 3 Podium Cards */}
+        
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+  
   {leaderboardData.slice(0, 3).map((creator, index) => (
     <Card
       key={creator.id}

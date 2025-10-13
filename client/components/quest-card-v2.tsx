@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { Quest } from "@/lib/types"
 import CurrencyDisplay from '@/components/CurrencyDisplay';
-import { Gift, Trophy, Award, Zap } from 'lucide-react';
+import { Gift, Trophy, Award, Zap, Video } from 'lucide-react';
+import { FaTwitter } from "react-icons/fa"
 
 interface QuestCardProps {
   quest: Quest
@@ -49,7 +50,21 @@ export default function QuestCardV2({ quest }: QuestCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-3 left-3 flex gap-2">
-              <Badge className="bg-brand-purple text-white hover:text-brand-purple">Create video</Badge>
+              {/* <Badge className="bg-brand-purple text-white hover:text-brand-purple">Create video</Badge> */}
+              
+              <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple flex items-center gap-1">
+                {quest.questType === "createThread" ? (
+                  <>
+                    <FaTwitter className="h-3 w-3" />
+                    Create X(Twitter) thread
+                  </>
+                ) : (
+                  <>
+                    <Video className="h-3 w-3" />
+                    Create video
+                  </>
+                )}
+              </Badge>
             </div>
             <div className="absolute bottom-3 left-3">
               {quest.approvalNeeded && (
@@ -136,8 +151,11 @@ export default function QuestCardV2({ quest }: QuestCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-2 left-2 flex gap-1">
               <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple">
-                Create video
+                {quest.questType}
               </Badge>
+
+
+
               {quest.approvalNeeded && (
                 <Badge className="text-xs bg-brand-blue text-white">
                   Approval needed
@@ -188,8 +206,23 @@ export default function QuestCardV2({ quest }: QuestCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-2 left-2">
-              <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple">
-                Create video
+              {/* <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple">
+                                {quest.questType}
+
+              </Badge> */}
+
+              <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple flex items-center gap-1">
+                {quest.questType === "createThread" ? (
+                  <>
+                    <FaTwitter className="h-3 w-3" />
+                    Create X(Twitter) thread
+                  </>
+                ) : (
+                  <>
+                    <Video className="h-3 w-3" />
+                    Create video
+                  </>
+                )}
               </Badge>
             </div>
             {/* Approval badge - bottom right of image */}

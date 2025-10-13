@@ -24,6 +24,8 @@ import AuthGuard from "@/components/AuthGuard";
 import { useRouter } from 'next/navigation'
 import { WithdrawalModal } from "@/components/withdrawal-modal"
 import { getWeb3AuthInstance } from "../../lib/web3AuthConnector"
+import { AirdropInfoModal } from "@/components/airdrop-info-modal"
+
 
 
 type PlatformIconProps = {
@@ -104,6 +106,8 @@ export default function DashboardPage() {
   const [walletBalance, setWalletBalance] = useState(0)
   const [pointsEarned, setPointsEarned] = useState(50)
   const [pointsBalance, setPointsBalance] = useState(50)
+  const [isAirdropModalOpen, setIsAirdropModalOpen] = useState(false)
+  
   const [userInfo, setUserInfo] = useState({
   name: "Creator",
   profilePhoto: "/human-avatar.jpg", // You can add a default avatar image
@@ -546,12 +550,14 @@ export default function DashboardPage() {
       <Button 
         size="sm" 
         className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm"
-        onClick={async () => {
-          await showAlert("🎁 Coming Soon! You'll be able to redeem at the rate of \n1000 points = 1 USD");
-        }}
+        // onClick={async () => {
+        //   await showAlert("🎁 Coming Soon! You'll be able to redeem at the rate of \n1000 points = 1 USD");
+        // }}
+        onClick={() => setIsAirdropModalOpen(true)}
+
       >
         <Gift className="w-4 h-4 mr-1" />
-        Redeem
+        Learn more
       </Button>
                     </div>
                   </CardContent>
@@ -829,6 +835,12 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
+          {/* Airdrop Info Modal */}
+      <AirdropInfoModal
+        isOpen={isAirdropModalOpen}
+        onClose={() => setIsAirdropModalOpen(false)}
+        userPoints={pointsEarned}
+      />
                     {/* Text Content */}
                     <div className="flex-1 space-y-1 sm:space-y-1.5">
                       {isVerified ? (
