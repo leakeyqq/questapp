@@ -11,6 +11,8 @@ import { useWeb3 } from "@/contexts/useWeb3"
 import type { Quest } from "@/lib/types"
 
 import CurrencyDisplay from '@/components/CurrencyDisplay';
+import { FaTwitter } from "react-icons/fa";
+import { Video } from "lucide-react";
 
 interface QuestCardProps {
   quest: Quest
@@ -205,7 +207,20 @@ export default function BrandDashboardPage() {
 
                       <div className="flex-1">
                         <div className="flex flex-wrap gap-2 mb-2">
-                          <Badge className="bg-brand-purple text-white">Create Video</Badge>
+                          {/* <Badge className="bg-brand-purple text-white">Create Video</Badge> */}
+                                        <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple flex items-center gap-1">
+                                          {quest.questType === "createThread" ? (
+                                            <>
+                                              <FaTwitter className="h-3 w-3" />
+                                              Create X(Twitter) thread
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Video className="h-3 w-3" />
+                                              Create video
+                                            </>
+                                          )}
+                                        </Badge>
                           <Badge variant="outline" className="border-brand-purple/30 text-brand-dark">
                             {Math.ceil(
                               (new Date(quest.endsOn).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),

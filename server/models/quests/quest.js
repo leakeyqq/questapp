@@ -266,6 +266,11 @@ const questSchema = new mongoose.Schema({
         type: String,
         enum: ['celo', 'solana'],
         default: false
+    },
+    questType: {
+        type: String,
+        enum: ['createVideo', 'createThread'],
+        default: 'createVideo'
     }
 }, {timestamps: true})
 

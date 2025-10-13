@@ -61,7 +61,7 @@ const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [title, setTitle] = useState("")
   const [brand, setBrandName] = useState("")
   // const [rewardCriteria, setRewardCriteria] = useState("")
-  const [category, setCategory] = useState("Create video")
+  const [category, setCategory] = useState("")
   // const [description, setDescription] = useState("")
   const [longDescription, setLongDescription] = useState("")
   const [prizePool, setPrizePool] = useState("")
@@ -398,6 +398,26 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
   }
 }
 
+// Add this useEffect after your existing useEffects
+useEffect(() => {
+  if (category === "Create thread") {
+    // For X/Twitter threads, only show Twitter platform
+    setPlatformRequirements(prev => 
+      prev.map(platform => ({
+        ...platform,
+        enabled: platform.platform === "X (Twitter)"
+      }))
+    );
+  } else {
+    // For video quests, reset to default state (all disabled)
+    setPlatformRequirements(prev => 
+      prev.map(platform => ({
+        ...platform,
+        enabled: false
+      }))
+    );
+  }
+}, [category]);
   
   return (
        <AuthGuard>
@@ -474,14 +494,18 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
 
                     <div className="space-y-2">
                       <Label htmlFor="category" className="text-brand-dark">
-                        Quest category <span className="text-red-500">*</span>
+                        {/* Quest category <span className="text-red-500">*</span> */}
+                        Type of quest <span className="text-red-500">*</span>
+
                       </Label>
                       <Select value={category} onValueChange={setCategory} required>
                         <SelectTrigger className="bg-white border-gray-300 text-gray-800">
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-200 text-gray-800">
-                          <SelectItem value="Create video">Video Creation</SelectItem>
+                          <SelectItem value="createVideo">Create video</SelectItem>
+                          <SelectItem value="createThread">Create X(Twitter) thread</SelectItem>
+
                         </SelectContent>
                       </Select>
                     </div>
@@ -514,7 +538,7 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
                     You are looking for content creators from which platforms?
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                {/* <CardContent className="space-y-4">
                   <div className="space-y-4">
                     {platformRequirements.map((platform, index) => (
                       <div
@@ -567,7 +591,75 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
                       </p>
                     </div>
                   )}
-                </CardContent>
+                </CardContent> */}
+
+                <CardContent className="space-y-4">
+  <div className="space-y-4">
+    {platformRequirements
+      .filter(platform => 
+        category === "Create thread" 
+          ? platform.platform === "X (Twitter)"  // Only show Twitter for threads
+          : true  // Show all platforms for video quests
+      )
+      .map((platform, index) => (
+        <div
+          key={platform.platform}
+          className={`p-4 rounded-lg border-2 transition-all ${
+            platform.enabled ? "border-brand-purple bg-brand-purple/5" : "border-gray-200 bg-gray-50"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id={`platform-${index}`}
+                checked={platform.enabled}
+                onCheckedChange={() => handlePlatformToggle(index)}
+                className="border-brand-purple data-[state=checked]:bg-brand-purple"
+                disabled={category === "Create thread"} // Disable checkbox for threads
+              />
+              <div className="flex items-center space-x-2">
+                <span className={platform.color}>{platform.icon}</span>
+                <Label
+                  htmlFor={`platform-${index}`}
+                  className="text-brand-dark font-medium cursor-pointer"
+                >
+                  {platform.platform}
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {platform.enabled && (
+            <div className="ml-6 space-y-2">
+              <Label className="text-sm text-gray-600">
+                Minimum Followers
+              </Label>
+              <Input
+                type="number"
+                placeholder="e.g., 1000"
+                value={platform.minFollowers}
+                onChange={(e) => handleMinFollowersChange(index, e.target.value)}
+                className="bg-white border-gray-300 text-gray-800 max-w-xs"
+                min="0"
+              />
+            </div>
+          )}
+        </div>
+      ))
+    }
+  </div>
+
+  {enabledPlatformsCount > 0 && (
+    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+      <p className="text-sm text-green-800">
+        {category === "Create thread" 
+          ? "✓ X (Twitter) is selected for your thread creation quest"
+          : `✓ Selected ${enabledPlatformsCount} platform${enabledPlatformsCount > 1 ? "s" : ""} for your quest`
+        }
+      </p>
+    </div>
+  )}
+</CardContent>
               </Card>
 
               {/* Participation Type Card */}

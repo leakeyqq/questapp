@@ -22,6 +22,7 @@ export interface Quest {
   rewardCriteria: string
   featured?: boolean
   approvalNeeded?: boolean
+  questType: string
   recentSubmissions?: {
     username: string
     date: string

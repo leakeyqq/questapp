@@ -150,7 +150,8 @@ export const handleQuestCreation = async (req, res) => {
       visibleOnline: true,
       applicants: [],
       submissions: [],
-      network: req.body.network
+      network: req.body.network,
+      questType: req.body.category
     });
 
     if(req.body.network == 'solana'){
@@ -194,7 +195,7 @@ export const getSingleQuest = async (req, res) => {
 
 export const get3questsOnly = async (req, res) => {
   try {
-    const _3quests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
+    const _3quests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({ createdAt: -1 }).limit(3).lean().exec()
     return res.status(200).json({ _3quests })
   } catch (error) {
     return res.status(500).json({ "error": error.message })
@@ -228,6 +229,7 @@ export const submitQuestByCreator = async (req, res) => {
       throw new Error('Quest not found');
     }
 
+    const questType = quest.questType
     // 2. Then check if user has already submitted
     const userAlreadySubmitted = quest.submissions.some(
       submission => submission.submittedByAddress == walletID
@@ -303,7 +305,7 @@ export const submitQuestByCreator = async (req, res) => {
         }
       }
 
-      updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
+      updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, questType)
     } else if (req.body.platform.toLowerCase() === 'tiktok') {
 
       if (quest.approvalNeeded) {
@@ -315,7 +317,7 @@ export const submitQuestByCreator = async (req, res) => {
       }
       await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
     } else if (req.body.platform.toLowerCase() === 'instagram') {
-      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, applicantUsername, quest.approvalNeeded)
+      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, applicantUsername, quest.approvalNeeded, questType)
     }
 
     return res.status(200).json({ updatedQuest })
@@ -343,7 +345,7 @@ function cleanTwitterUrl(url) {
   return cleanUrl;
 }
 
-async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCreatedOn) {
+async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCreatedOn, questType) {
   let contentUrl = cleanTwitterUrl(unclean_contentUrl)
   validateTwitterUrl(contentUrl)
   const { data } = await axios.get(
@@ -366,7 +368,7 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
 
   // Check if the tweet contains a video
   const hasVideo = data.legacy.entities?.media?.some(media => media.type === 'video');
-  if (!hasVideo) {
+  if (!hasVideo && questType == 'createVideo') {
     throw new Error('No video found in this tweet. Please submit a post containing a video.');
   }
 
@@ -609,7 +611,7 @@ async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) 
 
   }
 }
-async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn, applicantUsername, approvalNeeded) {
+async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn, applicantUsername, approvalNeeded, questType) {
 
   let video_view_count
 
@@ -636,7 +638,7 @@ async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedO
     const hasVideo = data.data?.xdt_shortcode_media?.edge_sidecar_to_children?.edges?.some(
       edge => edge.node.__typename === 'XDTGraphVideo'
     );
-    if (!hasVideo) {
+    if (!hasVideo && questType == 'createVideo') {
       throw new Error('No video found in this Instagram post. Please submit a post containing a video.');
     }
 

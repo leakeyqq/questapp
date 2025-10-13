@@ -115,6 +115,21 @@ export const getAllCreators = async(req, res) => {
     return res.status(200).json({creators})
 
 }
+export const getCreatorPoints = async (req, res) => {
+    try {
+        const creator = await Creator.findOne({creatorAddress: req.userWalletAddress}, {points: 1}).lean().exec()
+        let points = 50 // Default
+
+        if(creator && creator.points && creator.points.pointsEarned){
+            points = Number(creator.points.pointsEarned)
+        }
+
+        res.status(200).json({success: true, points}) 
+    } catch (error) {
+        console.log(error)
+        return res.status(200).json({success: false, error: error.message})
+    }
+}
 async function extractTikTokData(profileUrl, req, res) {
 
     try {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,23 +13,66 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { usePathname } from "next/navigation"
 import ConnectWalletButton from "./test/simple-connect"
+import { Zap, Info, Star } from "lucide-react"
+import { AirdropInfoModal } from "@/components/airdrop-info-modal"
+import { useAccount } from "wagmi";
+
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { address, isConnected } = useAccount();
+
+    const [isAirdropModalOpen, setIsAirdropModalOpen] = useState(false)
+    const [userPoints, setUserPoints] = useState(0)
+    const [imgError, setImgError] = useState(false)
+    
+
+      // Mock user points - in real app, this would come from your data source
+  // const userPoints = 500
+  // Fetch user points
+useEffect(() => {
+    if(isConnected && address){
+      const fetchPoints = async () => {
+        try {
+           const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator/getPoints`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            }
+          );
+          const data = await res.json();
+          if (data.success) {
+            setUserPoints(data.points)
+          } else {
+            console.log("Fetching points failed:", data.error);
+          }
+        } catch (error) {
+            console.log("Fetching points failed:", error);
+          
+        }
+      }
+
+      fetchPoints()
+    }
+  
+}, [isConnected])
 
   const isActive = (path: string) => {
     return pathname === path
   }
 
   return (
+    <>
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <img src="/panda-logo.png" alt="Logo" className="w-10 mr-3"/>
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
+              <span className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink">
                 Questpanda
               </span>
             </Link>
@@ -71,7 +114,7 @@ export default function Navbar() {
             >
               Creators
             </Link>
-            {/* <Link
+            <Link
               href="/leaderboard"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 isActive("/leaderboard")
@@ -80,7 +123,7 @@ export default function Navbar() {
               }`}
             >
               Leaderboard
-            </Link> */}
+            </Link>
 
             <Link
               href="/brand"
@@ -90,7 +133,7 @@ export default function Navbar() {
                   : "text-fuchsia-700 hover:text-fuchsia-700 hover:bg-brand-light/50"
               }`}
             >
-              Brands
+              Am a brand
             </Link>
 
             {/* <div className="items-center space-x-4">
@@ -99,36 +142,67 @@ export default function Navbar() {
 
           </div>
 
+            <div className="hidden md:flex items-center space-x-4 hidden">
+              {/* Points Display with Info Icon */}
+              <button
+                onClick={() => setIsAirdropModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-full hover:shadow-md hover:scale-105 transition-all group"
+              >
+            {imgError ? (
+            <span className="text-2xl">🐼</span>
+          ) : (
+            <img 
+              src="smallpanda.png"
+              alt="Icon"
+              className="w-5 h-5 object-cover"
+              onError={() => setImgError(true)}
+            />
+          )}
+                <span className="font-semibold text-gray-700">{userPoints.toLocaleString()}</span>
+              </button>
+            </div>
+
+            
+            <div className="md:hidden flex items-center gap-2">
+              {/* Mobile Points Display */}
+              {/* <button
+                onClick={() => setIsAirdropModalOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-full hover:shadow-md transition-all"
+              >
+                <Star className="w-4 h-4 text-brand-purple" />
+
+                <span className="font-semibold text-gray-700 text-sm">{userPoints.toLocaleString()}</span>
+              </button> */}
+
+<button
+  onClick={() => setIsAirdropModalOpen(true)}
+  className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-full hover:shadow-md transition-all"
+>
+
+
+              {imgError ? (
+            <span className="text-2xl">🐼</span>
+          ) : (
+            <img 
+              src="smallpanda.png"
+              alt="Icon"
+              className="w-4 h-4 object-cover"
+              onError={() => setImgError(true)}
+            />
+          )}
+  <span className="font-semibold text-gray-700 text-xs">{userPoints.toLocaleString()}</span>
+</button>
+
+            </div>
+            
+
+
           <div className="hidden md:flex items-center space-x-4">
           <div className="items-center space-x-4">
             {/* User Dropdown or Auth Button */}
               <ConnectWalletButton />
            </div>
            
-            {/* <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 bg-brand-light text-brand-purple">
-                  <span className="sr-only">User menu</span>
-                  <span className="text-sm font-medium">JD</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white border-gray-200 text-gray-800">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-200" />
-                <DropdownMenuItem className="hover:bg-brand-light hover:text-brand-purple">
-                  <Link href="/profile" className="w-full">
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-brand-light hover:text-brand-purple">
-                  <Link href="/settings" className="w-full">
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-200" />
-                <DropdownMenuItem className="hover:bg-brand-light hover:text-brand-purple">Sign out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
           </div>
 
           <div className="md:hidden">
@@ -213,17 +287,6 @@ export default function Navbar() {
               Creators
             </Link>
 
-            {/* <Link
-              href="/leaderboard"
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive("/leaderboard")
-                  ? "text-brand-purple bg-brand-light"
-                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
-              }`}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Leaderboard
-            </Link> */}
 
             <Link
               href="/brand"
@@ -234,7 +297,19 @@ export default function Navbar() {
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Brands
+              Am a Brand
+            </Link>
+
+                        <Link
+              href="/leaderboard"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive("/leaderboard")
+                  ? "text-brand-purple bg-brand-light"
+                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Leaderboard
             </Link>
 
             <div className="items-center space-x-4">
@@ -242,50 +317,17 @@ export default function Navbar() {
               <ConnectWalletButton />
            </div>
 
-            {/* <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="flex items-center px-3">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-brand-light flex items-center justify-center text-brand-purple">
-                    <span className="text-sm font-medium">JD</span>
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">John Doe</div>
-                  <div className="text-sm font-medium text-gray-500">john@example.com</div>
-                </div>
-              </div>
-              <div className="mt-3 px-2 space-y-1">
-                <Link
-                  href="/profile"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Profile
-                </Link>
-                <Link
-                  href="/settings"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Settings
-                </Link>
-                <button
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign out
-                </button>
-              </div>
-            </div> */}
-
-
-
-
-
-
           </div>
         </div>
       )}
     </nav>
+          {/* Airdrop Info Modal */}
+      <AirdropInfoModal
+        isOpen={isAirdropModalOpen}
+        onClose={() => setIsAirdropModalOpen(false)}
+        userPoints={userPoints}
+      />
+    </>
+    
   )
 }

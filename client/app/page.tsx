@@ -15,7 +15,7 @@ export default function Home() {
               Questpanda
             </h1> */}
             <h1 className="text-4xl md:text-6xl font-bold text-brand-dark mb-6 leading-tight">
-              Connecting creators{" "}
+              Connecting content creators{" "}
             <span className="bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent">
               with brands
             </span>
@@ -24,7 +24,7 @@ export default function Home() {
             <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 w-6 h-6 md:w-8 md:h-8 bg-brand-teal rounded-full opacity-70 blur-sm"></div>
           </div>
           <p className="text-base text-gray-600 max-w-2xl mx-auto">
-Are you a content creator? Create fun videos about products, share online and earn rewards
+Are you a content creator? Create fun content about products, share online and earn rewards
             {/* Are you a content creator? Create short promotional videos for brands, share on social media and earn */}
             {/* Are you a content creator? Join brand contests, make fun videos, share online, and earn rewards! */}
 
@@ -45,144 +45,8 @@ Are you a content creator? Create fun videos about products, share online and ea
           </div>
 
                     {/* Fancy Discover Creators Text */}
-          <div className="mt-12">
-            <Link href="/leaderboard" className="group inline-block">
-              <div className="relative">
-                {/* Background glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-
-                {/* Main content */}
-                <div className="relative bg-white rounded-lg p-4 sm:p-6 border border-gray-200/50 shadow-lg group-hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center justify-center space-x-3">
-                    {/* Animated icon */}
-                    <div className="relative">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-white"
-                        >
-                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                      </div>
-                      {/* Pulse animation */}
-                      <div className="absolute inset-0 w-12 h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full animate-ping opacity-20"></div>
-                    </div>
-
-                    {/* Text content */}
-                    <div className="text-left">
-                      <div className="text-md sm:text-2xl font-bold bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent group-hover:from-brand-teal group-hover:via-brand-purple group-hover:to-brand-pink transition-all duration-500">
-                        {/* Discover 3,000+ Creators */}
-                        Leaderboard
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors">
-                        {/* Find the perfect creator for your brand */}
-                    Top creators in our community
-                      </div>
-                    </div>
-
-                    {/* Arrow icon */}
-                    <div className="ml-4 group-hover:translate-x-1 transition-transform duration-300">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-brand-purple"
-                      >
-                        <path d="M7 7h10v10"></path>
-                        <path d="M7 17 17 7"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
 
 
-<div className="mt-12 px-4 sm:px-0 hidden">
-  <Link href="/discover" className="group inline-block w-full">
-    <div className="relative">
-      {/* Background glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-
-      {/* Main content */}
-      <div className="relative bg-white rounded-lg p-4 sm:p-6 border border-gray-200/50 shadow-lg group-hover:shadow-xl transition-all duration-300">
-        <div className="flex items-center justify-between space-x-3">
-          {/* Animated icon */}
-          <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-white"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </div>
-            {/* Pulse animation */}
-            <div className="absolute inset-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-purple to-brand-pink rounded-full animate-ping opacity-20"></div>
-          </div>
-
-          {/* Text content */}
-          <div className="text-left flex-grow min-w-0">
-            <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-brand-purple via-brand-pink to-brand-teal bg-clip-text text-transparent group-hover:from-brand-teal group-hover:via-brand-purple group-hover:to-brand-pink transition-all duration-500 truncate">
-              Discover 3,000+ Creators
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors truncate">
-              Find the perfect creator for your brand
-            </div>
-          </div>
-
-          {/* Arrow icon */}
-          <div className="ml-2 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-brand-purple"
-            >
-              <path d="M7 7h10v10"></path>
-              <path d="M7 17 17 7"></path>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Link>
-</div>
 
 
         </header>

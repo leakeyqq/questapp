@@ -29,6 +29,7 @@ import {
   FaFacebook,
   FaGlobe 
 } from 'react-icons/fa';
+import { Video } from "lucide-react"
 
 type PlatformIconProps = {
   platform?: string;
@@ -364,7 +365,22 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
       )}
       
       <div className="absolute bottom-4 left-4">
-        <Badge className="bg-brand-purple text-white">Create video</Badge>
+        {/* <Badge className="bg-brand-purple text-white">{quest.questType}</Badge> */}
+                      {/* <Badge className="text-xs bg-brand-purple text-white hover:text-brand-purple flex items-center gap-1"> */}
+                      <Badge className="bg-brand-purple text-white gap-1">
+
+                        {quest.questType === "createThread" ? (
+                          <>
+                            <FaTwitter className="h-3 w-3" />
+                            Create X(Twitter) thread
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-3 w-3" />
+                            Create video
+                          </>
+                        )}
+                      </Badge>
         <h1 className="text-3xl md:text-4xl font-bold text-white">{quest.title}</h1>
         <p className="text-white/80">by {quest.brandName}</p>
              <ShareButton />
