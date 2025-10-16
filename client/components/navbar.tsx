@@ -152,7 +152,7 @@ useEffect(() => {
             <span className="text-2xl">🐼</span>
           ) : (
             <img 
-              src="smallpanda.png"
+              src="/smallpanda.png"
               alt="Icon"
               className="w-5 h-5 object-cover"
               onError={() => setImgError(true)}
@@ -184,7 +184,7 @@ useEffect(() => {
             <span className="text-2xl">🐼</span>
           ) : (
             <img 
-              src="smallpanda.png"
+              src="/smallpanda.png"
               alt="Icon"
               className="w-4 h-4 object-cover"
               onError={() => setImgError(true)}

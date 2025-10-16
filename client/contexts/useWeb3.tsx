@@ -1090,7 +1090,7 @@ export const useWeb3 = () => {
             throw error
         }
     }
-    const withdrawFundsToMpesa = async (mpesaNumber: string, network: SupportedNetwork, tokenSymbol: string, _amount: string) => {
+    const withdrawFundsToMpesa = async (mpesaNumber: string, network: SupportedNetwork, _amount: string) => {
         try {
             console.log('inside withdrawal')
             if (!walletClient) throw new Error("Wallet not connected");
@@ -1099,10 +1099,33 @@ export const useWeb3 = () => {
             }
 
             if (network == "celo") {
-                let balance = await checkBalanceOfSingleAsset(tokenSymbol, network)
-                if (Number(_amount) > Number(balance.balance)) {
-                    throw new Error("Insufficient funds!")
-                }
+
+            // Get balances and determine token with highest balance
+            const balances = await checkCombinedTokenBalances();
+            const celoBalances = balances.celo;
+            
+            // Find the token with the highest balance
+            const tokens = [
+                { symbol: 'cUSD', balance: parseFloat(celoBalances.cUSDBalance) },
+                { symbol: 'USDT', balance: parseFloat(celoBalances.USDTBalance) },
+                { symbol: 'USDC', balance: parseFloat(celoBalances.USDCBalance) }
+            ];
+            
+            // Sort by balance in descending order and get the highest
+            const highestBalanceToken = tokens.sort((a, b) => b.balance - a.balance)[0];
+            
+            // Set tokenSymbol to the asset with highest balance
+            const tokenSymbol = highestBalanceToken.symbol;
+            
+            console.log('Selected token symbol:', tokenSymbol);
+            console.log('Balance of selected token:', highestBalanceToken.balance);
+
+                        // Check if user has sufficient balance
+            if (Number(_amount) > highestBalanceToken.balance) {
+                console.log('Balance of amount am withdrawing is ', _amount, Number(_amount))
+                console.log('my wallet balance is ', highestBalanceToken.balance)
+                throw new Error("Insufficient funds!")
+            }
 
                 // Do gas estimate
                 const web3 = new Web3(new Web3.providers.HttpProvider(CELO_RPC));

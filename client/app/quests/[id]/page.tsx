@@ -395,7 +395,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
               <TabsContent value="details" className="bg-white rounded-xl p-6 border border-gray-200 mt-2 shadow-md">
                 <h2 className="text-xl font-bold mb-4 text-brand-dark">Quest details</h2>
                 {/* <p className="text-gray-700 text-sm md:text-lg">{quest.description}</p> */}
-                <p className="text-gray-700 text-sm md:text-lg">
+                <p className="text-gray-700 text-sm md:text-lg whitespace-pre-wrap break-words">
                   <LinkifyText text={quest.description} />
                 </p>
 
@@ -542,8 +542,12 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                     <div key={submission._id} className="relative  bg-white rounded-md p-3 border border-gray-100 shadow-sm">
                         {/* Reward Banner */}
                       {submission.rewardAmountUsd && (
-                        <div className="absolute bottom-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-                          {/* Reward: {submission.rewardAmountUsd} USD */}
+                        // <div className="absolute bottom-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                          <div 
+    className={`absolute bottom-2 right-2 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${
+      submission.rewarded ? 'bg-pink-500' : 'bg-brand-purple'
+    }`}
+  >
                           {submission.rewardAmountUsd} USD
 
                         </div>

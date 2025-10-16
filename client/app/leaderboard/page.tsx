@@ -243,7 +243,7 @@ const getRankBg = (rank: number) => {
   <span className="text-2xl">🐼</span>
 ) : (
   <img 
-    src="smallpanda.png"
+    src="/smallpanda.png"
     alt="Icon"
     className="w-10 h-10 object-cover"
     onError={() => setImgError(true)}

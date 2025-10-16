@@ -51,7 +51,7 @@ export function AirdropInfoModal({ isOpen, onClose, userPoints }: AirdropInfoMod
   <span className="text-2xl">🐼</span>
 ) : (
   <img 
-    src="smallpanda.png"
+    src="/smallpanda.png"
     alt="Icon"
     className="w-8 h-8 object-cover"
     onError={() => setImgError(true)}
@@ -100,7 +100,11 @@ export function AirdropInfoModal({ isOpen, onClose, userPoints }: AirdropInfoMod
                           <Gift className="w-5 h-5 text-blue-900" />
                         </div>
                         <div>
-                          <p className="font-bold text-blue-900 mb-1">After launch 🎁</p>
+                          {/* <p className="font-bold text-blue-900 mb-1">After launch 🎁</p> */}
+                          {/* <p className="font-bold text-blue-900 mb-1">After launch 🎁</p> */}
+                          <p className="font-bold text-blue-900 mb-1">Airdrop coming...🎁</p>
+
+
                           <p className="text-sm text-blue-800">
                             Your points will convert to <strong>coins</strong> with real value. You can redeem for cash
                           </p>
