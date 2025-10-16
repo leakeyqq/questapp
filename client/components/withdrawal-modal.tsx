@@ -201,7 +201,7 @@ export function WithdrawalModal({ isOpen, onClose, onWithdrawalComplete }: Withd
           return
         }
 
-        const receipt = await withdrawFundsToMpesa(mpesaNumber, 'celo', 'cUSD', withdrawalAmount)
+        const receipt = await withdrawFundsToMpesa(mpesaNumber, 'celo', withdrawalAmount)
         await showAlert("Withdrawal was successful!")
         setStep("success");
         
