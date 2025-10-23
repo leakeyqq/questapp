@@ -36,7 +36,7 @@ export function AirdropInfoModal({ isOpen, onClose, userPoints }: AirdropInfoMod
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Rewards  program🎁</h2>
-              <p className="text-white/90 text-xs">Earn extra points → Get free cash</p>
+              <p className="text-white/90 text-xs">Earn extra points → Get free Airdrop</p>
             </div>
           </div>
         </div>

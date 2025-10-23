@@ -11,6 +11,8 @@ import Footer from "@/components/footer"
 import {CurrencyProvider} from "../contexts/CurrencyContext"
 import { frameEmbed } from "@/lib/fcFrameMeta"
 
+import { Analytics } from '@vercel/analytics/next';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -18,9 +20,23 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico', // Path must start with /
     shortcut: '/favicon.ico',
+    apple: '/icon-192x192.png', // Add apple touch icon for PWA
   },
   title: "Questpanda - Create content and earn",
   description: "Connecting brands that need digital marketing with content creators",
+  manifest: '/manifest.json', // Add manifest for PWA
+  themeColor: '#000000', // Add theme color for PWA
+  appleWebApp: {
+    capable: true, // Enable Apple PWA
+    statusBarStyle: 'default',
+    title: 'Questpanda',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false, // Better for PWA
+  },
   openGraph: {
     title: "Questpanda - Create content and earn",
     description: "Connecting brands that need digital marketing with content creators",
@@ -41,6 +57,7 @@ export const metadata: Metadata = {
   },
   other: {
     'fc:frame': JSON.stringify(frameEmbed),
+    'mobile-web-app-capable': 'yes', // Additional PWA support
   },
 }
 
@@ -51,6 +68,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Add PWA meta tags that aren't covered by Metadata API */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Questpanda" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body className={inter.className}>
         <AppProvider>
           {/* <ThemeProvider attribute="class" defaultTheme="dark"> */}
@@ -61,6 +86,9 @@ export default function RootLayout({
           {/* </ThemeProvider> */}
           </CurrencyProvider>
         </AppProvider>
+        {/* Add the PWA install prompt */}
+        <PWAInstallPrompt />
+        <Analytics />
       </body>
     </html>
   )

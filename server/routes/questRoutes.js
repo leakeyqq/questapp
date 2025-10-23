@@ -1,10 +1,11 @@
 import express from "express"
 const router = express.Router()
 
-import {validate_createQuest, handleQuestCreation, getAllQuests, getSingleQuest, get3questsOnly, validate_questSubmission, submitQuestByCreator} from "../controllers/questController.js"
+import {validate_createQuest, handleQuestCreation, getAllQuests, getSingleQuest, get3questsOnly, validate_questSubmission, submitQuestByCreator, updateQuestSubmissions} from "../controllers/questController.js"
 import {requestApprovalToJoinQuest} from "../controllers/approvalController.js"
 import {requireAuth} from "../middleware/auth.js"
 
+router.post("/updateSubmissions", updateQuestSubmissions)
 router.post("/create", requireAuth, validate_createQuest, handleQuestCreation)
 router.get("/allQuests", getAllQuests)
 router.get("/getSingleQuest/:questID", getSingleQuest)

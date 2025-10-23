@@ -19,8 +19,20 @@ const solanaConnection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 const CELO_RPC = 'https://forno.celo.org'; // or your own RPC
 const SPENDER_ADDRESS = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
+const SPENDER_ADDRESS_BASE = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT_BASE;
 
-
+// Base network stuff
+const BASE_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+const BASE_ERC20_ABI = [
+  {
+    constant: true,
+    inputs: [{ name: "_owner", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ name: "balance", type: "uint256" }],
+    type: "function",
+  },
+];
+const USDC_BASE_DECIMALS = 6;
 
 import {
     createPublicClient,
@@ -36,6 +48,7 @@ import {
 import { celoAlfajores, celo } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import { getDataSuffix, submitReferral } from '@divvi/referral-sdk'
+import { error } from "console";
 
 const publicClient = createPublicClient({
     chain: celo,
@@ -44,7 +57,7 @@ const publicClient = createPublicClient({
 
 const cUSDTokenAddress = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
 // const MINIPAY_NFT_CONTRACT = "0xE8F4699baba6C86DA9729b1B0a1DA1Bd4136eFeF";
-type SupportedNetwork = "celo" | "solana" | "scroll" | null;
+type SupportedNetwork = "celo" | "solana" | "base" | "scroll" | null;
 
 
 export const useWeb3 = () => {
@@ -209,6 +222,65 @@ export const useWeb3 = () => {
         }
 
     };
+    const approveSpendingBaseNetwork = async (_amount: string, tokenSymbol: string) => {
+        try {
+            if(tokenSymbol.toUpperCase() != 'USDC') throw new Error('Only USDC will work on Base!')
+            const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC; // or your Alchemy/Infura endpoint
+            if(!BASE_RPC){throw new Error('No Base RPC URL found!')}
+
+            const web3 = new Web3(new Web3.providers.HttpProvider(BASE_RPC));
+
+            const privateKey = await getEthereumPrivateKey();
+            const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+            web3.eth.accounts.wallet.add(account);
+
+            // Only supporting USDC on Base
+            const tokenContractAddress = BASE_USDC_ADDRESS// Must return Base USDC contract
+            const decimals = 6; // Should return 6 for USDC
+            const amount = Number(_amount) * 1.01;
+            const amountInWei = BigInt(Math.floor(amount * 10 ** decimals)).toString();
+
+            const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT_BASE;
+            if (!spenderAddress) throw new Error("Missing spender address in env vars");
+
+            const contract = new web3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
+
+            const data = contract.methods.approve(spenderAddress, amountInWei).encodeABI();
+
+            // 1. Estimate gas
+            const gasEstimate = await contract.methods
+                .approve(spenderAddress, amountInWei)
+                .estimateGas({ from: account.address });
+
+            // 2. Prefill gas if you have such function (optional)
+            await prefillGas_v2_base(BigInt(gasEstimate));
+
+            // 3. Get current gas price
+            const gasPrice = await web3.eth.getGasPrice();
+
+            // 4. Create & sign transaction
+            const tx = {
+                from: account.address,
+                to: tokenContractAddress,
+                gas: gasEstimate,
+                gasPrice: gasPrice,
+                data,
+            };
+
+            const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
+
+            // 5. Broadcast transaction
+            const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+            console.log('✅ Base USDC approval successful:', receipt.transactionHash);
+            return receipt;
+
+        } catch (error) {
+            console.error("❌ Base approval failed:", error);
+            throw new Error(`Failed to approve on Base: ${error}`);
+        }
+};
+
     const createQuest = async (prizePool: string, tokenSymbol: string) => {
 
         if (!(await isUsingWeb3Auth())) {
@@ -492,6 +564,152 @@ export const useWeb3 = () => {
 
 
     };
+    const createQuest_base = async (prizePool: string, tokenSymbol: string) => {
+        if (!SPENDER_ADDRESS_BASE) {
+            throw new Error("❌ QUESTPANDA contract address not found in env");
+        }
+
+        // --- Setup Base RPC + wallet ---
+        const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC // or your Alchemy RPC
+        if (!BASE_RPC) throw new Error("No BASE URL found!")
+        const web3 = new Web3(new Web3.providers.HttpProvider(BASE_RPC));
+        const privateKey = await getEthereumPrivateKey();
+        const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        web3.eth.accounts.wallet.add(account);
+
+        // --- Token setup ---
+        const decimals = 6; // USDC = 6
+        const tokenContractAddress = BASE_USDC_ADDRESS;
+        const amountInWei = BigInt(Math.floor(Number(prizePool) * 10 ** decimals)).toString();
+
+        const tokenContract = new web3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
+        const contract = new web3.eth.Contract(QuestPandaABI, SPENDER_ADDRESS_BASE);
+
+        // --- Verify allowance ---
+        const requiredAmount = BigInt(amountInWei);
+        let currentAllowance = BigInt(0);
+
+        for (let attempt = 1; attempt <= 4; attempt++) {
+            try {
+                currentAllowance = BigInt(await tokenContract.methods
+                    .allowance(account.address, SPENDER_ADDRESS_BASE)
+                    .call());
+
+                console.log(`Attempt ${attempt}: Allowance ${currentAllowance}/${requiredAmount}`);
+
+                if (currentAllowance >= requiredAmount) break; // Enough allowance
+                if (attempt === 3) throw new Error("Allowance problem after 3 attempts");
+
+                const delay = attempt * 1000; // wait progressively
+                console.log(`Waiting ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } catch (error) {
+                console.error("Error checking allowance:", error);
+                throw new Error(`Allowance check failed: ${error}`);
+            }
+        }
+
+        // --- Prepare contract call ---
+        const data = contract.methods.createQuestAsBrand(amountInWei, tokenContractAddress).encodeABI();
+
+        // --- Estimate gas & prefill ---
+        const gas = await contract.methods
+            .createQuestAsBrand(amountInWei, tokenContractAddress)
+            .estimateGas({ from: account.address });
+
+        await prefillGas_v2_base(BigInt(gas)); // 👈 Base network version
+
+        // --- Build and sign TX ---
+        const gasPrice = await web3.eth.getGasPrice();
+        const nonce = await web3.eth.getTransactionCount(account.address, "pending");
+
+        const tx = {
+            from: account.address,
+            to: SPENDER_ADDRESS_BASE,
+            data,
+            gas,
+            gasPrice,
+            nonce,
+        };
+
+        const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
+        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+        console.log("✅ Transaction confirmed on Base:", receipt.transactionHash);
+        console.log("🔗 Explorer: https://basescan.org/tx/" + receipt.transactionHash);
+
+        console.log("[DEBUG] Receipt details:", {
+            transactionHash: receipt.transactionHash,
+            blockNumber: receipt.blockNumber.toString(),
+            gasUsed: receipt.gasUsed.toString(),
+            logs: receipt.logs?.map(log => ({
+                address: log.address,
+                topics: log.topics,
+                data: log.data
+            }))
+        });
+        // Type-safe event extraction
+        const eventSignature = web3.utils.keccak256("QuestCreatedByBrand(uint256,address,address,uint256)");
+        console.log("[DEBUG] Event signature:", eventSignature);
+
+        // Find the correct log with proper type guards
+        const questCreatedLog = receipt.logs?.find((log): log is { address: string; topics: string[]; data: string } => {
+            if (!log.address || !log.topics || !log.data) return false;
+            return (
+                log.address.toLowerCase() === SPENDER_ADDRESS_BASE.toLowerCase() &&
+                log.topics[0] === eventSignature
+            );
+        });
+
+        if (!questCreatedLog) {
+            console.error("[DEBUG] All logs:", receipt.logs?.map(l => ({
+                address: l.address,
+                topics: l.topics,
+                data: l.data
+            })));
+            throw new Error("QuestCreatedByBrand event not found in transaction logs");
+        }
+
+        console.log("[DEBUG] Found event log:", {
+            address: questCreatedLog.address,
+            topics: questCreatedLog.topics,
+            data: questCreatedLog.data
+        });
+
+        type QuestCreatedLog = {
+            questId: string;
+            brand: string;
+            token: string;
+            prizePool: string;
+        };
+
+        // Type-safe decoding with error handling
+        try {
+            console.log("[DEBUG] Decoding log data...");
+            // Decode with proper type assertions
+            // Properly decode with correct parameter order and indexing
+            const decoded = web3.eth.abi.decodeLog(
+                [
+                    { type: 'uint256', name: 'questId', indexed: true },
+                    { type: 'address', name: 'brand', indexed: true },
+                    { type: 'address', name: 'token', indexed: true },
+                    { type: 'uint256', name: 'prizePool' }
+                ],
+                questCreatedLog.data,
+                questCreatedLog.topics.slice(1)
+            );
+
+            // The questId is the first indexed parameter (topics[1])
+            const questId = web3.utils.hexToNumber(questCreatedLog.topics[1]);
+            console.log("Real Quest ID:", questId); // Should now match block explorer
+            return questId;
+
+        } catch (error) {
+            console.error("❌ Failed to decode event:", error);
+            throw new Error(`Failed to decode QuestCreatedByBrand event: ${error}`);
+        }
+    };
+
     const depositToEscrowOnSolana = async (prizePool: string, tokenSymbol: string) => {
 
         try {
@@ -876,7 +1094,28 @@ export const useWeb3 = () => {
                 return {
                     balance: Number(balance).toFixed(2),
                 };
-            } else {
+            } else if (network === "base" && tokenSymbol.toLowerCase() === "usdc") {
+                const userAddress = walletClient.account.address;
+
+                if (!process.env.NEXT_PUBLIC_BASE_RPC) { throw new Error("No Base RPC URL") }
+                // Initialize Web3 with Base RPC
+                const web3 = new Web3(
+                    new Web3.providers.HttpProvider(process.env.NEXT_PUBLIC_BASE_RPC)
+                );
+
+                // Create contract instance
+                const usdcContract = new web3.eth.Contract(BASE_ERC20_ABI, BASE_USDC_ADDRESS);
+
+                // Fetch balance
+                const balanceRaw = await usdcContract.methods
+                    .balanceOf(userAddress)
+                    .call();
+
+                const balance = Number(balanceRaw) / 10 ** USDC_BASE_DECIMALS;
+                console.log(`💰 USDC Balance on Base: ${balance}`);
+
+                return { balance: balance.toFixed(2) };
+            }else {
                 throw new Error(`Unsupported network: ${network}`);
             }
 
@@ -897,6 +1136,9 @@ export const useWeb3 = () => {
             USDTBalance: number;
             USDCBalance: number;
         };
+        base: {
+            USDCBalance: string;
+        }
     }> => {
         try {
             if (!walletClient) throw new Error("Wallet not connected");
@@ -939,6 +1181,13 @@ export const useWeb3 = () => {
                 getSolanaTokenBalance(solanaWalletAddress, 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 6), // USDC - Replace with actual
             ]);
 
+                    // ---------- BASE ----------
+        // Create Web3 instance for Base
+        const baseWeb3 = new Web3(process.env.NEXT_PUBLIC_BASE_RPC); // or your preferred Base RPC URL
+        
+        const baseUSDCContract = new baseWeb3.eth.Contract(StableTokenABI.abi, '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
+        const baseUSDCBalanceInWei = await baseUSDCContract.methods.balanceOf(userAddress).call();
+
             return {
                 celo: {
                     cUSDBalance: (Number(cUSDBalanceInWei) / 10 ** 18).toString(),
@@ -948,7 +1197,10 @@ export const useWeb3 = () => {
                 solana: {
                     USDTBalance: solUSDTBalance,
                     USDCBalance: solUSDCBalance,
-                }
+                },
+                base: {
+                    USDCBalance: (Number(baseUSDCBalanceInWei) / 10 ** 6).toString()
+            }
             };
         } catch (error: any) {
             console.error('❌ Error checking combined token balances:', error);
@@ -1250,8 +1502,6 @@ export const useWeb3 = () => {
             throw error
         }
     }
-
-
     // Fetch SPL Token Balance from Solana
     async function getSolanaTokenBalance(walletAddress: string, tokenMintAddress: string, decimals: number): Promise<number> {
 
@@ -1276,8 +1526,6 @@ export const useWeb3 = () => {
             }
         }
     }
-
-
     const signTransaction = async () => {
         if (!walletClient) throw new Error("Wallet not connected");
 
@@ -1399,6 +1647,52 @@ export const useWeb3 = () => {
             throw error;
         }
     };
+const prefillGas_v2_base = async (gasEstimate: bigint) => {
+    try {
+        // 1. Initialize web3 for Base mainnet
+        const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC; // or your Alchemy/Infura endpoint
+        if(!BASE_RPC) throw new Error('BASE RPC missing!')
+        const web3Base = new Web3(new Web3.providers.HttpProvider(BASE_RPC));
+
+        // 2. Get current gas price
+        const gasPriceWei = await web3Base.eth.getGasPrice();
+        const gasPrice = BigInt(gasPriceWei);
+
+        console.log('Current gas price (wei):', gasPrice.toString());
+        console.log('Gas estimate units:', gasEstimate.toString());
+
+        // 3. Compute raw gas cost
+        const rawCost = gasEstimate * gasPrice;
+
+        // 4. Convert from wei → ETH (1e18 wei = 1 ETH)
+        const estimatedCostETH = Number(rawCost) / 1e18;
+        console.log('Estimated ETH cost on Base:', estimatedCostETH);
+
+        // 5. Notify backend with estimated gas cost
+        const gasResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/gas-estimate-base`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                function: 'approveUSDCOnBase', // or any descriptive label
+                estimatedCostEth: estimatedCostETH,
+                timestamp: new Date().toISOString(),
+            }),
+        });
+
+        const { txHash } = await gasResponse.json();
+
+        // 6. Wait for transaction receipt
+        const receipt = await waitForReceipt_base(txHash);
+
+        console.log('✅ Base gas refill confirmed:', receipt.transactionHash);
+        return true;
+
+    } catch (error) {
+        console.error('❌ Error adding gas on Base:', error);
+        throw error;
+    }
+};
 
     // Helper function to poll for transaction receipt
     const waitForReceipt = async (txHash: string, interval = 1000, maxTries = 60): Promise<any> => {
@@ -1406,6 +1700,22 @@ export const useWeb3 = () => {
 
         while (tries < maxTries) {
             const receipt = await web3.eth.getTransactionReceipt(txHash);
+            if (receipt) return receipt;
+            await new Promise(res => setTimeout(res, interval));
+            tries++;
+        }
+
+        throw new Error(`Timeout waiting for transaction receipt: ${txHash}`);
+    };
+
+const waitForReceipt_base = async (txHash: string, interval = 1000, maxTries = 60): Promise<any> => {
+        let tries = 0;
+
+                // Create Web3 instance for Base
+        const baseWeb3 = new Web3(process.env.NEXT_PUBLIC_BASE_RPC); // or your preferred Base RPC URL
+        
+        while (tries < maxTries) {
+            const receipt = await baseWeb3.eth.getTransactionReceipt(txHash);
             if (receipt) return receipt;
             await new Promise(res => setTimeout(res, interval));
             tries++;
@@ -1446,6 +1756,7 @@ export const useWeb3 = () => {
         signTransaction,
         checkCUSDBalance,
         approveSpending,
+        approveSpendingBaseNetwork,
         createQuest,
         rewardCreator,
         isWalletReady,
@@ -1455,6 +1766,7 @@ export const useWeb3 = () => {
         checkCombinedTokenBalances,
         withdrawFundsOnchain,
         confirmMpesaNames,
-        withdrawFundsToMpesa
+        withdrawFundsToMpesa,
+        createQuest_base
     };
 };

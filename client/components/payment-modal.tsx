@@ -25,7 +25,7 @@ import Cookies from 'js-cookie';
 
 
 // Update the PaymentMethod type to include networks
-type PaymentNetwork = "celo" | "solana" | "scroll" | null;
+type PaymentNetwork = "celo" | "solana" | "scroll" | "base" | null;
 
 
 interface PaymentModalProps {
@@ -564,22 +564,18 @@ useEffect(() => {
             <img src="/crypto/celo.png" alt="Celo" className="w-5 h-5" />
             Celo
           </Button>
-          {/* <Button
-            variant="outline"
-            onClick={() => setSelectedNetwork("solana")}
-            className="flex items-center gap-2"
-          >
-            <img src="/crypto/solana.png" alt="Solana" className="w-5 h-5" />
-            Solana 
-          </Button> */}
+
+          {selectedMethod !== "USDT" && (
           <Button
             variant="outline"
-            onClick={() => setSelectedNetwork("scroll")}
+            onClick={() => setSelectedNetwork("base")}
             className="flex items-center gap-2"
           >
-            <img src="/scroll.png" alt="Scroll" className="w-5 h-5" />
-            Scroll
+            <img src="/crypto/base.png" alt="Base" className="w-5 h-5" />
+            Base
           </Button>
+          ) }
+
         </div>
       </div>
     )}
@@ -590,21 +586,21 @@ useEffect(() => {
       <>
         <div className="bg-brand-light p-2 rounded border border-gray-200">
           <Label className="flex items-center gap-2 text-xs font-medium text-brand-dark">
-            Send to wallet address on {selectedMethod === "cUSD" ? "Celo" : selectedNetwork === "celo" ? "Celo" : "Scroll"}
+            Send to wallet address on {selectedMethod === "cUSD" ? "Celo" : selectedNetwork === "celo" ? "Celo" : "Base"}
             <img 
-              src={selectedMethod === "cUSD" || selectedNetwork === "celo" ? "/crypto/celo.png" : "/scroll.png"} 
+              src={selectedMethod === "cUSD" || selectedNetwork === "celo" ? "/crypto/celo.png" : "/crypto/base.png"} 
               className="w-5 h-5" 
             />
           </Label>
 
           <div className="flex items-center gap-2 mt-2">
             <code className="bg-white px-2 py-1 rounded border text-xs flex-1 break-all">
-              {selectedMethod === "cUSD" || selectedNetwork === "celo"  || selectedNetwork === "scroll"
+              {selectedMethod === "cUSD" || selectedNetwork === "celo"  || selectedNetwork === "scroll" || selectedNetwork === "base" 
                 ? walletAddress 
                 : solanaAddress /* Mock Solana address */}
             </code>
             <CopyButton text={
-              selectedMethod === "cUSD" || selectedNetwork === "celo" 
+              selectedMethod === "cUSD" || selectedNetwork === "celo" || selectedNetwork === "base" 
                 ? walletAddress || '' 
                 : solanaAddress || 'InvalidAddress'
             } />
