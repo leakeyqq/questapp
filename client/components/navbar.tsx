@@ -16,6 +16,9 @@ import ConnectWalletButton from "./test/simple-connect"
 import { Zap, Info, Star } from "lucide-react"
 import { AirdropInfoModal } from "@/components/airdrop-info-modal"
 import { useAccount } from "wagmi";
+import { useWeb3 } from "@/contexts/useWeb3"
+import { getWeb3AuthInstance } from "../lib/web3AuthConnector"
+
 
 
 export default function Navbar() {
@@ -26,6 +29,15 @@ export default function Navbar() {
     const [isAirdropModalOpen, setIsAirdropModalOpen] = useState(false)
     const [userPoints, setUserPoints] = useState(0)
     const [imgError, setImgError] = useState(false)
+    const { isWalletReady } = useWeb3();
+    
+
+      const [userInfo, setUserInfo] = useState({
+      name: "Me",
+      profilePhoto: "/human-avatar.jpg", // You can add a default avatar image
+      email: ""
+    });
+    
     
 
       // Mock user points - in real app, this would come from your data source
@@ -59,6 +71,32 @@ useEffect(() => {
     }
   
 }, [isConnected])
+
+  useEffect(() => {
+
+    const fetchUserInfo = async () => {
+      try {
+        const web3auth = getWeb3AuthInstance();
+
+        // After successful login
+        if(web3auth.connected){
+          const userInfo = await web3auth.getUserInfo();
+          setUserInfo({
+            name: userInfo.name || "Creator",
+            profilePhoto: userInfo.profileImage || "/human-avatar.jpg",
+            email: ""
+
+          });
+        }
+      } catch (error) {
+        throw error
+      }
+
+    }
+    fetchUserInfo()
+
+  }, [isConnected, address, isWalletReady])
+
 
   const isActive = (path: string) => {
     return pathname === path
@@ -112,7 +150,7 @@ useEffect(() => {
                   : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
               }`}
             >
-              Creators
+              Creator
             </Link>
             <Link
               href="/leaderboard"
@@ -129,16 +167,12 @@ useEffect(() => {
               href="/brand"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 isActive("/brand")
-                  ? "text-fuchsia-700 bg-brand-light"
-                  : "text-fuchsia-700 hover:text-fuchsia-700 hover:bg-brand-light/50"
+                  ? "text-brand-purple bg-brand-light"
+                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
               }`}
             >
-              Am a brand
+              Brand
             </Link>
-
-            {/* <div className="items-center space-x-4">
-              <ConnectWalletButton />
-           </div> */}
 
           </div>
 
@@ -165,14 +199,6 @@ useEffect(() => {
             
             <div className="md:hidden flex items-center gap-2">
               {/* Mobile Points Display */}
-              {/* <button
-                onClick={() => setIsAirdropModalOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-full hover:shadow-md transition-all"
-              >
-                <Star className="w-4 h-4 text-brand-purple" />
-
-                <span className="font-semibold text-gray-700 text-sm">{userPoints.toLocaleString()}</span>
-              </button> */}
 
 <button
   onClick={() => setIsAirdropModalOpen(true)}
@@ -198,10 +224,39 @@ useEffect(() => {
 
 
           <div className="hidden md:flex items-center space-x-4">
-          <div className="items-center space-x-4">
-            {/* User Dropdown or Auth Button */}
+
+            
+<div className="hidden md:flex items-center space-x-4">
+  <div className="items-center space-x-4">
+    {/* Show user profile and name when logged in */}
+    {isConnected && userInfo ? (
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 rounded-full pl-2 pr-4 py-1 border">
+          <div className="w-8 h-8 bg-brand-purple/10 rounded-full flex items-center justify-center">
+            <img 
+              src={userInfo.profilePhoto} 
+              alt={userInfo.name} 
+              className="w-full h-full object-cover rounded-[50%]" 
+              onError={(e) => {
+                e.currentTarget.src = "/human-avatar.jpg"
+              }}
+            />
+          </div>
+          <span className="text-sm font-medium text-gray-700">
+            {userInfo.name.split(' ')[0]}
+          </span>
+        </div>
+        <ConnectWalletButton />
+      </div>
+    ) : (
+      <ConnectWalletButton />
+    )}
+  </div>
+</div>
+
+          {/* <div className="items-center space-x-4">
               <ConnectWalletButton />
-           </div>
+           </div> */}
            
           </div>
 
@@ -252,6 +307,28 @@ useEffect(() => {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
+
+                  {/* Show user info in mobile menu */}
+      {isConnected && userInfo && (
+        <div className="flex items-center space-x-3 px-3 py-4 border-b border-gray-100 mb-2 bg-gray-50 rounded-lg mx-2">
+          <div className="w-10 h-10 bg-brand-purple/10 rounded-full flex items-center justify-center">
+            <img 
+              src={userInfo.profilePhoto} 
+              alt={userInfo.name}
+              className="w-full h-full object-cover rounded-[50%]"
+              onError={(e) => {
+                e.currentTarget.src = "/human-avatar.jpg"
+              }}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700">{userInfo.name}</p>
+            <p className="text-xs text-gray-500">Online</p>
+          </div>
+        </div>
+      )}
+
+
           <Link
               href="/"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
@@ -284,7 +361,7 @@ useEffect(() => {
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Creators
+              Creator
             </Link>
 
 
@@ -292,12 +369,12 @@ useEffect(() => {
               href="/brand"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive("/brand")
-                  ? "text-fuchsia-700 bg-brand-light"
-                  : "text-fuchsia-700 hover:text-brand-purple hover:bg-brand-light/50"
+                  ? "text-brand-purple bg-brand-light"
+                  : "text-gray-700 hover:text-brand-purple hover:bg-brand-light/50"
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Am a Brand
+              Brand
             </Link>
 
                         <Link

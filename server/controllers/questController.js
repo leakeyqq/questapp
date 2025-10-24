@@ -12,6 +12,7 @@ dotenv.config()
 import { check, validationResult } from "express-validator"
 
 
+
 export const validate_createQuest = [
   check("brand")
     .trim()
@@ -173,7 +174,7 @@ export const getAllQuests = async (req, res) => {
   try {
 
     // const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
-    const allQuests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1 }).sort({ createdAt: -1 }).lean().exec()
+    const allQuests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({ createdAt: -1 }).lean().exec()
     return res.status(200).json({ allQuests })
   } catch (e) {
     return res.status(500).json({ "error": e.message })
@@ -296,6 +297,14 @@ export const submitQuestByCreator = async (req, res) => {
     }
 
     let updatedQuest
+    let minFollowersRequired = 0
+
+
+        // Check minimum follower count requirement
+    const platformConfig = quest.socialPlatformsAllowed[req.body.platform];
+    if (platformConfig && platformConfig.minFollowers) {
+         minFollowersRequired = platformConfig.minFollowers;
+    }
 
     if (req.body.platform.toLowerCase() === 'twitter') {
       if (quest.approvalNeeded) {
@@ -305,7 +314,7 @@ export const submitQuestByCreator = async (req, res) => {
         }
       }
 
-      updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, questType)
+      updatedQuest = await pullTwitterData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, questType, minFollowersRequired)
     } else if (req.body.platform.toLowerCase() === 'tiktok') {
 
       if (quest.approvalNeeded) {
@@ -315,9 +324,9 @@ export const submitQuestByCreator = async (req, res) => {
 
         }
       }
-      await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt)
+      await pullTikTokData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, minFollowersRequired)
     } else if (req.body.platform.toLowerCase() === 'instagram') {
-      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, applicantUsername, quest.approvalNeeded, questType)
+      await pullInstagramData_v2(walletID, req.body.contentUrl, questID, quest.createdAt, applicantUsername, quest.approvalNeeded, questType, minFollowersRequired)
     }
 
     return res.status(200).json({ updatedQuest })
@@ -328,6 +337,181 @@ export const submitQuestByCreator = async (req, res) => {
 
 
 }
+
+
+
+
+export const updateQuestSubmissions = async (req, res) => {
+  try {
+    console.log('🕒 Starting bulk Twitter engagement update for all active quests');
+
+
+    // Get current date (start of day for comparison)
+    const currentDate = new Date();
+
+    // Find all quests where end date hasn't passed
+    const activeQuests = await Quest.find({
+      endsOn: { $gte: currentDate }
+    });
+
+    console.log(`Found ${activeQuests.length} active quests`);
+
+    let totalResults = {
+      success: true,
+      questsProcessed: 0,
+      totalUpdated: 0,
+      totalFailed: 0,
+      totalSubmissions: 0,
+      questDetails: []
+    };
+
+    // Process each active quest
+    for (const quest of activeQuests) {
+      try {
+        console.log(`\n📋 Processing quest: ${quest.title} (ID: ${quest._id})`);
+        
+        const questResult = await updateTwitterSubmissionsEngagementForQuest(quest);
+        
+        totalResults.questsProcessed++;
+        totalResults.totalUpdated += questResult.updated;
+        totalResults.totalFailed += questResult.failed;
+        totalResults.totalSubmissions += questResult.total;
+        totalResults.questDetails.push({
+          questId: quest._id,
+          questTitle: quest.title,
+          ...questResult
+        });
+
+        console.log(`✅ Completed quest: ${quest.title}`);
+
+        // Small delay between quests to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+      } catch (error) {
+        console.error(`❌ Failed to process quest ${quest._id}:`, error.message);
+        totalResults.questDetails.push({
+          questId: quest._id,
+          questTitle: quest.title,
+          error: error.message,
+          success: false
+        });
+      }
+    }
+
+    console.log('\n🎉 Bulk update completed!');
+    console.log(`Quests processed: ${totalResults.questsProcessed}`);
+    console.log(`Total submissions updated: ${totalResults.totalUpdated}`);
+    console.log(`Total submissions failed: ${totalResults.totalFailed}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Bulk Twitter engagement update completed',
+      data: totalResults
+    });
+
+  } catch (error) {
+    console.error('❌ Error in bulk update:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// Modified version of your function for a single quest
+async function updateTwitterSubmissionsEngagementForQuest(quest) {
+  try {
+    console.log(`Starting engagement update for quest: ${quest.title}`);
+
+    // Filter only Twitter submissions
+    const twitterSubmissions = quest.submissions.filter(
+      submission => submission.socialPlatformName === 'twitter'
+    );
+
+    console.log(`Found ${twitterSubmissions.length} Twitter submissions to update`);
+
+    let updatedCount = 0;
+    let errorCount = 0;
+
+    // Process each Twitter submission
+    for (const submission of twitterSubmissions) {
+      try {
+        console.log(`Updating submission for: ${submission.submittedByAddress}`);
+        
+        const updatedData = await fetchUpdatedTwitterEngagement(submission.videoLink);
+        
+        // Update the submission with fresh data
+        submission.twitterData.retweetCount = updatedData.retweetCount;
+        submission.twitterData.replyCount = updatedData.replyCount;
+        submission.twitterData.likeCount = updatedData.likeCount;
+        submission.twitterData.quoteCount = updatedData.quoteCount;
+        submission.twitterData.viewCount = updatedData.viewCount;
+        submission.twitterData.bookmarkCount = updatedData.bookmarkCount;
+        submission.socialStatsLastUpdated = new Date();
+
+        updatedCount++;
+        console.log(`✓ Updated submission for ${submission.submittedByAddress}`);
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        errorCount++;
+        console.error(`✗ Failed to update submission for ${submission.submittedByAddress}:`, error.message);
+      }
+    }
+
+    // Save the updated quest
+    await quest.save();
+
+    console.log(`\nUpdate completed for quest ${quest.title}!`);
+    console.log(`Successfully updated: ${updatedCount}`);
+    console.log(`Failed: ${errorCount}`);
+    console.log(`Total processed: ${twitterSubmissions.length}`);
+
+    return {
+      success: true,
+      updated: updatedCount,
+      failed: errorCount,
+      total: twitterSubmissions.length
+    };
+
+  } catch (error) {
+    console.error('Error updating quest submissions:', error);
+    throw error;
+  }
+}
+
+async function fetchUpdatedTwitterEngagement(videoUrl) {
+  try {
+    const { data } = await axios.get(
+      `https://api.scrapecreators.com/v1/twitter/tweet?url=${videoUrl}`,
+      {
+        headers: {
+          'x-api-key': process.env.SCRAPECREATOR_API_KEY
+        }
+      }
+    );
+
+    if (!data) {
+      throw new Error('Could not fetch updated Twitter data');
+    }
+
+    return {
+      retweetCount: data.legacy.retweet_count,
+      replyCount: data.legacy.reply_count,
+      likeCount: data.legacy.favorite_count,
+      quoteCount: data.legacy.quote_count,
+      viewCount: data.views.count,
+      bookmarkCount: data.legacy.bookmark_count
+    };
+
+  } catch (error) {
+    console.error(`Error fetching Twitter data for URL: ${videoUrl}`, error.message);
+    throw new Error(`Failed to fetch updated engagement data: ${error.message}`);
+  }
+}
+
 
 
 function cleanTwitterUrl(url) {
@@ -345,7 +529,7 @@ function cleanTwitterUrl(url) {
   return cleanUrl;
 }
 
-async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCreatedOn, questType) {
+async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCreatedOn, questType, minFollowersRequired) {
   let contentUrl = cleanTwitterUrl(unclean_contentUrl)
   validateTwitterUrl(contentUrl)
   const { data } = await axios.get(
@@ -372,6 +556,10 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
     throw new Error('No video found in this tweet. Please submit a post containing a video.');
   }
 
+
+if (Number(data.core.user_results.result.legacy.followers_count) < Number(minFollowersRequired)){
+  throw new Error('You do not meet the number of followers needed to participate');
+}
 
   const updatedCreator = await Creator.findOneAndUpdate(
     { creatorAddress: walletID },
@@ -476,7 +664,7 @@ async function pullTwitterData_v2(walletID, unclean_contentUrl, questID, questCr
 
   }
 }
-async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) {
+async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn, minFollowersRequired) {
 
   let tiktokUsername = extractTikTokUsername(contentUrl)
 
@@ -611,7 +799,7 @@ async function pullTikTokData_v2(walletID, contentUrl, questID, questCreatedOn) 
 
   }
 }
-async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn, applicantUsername, approvalNeeded, questType) {
+async function pullInstagramData_v2(walletID, contentUrl, questID, questCreatedOn, applicantUsername, approvalNeeded, questType, minFollowersRequired) {
 
   let video_view_count
 

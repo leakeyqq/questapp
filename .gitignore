@@ -3,3 +3,5 @@ node_modules/
 package.json
 package-lock.json
 smart-contract/artifacts/build-info
+workbox-5f3e40ee.js
+sw.js

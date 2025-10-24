@@ -54,7 +54,7 @@ const { address, isConnected } = useAccount();
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, createQuest, checkTokenBalances, checkCombinedTokenBalances, depositToEscrowOnSolana } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, approveSpendingBaseNetwork, createQuest, createQuest_base, checkCombinedTokenBalances, depositToEscrowOnSolana } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Form state
@@ -291,6 +291,7 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
 const {
   celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
   solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+  base: { USDCBalance: baseUSDCBalance}
 } = await checkCombinedTokenBalances();
 
       // Check across all tokens (priority order)
@@ -304,7 +305,9 @@ if (Number(cUSDBalance) >= Number(prizePool)) {
   await completeQuestCreation("usdt", 'solana');
 } else if (Number(solUSDCBalance) >= Number(prizePool)) {
   await completeQuestCreation("usdc", 'solana');
-      }else{
+}else if(Number(baseUSDCBalance) >= Number(prizePool)){
+    await completeQuestCreation("usdc", 'base');
+}else{
         // If user show them a warning and a deep link to go and deposit funds
         // If user in on a different wallet then pop up the deposit modal
         if (typeof window !== "undefined" && window.ethereum?.isMiniPay) {
@@ -341,6 +344,10 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
       }else if(network == 'solana'){
         console.log('going to pay to solana escorow')
         solanaTxId = await depositToEscrowOnSolana(prizePool, tokenForPayment)
+      }else if(network == 'base'){
+        await approveSpendingBaseNetwork(prizePool, tokenForPayment)
+        onchainQuestId = await createQuest_base(prizePool, tokenForPayment)
+
       }
 
         setIsSubmitting(true);

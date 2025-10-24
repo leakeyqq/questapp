@@ -591,25 +591,25 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                         <span>{creatorData?.platform}</span>
 
                       <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
-                         {/*
+                         
                         <a
                           href={submission.videoLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-brand-purple hover:text-brand-pink flex items-center text-sm"
                         >
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="m22 8-6 4 6 4V8Z" />
-                            <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
-                          </svg>
-                          Watch
+                                                    
+                        {quest.questType === "createThread" ? (
+                          <>
+                            Read🧵
+                          </>
+                        ) : (
+                          <>
+                            Watch📹
+                          </>
+                        )}
                         </a>
                         <CopyButton text={submission.videoLink || ''} />
-                        <span
-                          className={`text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${
-                            submission.rewardAmountUsd == '0' ? 'bg-brand-purple' : 'bg-brand-teal'}`}>
-                          + {submission.rewardAmountUsd} USD
-                        </span> */}
 
                       </div>
   
