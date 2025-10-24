@@ -57,6 +57,10 @@ const pwaConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development', // Disable in development
+  sw: 'sw.js',
+  fallbacks: {
+    document: '/offline',
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
