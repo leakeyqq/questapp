@@ -10,7 +10,7 @@ export default function ShareButton() {
   const handleShare = async () => {
     const shareData = {
       title: document.title,
-      text: 'Do this quest and earn!',
+      text: 'Hi friend, I invite you to do this quest and earn!',
       url: window.location.href,
     };
 
