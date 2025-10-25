@@ -231,20 +231,32 @@ export const submitQuestByCreator = async (req, res) => {
     }
 
     const questType = quest.questType
+
+        // 1. First check if the same link has been submitted by any other user
+    const linkAlreadySubmitted = quest.submissions.some(
+      submission => submission.videoLink?.toLowerCase()  === req.body.contentUrl?.toLowerCase()
+    );
+
+    if (linkAlreadySubmitted) {
+      return res.status(400).json({
+        error: {
+          msg: "This content has already been submitted by another user"
+        }
+      });
+    }
+
     // 2. Then check if user has already submitted
     const userAlreadySubmitted = quest.submissions.some(
       submission => submission.submittedByAddress == walletID
     );
 
-
-
-    // if (userAlreadySubmitted) {
-    //   return res.status(400).json({
-    //     error: {
-    //       msg: "Oops..You cannot submit a single quest twice😪"
-    //     }
-    //   });
-    // }
+    if (userAlreadySubmitted) {
+      return res.status(400).json({
+        error: {
+          msg: "Oops..You cannot submit a single quest twice😪"
+        }
+      });
+    }
 
       if (new Date(quest.endsOn) < new Date()) {
       return res.status(400).json({ 
