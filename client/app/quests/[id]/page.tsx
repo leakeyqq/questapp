@@ -14,7 +14,7 @@ import CurrencyDisplay from '@/components/CurrencyDisplay';
 import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
 import { cookies } from 'next/headers';
 import ShareButton from "@/components/ShareButton"
-
+import UpvoteButton from '@/components/UpvoteButton';
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
@@ -146,6 +146,7 @@ interface Submission {
       followers?: number
     }
   }
+  upvoters?: string[] 
 }
 interface Applicant {
   userWalletAddress: string;
@@ -158,7 +159,7 @@ interface Applicant {
 
 let allSubmissions: Submission[] = []
 
-  
+
   const awaitedParams = await params; // Properly await params first
 
   const quest = await getSingleQuest(awaitedParams.id);
@@ -301,6 +302,10 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
       }
 
     
+      const hasUserUpvoted = (submission: Submission): boolean => {
+        if (!userWalletAddress || !submission.upvoters) return false;
+        return submission.upvoters.includes(userWalletAddress);
+      }
 
   return (
     <div className="min-h-screen bg-brand-light">
@@ -534,20 +539,61 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
             <TabsContent value="submissions" className="bg-white rounded-lg p-4 border border-gray-200 mt-2 shadow-sm">
               <div className="space-y-3">
               {allSubmissions && allSubmissions.length > 0 ? (
-                allSubmissions.reverse().map((submission: Submission) => {
+                allSubmissions.reverse().map((submission: Submission, index: number) => {
                   const creatorData = getCreatorData(submission)
                   const videoMetrics = getVideoMetrics(submission)
+                  const submissionNumber = allSubmissions.length - index;
+                  const hasUpvoted = hasUserUpvoted(submission);
+                  const upvoteCount = submission.upvoters?.length || 0;
+
 
                   return (
                     <div key={submission._id} className="relative  bg-white rounded-md p-3 border border-gray-100 shadow-sm">
+
+                                  {/* Submission Number - Top Left */}
+            <div className="absolute top-0 left-0 w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              {submissionNumber}
+            </div>
+
+                      {/* Upvote Button - Top Right Position */}
+
+
+                      <button
+                        className={`absolute top-1 right-1 flex items-center gap-0 px-1.5 py-1 border rounded-md transition-all duration-150 hover:shadow-sm active:scale-95 text-xs font-medium ${hasUpvoted
+                            ? 'bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200'
+                            : 'bg-white border-gray-300 hover:border-brand-purple hover:text-brand-purple'
+                          }`}
+                      >Upvote
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            d="M12 6L6 18H18L12 6Z"
+                          />
+                        </svg>
+                        <span className="font-semibold text-xs">{upvoteCount}</span>
+                      </button>
+
+                                  {/* Upvote Button Component */}
+            <UpvoteButton
+              questId={quest._id}
+              submissionId={submission._id || ''}
+              hasUpvoted={hasUpvoted}
+              upvoteCount={upvoteCount}
+            />
+
                         {/* Reward Banner */}
                       {submission.rewardAmountUsd && (
-                        // <div className="absolute bottom-2 right-2 bg-brand-purple text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-                          <div 
-    className={`absolute bottom-2 right-2 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${
-      submission.rewarded ? 'bg-pink-500' : 'bg-brand-purple'
-    }`}
-  >
+                        <div
+                          className={`absolute bottom-2 right-2 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md ${submission.rewarded ? 'bg-pink-500' : 'bg-brand-purple'
+                            }`}
+                        >
+    
                           {submission.rewardAmountUsd} USD
 
                         </div>
@@ -577,9 +623,14 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                               <p className="text-gray-600 text-xs">@{creatorData.username}</p>
                             )}
                             {creatorData?.followers !== undefined && (
+                              
                               <p className="text-xs text-gray-500 mt-1">
-                                <span className="font-medium text-brand-purple">{formatNumber(creatorData.followers)}</span>{" "}
-                                followers
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-2">
+                                                                               <span>{creatorData?.platform}</span>
+
+                      <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
+                      <span className="font-medium text-brand-purple">{formatNumber(creatorData.followers)}</span>{" "}followers
+                      </div>
                               </p>
                             )}
                           </div>
@@ -587,11 +638,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                       </div>
 
                       {/* Platform + Watch + Copy */}
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">
-                        <span>{creatorData?.platform}</span>
-
-                      <SocialPlatformIcon platform={submission.socialPlatformName} className="w-4 h-4" />
-                         
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">    
                         <a
                           href={submission.videoLink}
                           target="_blank"
@@ -605,11 +652,13 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                           </>
                         ) : (
                           <>
-                            Watch📹
+                            Watch📺
                           </>
                         )}
                         </a>
                         <CopyButton text={submission.videoLink || ''} />
+
+
 
                       </div>
   

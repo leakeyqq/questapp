@@ -418,6 +418,94 @@ export const updateQuestSubmissions = async (req, res) => {
   }
 };
 
+export const upvoteSubmission = async (req, res) => {
+
+  try{
+  const {submissionId, questId} = req.body
+  const userWalletAddress = req.userWalletAddress
+  const dateNow = new Date()
+
+  if(!submissionId || !questId) throw new Error('Missing Submission Id or Quest Id!')
+  
+  const quest = await Quest.findById(questId).exec()
+
+  if(!quest){
+    throw new Error('Quest not found!')
+  }else if(dateNow > quest.endsOn){
+    throw new Error('Sorry this quest has already ended!')
+  }
+
+  const submission = quest.submissions.id(submissionId);
+  if (!submission) {
+    throw new Error('Submission not found!');
+  }
+
+  // Check if user has already voted
+  if (submission.upvoters && submission.upvoters.includes(userWalletAddress)) {
+    throw new Error('You have already upvoted this submission!');
+  }
+
+      // Add user to upvoters array
+    if (!submission.upvoters) {
+      submission.upvoters = [];
+    }
+    submission.upvoters.push(userWalletAddress);
+
+    // Save the quest with updated submission
+    await quest.save();
+
+
+    console.log('vote adding was successful')
+    return res.status(200).json({success: true, upvoters: submission.upvoters })
+
+
+  }catch(e){
+    console.log('e is ', e.message)
+    return res.status(200).json({success: false, message: e.message})
+  }
+}
+export const removeVote = async (req, res) => {
+  try {
+    const { submissionId, questId } = req.body;
+    const userWalletAddress = req.userWalletAddress;
+    const dateNow = new Date();
+
+    if (!submissionId || !questId) throw new Error('Missing Submission Id or Quest Id!');
+    
+    const quest = await Quest.findById(questId).exec();
+
+    if (!quest) {
+      throw new Error('Quest not found!');
+    } else if (dateNow > quest.endsOn) {
+      throw new Error('Sorry this quest has already ended!');
+    }
+
+    const submission = quest.submissions.id(submissionId);
+    if (!submission) {
+      throw new Error('Submission not found!');
+    }
+
+    // Check if user has voted
+    if (!submission.upvoters || !submission.upvoters.includes(userWalletAddress)) {
+      throw new Error('You have not upvoted this submission!');
+    }
+
+    // Remove user from upvoters array
+    submission.upvoters = submission.upvoters.filter(
+      voter => voter !== userWalletAddress
+    );
+
+    // Save the quest with updated submission
+    await quest.save();
+    console.log('vote removal successful ')
+
+    return res.status(200).json({ success: true, upvoters: submission.upvoters});
+
+  } catch (e) {
+    console.log(e)
+    return res.status(200).json({ success: false, message: e.message });
+  }
+};
 // Modified version of your function for a single quest
 async function updateTwitterSubmissionsEngagementForQuest(quest) {
   try {

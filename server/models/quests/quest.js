@@ -247,6 +247,10 @@ const questSchema = new mongoose.Schema({
                 replyCount: {type: Number, required: false},
                 viewCount: {type: Number, required: false},
                 locationCreated: {type: String, required: false}
+            },
+            upvoters: {
+                type: [String], // Array of wallet addresses that upvoted this submission
+                default: []
             }
         }
     ],
