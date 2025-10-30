@@ -15,6 +15,7 @@ import FarcasterSDKInitializer from "@/components/FarcasterSDKInitializer";
 import { cookies } from 'next/headers';
 import ShareButton from "@/components/ShareButton"
 import UpvoteButton from '@/components/UpvoteButton';
+import QuestQRCode from '@/components/QuestQRCode';
 
 import { generateMetadata } from "./../[id]/generateMetadata";
 export { generateMetadata };
@@ -755,6 +756,9 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
             </div>
           </div>
         </div>
+      
+      <QuestQRCode className="mt-12 mb-4" />
+      
       </div>
     </div>
   )
