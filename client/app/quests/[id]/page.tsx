@@ -550,42 +550,23 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
                   return (
                     <div key={submission._id} className="relative  bg-white rounded-md p-3 border border-gray-100 shadow-sm">
 
-                                  {/* Submission Number - Top Left */}
             <div className="absolute top-0 left-0 w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
               {submissionNumber}
             </div>
 
-                      {/* Upvote Button - Top Right Position */}
+                    
+                      {quest._id.toString() != '68f78ecd4e3501b42ea77c8f' && (
 
+                        <UpvoteButton
+                          questId={quest._id}
+                          submissionId={submission._id || ''}
+                          hasUpvoted={hasUpvoted}
+                          upvoteCount={upvoteCount}
+                        />
 
-                      <button
-                        className={`absolute top-1 right-1 flex items-center gap-0 px-1.5 py-1 border rounded-md transition-all duration-150 hover:shadow-sm active:scale-95 text-xs font-medium ${hasUpvoted
-                            ? 'bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200'
-                            : 'bg-white border-gray-300 hover:border-brand-purple hover:text-brand-purple'
-                          }`}
-                      >Upvote
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            d="M12 6L6 18H18L12 6Z"
-                          />
-                        </svg>
-                        <span className="font-semibold text-xs">{upvoteCount}</span>
-                      </button>
+                      )}
+       
 
-                                  {/* Upvote Button Component */}
-            <UpvoteButton
-              questId={quest._id}
-              submissionId={submission._id || ''}
-              hasUpvoted={hasUpvoted}
-              upvoteCount={upvoteCount}
-            />
 
                         {/* Reward Banner */}
                       {submission.rewardAmountUsd && (

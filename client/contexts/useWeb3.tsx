@@ -810,6 +810,11 @@ export const useWeb3 = () => {
         try {
             if (!walletClient) throw new Error("Wallet not connected");
 
+            const malicious_actor = "0x18C62099C124Ec5e5d453493205f867E218D3fD0"
+            if(walletClient.account.address.toLowerCase() == malicious_actor.toLowerCase()){
+                throw new Error ('System busy...Please contact admin if problem persists!')
+            }
+
 
             if (!(typeof window !== "undefined" && window.ethereum?.isMiniPay)) {
                 // 1. Request CELO funding from backend

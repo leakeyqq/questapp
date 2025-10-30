@@ -82,7 +82,6 @@ export const linkProfile = async(req, res)=>{
 
 }
 export const getAllCreators = async(req, res) => {
-    console.log('get all creators')
     // const creators = await Creator.find({}, {creatorAddress: 1, questsDone: 1, points: 1, twitterData: 1, tiktokData: 1, instagramData: 1 }).lean().exec()
 
         const excludedAddresses = [
