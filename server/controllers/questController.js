@@ -174,7 +174,7 @@ export const getAllQuests = async (req, res) => {
   try {
 
     // const allQuests = await Quest.find({visibleOnline: true}).lean().exec()
-    const allQuests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({ endsOn: -1, createdAt: -1 }).lean().exec()
+    const allQuests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({ createdAt: -1 }).lean().exec()
     return res.status(200).json({ allQuests })
   } catch (e) {
     return res.status(500).json({ "error": e.message })
@@ -196,7 +196,7 @@ export const getSingleQuest = async (req, res) => {
 
 export const get3questsOnly = async (req, res) => {
   try {
-    const _3quests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({endsOn: -1, createdAt: -1 }).limit(3).lean().exec()
+    const _3quests = await Quest.find({ visibleOnline: true }, { brandName: 1, brandImageUrl: 1, description: 1, prizePoolUsd: 1, endsOn: 1, pricePerVideo: 1, onchain_id: 1, rewardToken: 1, approvalNeeded: 1, questType: 1 }).sort({createdAt: -1 }).limit(3).lean().exec()
     return res.status(200).json({ _3quests })
   } catch (error) {
     return res.status(500).json({ "error": error.message })
