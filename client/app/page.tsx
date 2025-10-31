@@ -65,6 +65,16 @@ Are you a content creator? Create fun content about products, share online and e
               <QuestCard key={quest.id} quest={quest} />
             ))}
           </div> */}
+            {/* Add this View More button */}
+  {/* Arrow version */}
+  <div className="flex justify-center mt-8">
+    <Link href="/quests" className="flex items-center gap-2 text-brand-purple hover:text-brand-pink transition-colors font-semibold">
+      View more Quests
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </Link>
+  </div>
         </section>
 
         <section className="mb-16">
