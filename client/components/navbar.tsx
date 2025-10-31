@@ -230,24 +230,34 @@ useEffect(() => {
   <div className="items-center space-x-4">
     {/* Show user profile and name when logged in */}
     {isConnected && userInfo ? (
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2 rounded-full pl-2 pr-4 py-1 border">
-          <div className="w-8 h-8 bg-brand-purple/10 rounded-full flex items-center justify-center">
-            <img 
-              src={userInfo.profilePhoto} 
-              alt={userInfo.name} 
-              className="w-full h-full object-cover rounded-[50%]" 
-              onError={(e) => {
-                e.currentTarget.src = "/human-avatar.jpg"
-              }}
-            />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex items-center space-x-2 rounded-full pl-2 pr-4 py-1 border hover:bg-gray-50 cursor-pointer transition-colors">
+            <div className="w-8 h-8 bg-brand-purple/10 rounded-full flex items-center justify-center">
+              <img 
+                src={userInfo.profilePhoto} 
+                alt={userInfo.name} 
+                className="w-full h-full object-cover rounded-[50%]" 
+                onError={(e) => {
+                  e.currentTarget.src = "/human-avatar.jpg"
+                }}
+              />
+            </div>
+            <span className="text-sm font-medium text-gray-700">
+              {userInfo.name.split(' ')[0]}
+            </span>
           </div>
-          <span className="text-sm font-medium text-gray-700">
-            {userInfo.name.split(' ')[0]}
-          </span>
-        </div>
-        <ConnectWalletButton />
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="p-0">
+            <div className="w-full">
+              <ConnectWalletButton />
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     ) : (
       <ConnectWalletButton />
     )}
