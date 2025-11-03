@@ -138,6 +138,75 @@ async function customSendEthOnBase(toAddress, ethAmount){
     }
 }
 
+export const customFundFeesOnWallet_scroll = async(req, res) => {
+      try {
+        console.log('req.body is ', req.body)
+        const beneficiary_address = req.userWalletAddress
+        const amountInEth = req.body.estimatedCostEth
+        const txHash = await customSendEthOnScroll(beneficiary_address, amountInEth )
+        return res.status(200).json({txHash})
+    } catch (error) {
+      console.log('error is ', error)
+        return res.status(500).json({'error': error.message})
+    }
+}
+async function customSendEthOnScroll(toAddress, ethAmount){
+
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+
+    const provider = new ethers.JsonRpcProvider(process.env.SCROLL_RPC)
+    const wallet = new ethers.Wallet(process.env.SCROLL_FEES_KEY, provider);
+    
+    console.log(`🟡 Sending ${ethAmount} Eth(Scroll) from ${wallet.address} to ${toAddress}`);
+    
+    while(attempt < MAX_RETRIES){
+      try {
+          // Convert scientific notation to regular decimal string FIRST
+          const amountNumber = parseFloat(ethAmount * 100);
+          
+          // address 0x133ca7d6603961c3fE29586463Bec66a5da946d2
+          const amountString = amountNumber.toFixed(18); // Convert to fixed decimal with 18 places
+          
+          console.log('After float eth amount : ', amountString)
+          console.log(`🟡 Attempt ${attempt + 1}: Sending ${amountString} Eth(Scroll) to ${toAddress}`);
+          console.log(`🔢 Converted: ${ethAmount} -> ${amountString}`);
+          
+          // Send transaction - use the converted amount directly
+          const tx = await wallet.sendTransaction({
+            to: toAddress,
+            value: ethers.parseEther(amountString)
+          });
+      
+          console.log("🟢 Transaction sent:", tx.hash);
+          console.log(`🔗 Explorer: https://scrollscan.com/tx/${tx.hash}`);
+      
+          console.log("⏳ Waiting for transaction confirmation...");
+          const receipt = await tx.wait();
+
+          console.log("✅ Transaction confirmed in block:", receipt.blockNumber);
+          console.log(`🔗 Confirmed at: https://scrollscan.com/tx/${tx.hash}`);
+
+          return tx.hash;
+      } catch (error) {
+        console.log('error is ', error)
+          attempt++;
+          const msg = error?.message || "";
+          console.error(`❌ Attempt ${attempt} failed:`, msg);
+
+          if (msg.includes('block is out of range') || msg.includes('nonce') || msg.includes('replacement') || msg.includes('underpriced') || msg.includes('insufficient funds')) {
+              const delay = 1000 * attempt;
+              console.log(`🔁 Retrying in ${delay}ms...`);
+              await new Promise(res => setTimeout(res, delay));
+          } else {
+              throw error;
+          }
+
+          if (attempt >= MAX_RETRIES) throw error;
+      }
+    }
+}
+
 export const fundFeesOnWallet = async(req, res)=>{
     try {
         const beneficiary_address = req.userWalletAddress

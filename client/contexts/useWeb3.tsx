@@ -20,9 +20,13 @@ const solanaConnection = new Connection(SOLANA_RPC_URL, 'confirmed');
 const CELO_RPC = 'https://forno.celo.org'; // or your own RPC
 const SPENDER_ADDRESS = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT;
 const SPENDER_ADDRESS_BASE = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT_BASE;
+const SPENDER_ADDRESS_SCROLL = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT_SCROLL;
 
 // Base network stuff
 const BASE_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+const SCROLL_USDC_ADDRESS="0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4"
+const SCROLL_USDT_ADDRESS ="0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df"
+
 const BASE_ERC20_ABI = [
   {
     constant: true,
@@ -49,6 +53,7 @@ import { celoAlfajores, celo } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import { getDataSuffix, submitReferral } from '@divvi/referral-sdk'
 import { error } from "console";
+import { number } from "zod";
 
 const publicClient = createPublicClient({
     chain: celo,
@@ -224,9 +229,9 @@ export const useWeb3 = () => {
     };
     const approveSpendingBaseNetwork = async (_amount: string, tokenSymbol: string) => {
         try {
-            if(tokenSymbol.toUpperCase() != 'USDC') throw new Error('Only USDC will work on Base!')
+            if (tokenSymbol.toUpperCase() != 'USDC') throw new Error('Only USDC will work on Base!')
             const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC; // or your Alchemy/Infura endpoint
-            if(!BASE_RPC){throw new Error('No Base RPC URL found!')}
+            if (!BASE_RPC) { throw new Error('No Base RPC URL found!') }
 
             const web3 = new Web3(new Web3.providers.HttpProvider(BASE_RPC));
 
@@ -279,7 +284,83 @@ export const useWeb3 = () => {
             console.error("❌ Base approval failed:", error);
             throw new Error(`Failed to approve on Base: ${error}`);
         }
+    };
+    const approveSpendingScrollNetwork = async (_amount: string, tokenSymbol: string) => {
+        try {
+            if (!(tokenSymbol.toUpperCase() == 'USDC' || tokenSymbol.toUpperCase() == 'USDT')) throw new Error('Asset NOT supported on Scroll!')
+
+            const SCROLL_RPC = process.env.NEXT_PUBLIC_SCROLL_RPC; // or your Alchemy/Infura endpoint
+            if(!SCROLL_RPC){throw new Error('No Scroll RPC URL found!')}
+
+            const scrollWeb3 = new Web3(new Web3.providers.HttpProvider(SCROLL_RPC));
+
+            const privateKey = await getEthereumPrivateKey();
+            const account = scrollWeb3.eth.accounts.privateKeyToAccount(privateKey);
+            scrollWeb3.eth.accounts.wallet.add(account);
+
+            // const tokenContractAddress = BASE_USDC_ADDRESS// Must return Base USDC contract
+            const tokenContractAddress = tokenSymbol.toUpperCase() === 'USDC' ? SCROLL_USDC_ADDRESS : SCROLL_USDT_ADDRESS
+
+            const decimals = 6; // Should return 6 for USDC
+            const amount = Number(_amount) * 1.01;
+            const amountInWei = BigInt(Math.floor(amount * 10 ** decimals)).toString();
+
+            const spenderAddress = process.env.NEXT_PUBLIC_QUESTPANDA_SMART_CONTRACT_SCROLL;
+            if (!spenderAddress) throw new Error("Missing spender address in env vars");
+
+            const contract = new scrollWeb3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
+
+            const data = contract.methods.approve(spenderAddress, amountInWei).encodeABI();
+
+            // 1. Estimate gas
+            const gasEstimate = await contract.methods
+                .approve(spenderAddress, amountInWei)
+                .estimateGas({ from: account.address });
+
+            // 2. Prefill gas if you have such function (optional)
+            await prefillGas_v2_scroll(BigInt(gasEstimate));
+
+
+
+            try {
+                console.log('starting sending tx')
+                
+
+             // 3. Get current gas price
+            const gasPrice = await scrollWeb3.eth.getGasPrice();
+            console.log('gas price is ', gasPrice)
+
+
+            // 4. Create & sign transaction
+            const tx = {
+                from: account.address,
+                to: tokenContractAddress,
+                gas: gasEstimate,
+                gasPrice: gasPrice,
+                data,
+            };
+
+            console.log('tx is ', tx)
+
+            const signedTx = await scrollWeb3.eth.accounts.signTransaction(tx, privateKey);
+
+            console.log('tx signed')
+            // 5. Broadcast transaction
+            const receipt = await scrollWeb3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+            console.log('✅ Scroll approval successful:', receipt.transactionHash);
+            return receipt;
+            } catch (error) {
+                console.log('error is when sending tx ', error)
+            }
+
+
+        } catch (error) {
+            console.error("❌ Scroll approval failed:", error);
+            throw new Error(`Failed to approve on Scroll: ${error}`);
+        }
 };
+
 
     const createQuest = async (prizePool: string, tokenSymbol: string) => {
 
@@ -657,6 +738,151 @@ export const useWeb3 = () => {
             if (!log.address || !log.topics || !log.data) return false;
             return (
                 log.address.toLowerCase() === SPENDER_ADDRESS_BASE.toLowerCase() &&
+                log.topics[0] === eventSignature
+            );
+        });
+
+        if (!questCreatedLog) {
+            console.error("[DEBUG] All logs:", receipt.logs?.map(l => ({
+                address: l.address,
+                topics: l.topics,
+                data: l.data
+            })));
+            throw new Error("QuestCreatedByBrand event not found in transaction logs");
+        }
+
+        console.log("[DEBUG] Found event log:", {
+            address: questCreatedLog.address,
+            topics: questCreatedLog.topics,
+            data: questCreatedLog.data
+        });
+
+        type QuestCreatedLog = {
+            questId: string;
+            brand: string;
+            token: string;
+            prizePool: string;
+        };
+
+        // Type-safe decoding with error handling
+        try {
+            console.log("[DEBUG] Decoding log data...");
+            // Decode with proper type assertions
+            // Properly decode with correct parameter order and indexing
+            const decoded = web3.eth.abi.decodeLog(
+                [
+                    { type: 'uint256', name: 'questId', indexed: true },
+                    { type: 'address', name: 'brand', indexed: true },
+                    { type: 'address', name: 'token', indexed: true },
+                    { type: 'uint256', name: 'prizePool' }
+                ],
+                questCreatedLog.data,
+                questCreatedLog.topics.slice(1)
+            );
+
+            // The questId is the first indexed parameter (topics[1])
+            const questId = web3.utils.hexToNumber(questCreatedLog.topics[1]);
+            console.log("Real Quest ID:", questId); // Should now match block explorer
+            return questId;
+
+        } catch (error) {
+            console.error("❌ Failed to decode event:", error);
+            throw new Error(`Failed to decode QuestCreatedByBrand event: ${error}`);
+        }
+    };
+    const createQuest_scroll = async (prizePool: string, tokenSymbol: string) => {
+        if (!SPENDER_ADDRESS_SCROLL) {
+            throw new Error("❌ QUESTPANDA contract address not found in env");
+        }
+
+        // --- Setup Base RPC + wallet ---
+        const SCROLL_RPC = process.env.NEXT_PUBLIC_SCROLL_RPC // or your Alchemy RPC
+        if (!SCROLL_RPC) throw new Error("No SCROLL URL found!")
+        const scrollWeb3 = new Web3(new Web3.providers.HttpProvider(SCROLL_RPC));
+        const privateKey = await getEthereumPrivateKey();
+        const account = scrollWeb3.eth.accounts.privateKeyToAccount(privateKey);
+        scrollWeb3.eth.accounts.wallet.add(account);
+
+        // --- Token setup ---
+        const decimals = 6; // USDC = 6
+        const tokenContractAddress = tokenSymbol.toUpperCase() === 'USDC' ? SCROLL_USDC_ADDRESS : SCROLL_USDT_ADDRESS
+        const amountInWei = BigInt(Math.floor(Number(prizePool) * 10 ** decimals)).toString();
+
+        const tokenContract = new scrollWeb3.eth.Contract(StableTokenABI.abi, tokenContractAddress);
+        const contract = new scrollWeb3.eth.Contract(QuestPandaABI, SPENDER_ADDRESS_SCROLL);
+
+        // --- Verify allowance ---
+        const requiredAmount = BigInt(amountInWei);
+        let currentAllowance = BigInt(0);
+
+        for (let attempt = 1; attempt <= 4; attempt++) {
+            try {
+                currentAllowance = BigInt(await tokenContract.methods
+                    .allowance(account.address, SPENDER_ADDRESS_SCROLL)
+                    .call());
+
+                console.log(`Attempt ${attempt}: Allowance ${currentAllowance}/${requiredAmount}`);
+
+                if (currentAllowance >= requiredAmount) break; // Enough allowance
+                if (attempt === 3) throw new Error("Allowance problem after 3 attempts");
+
+                const delay = attempt * 1000; // wait progressively
+                console.log(`Waiting ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } catch (error) {
+                console.error("Error checking allowance:", error);
+                throw new Error(`Allowance check failed: ${error}`);
+            }
+        }
+
+        // --- Prepare contract call ---
+        const data = contract.methods.createQuestAsBrand(amountInWei, tokenContractAddress).encodeABI();
+
+        // --- Estimate gas & prefill ---
+        const gas = await contract.methods
+            .createQuestAsBrand(amountInWei, tokenContractAddress)
+            .estimateGas({ from: account.address });
+
+        await prefillGas_v2_scroll(BigInt(gas)); // 👈 
+
+        // --- Build and sign TX ---
+        const gasPrice = await scrollWeb3.eth.getGasPrice();
+        const nonce = await scrollWeb3.eth.getTransactionCount(account.address, "pending");
+
+        const tx = {
+            from: account.address,
+            to: SPENDER_ADDRESS_SCROLL,
+            data,
+            gas,
+            gasPrice,
+            nonce,
+        };
+
+        const signedTx = await scrollWeb3.eth.accounts.signTransaction(tx, privateKey);
+        const receipt = await scrollWeb3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+        console.log("✅ Transaction confirmed on Scroll:", receipt.transactionHash);
+        console.log("🔗 Explorer: https://scrollscan.com/tx/" + receipt.transactionHash);
+
+        console.log("[DEBUG] Receipt details:", {
+            transactionHash: receipt.transactionHash,
+            blockNumber: receipt.blockNumber.toString(),
+            gasUsed: receipt.gasUsed.toString(),
+            logs: receipt.logs?.map(log => ({
+                address: log.address,
+                topics: log.topics,
+                data: log.data
+            }))
+        });
+        // Type-safe event extraction
+        const eventSignature = web3.utils.keccak256("QuestCreatedByBrand(uint256,address,address,uint256)");
+        console.log("[DEBUG] Event signature:", eventSignature);
+
+        // Find the correct log with proper type guards
+        const questCreatedLog = receipt.logs?.find((log): log is { address: string; topics: string[]; data: string } => {
+            if (!log.address || !log.topics || !log.data) return false;
+            return (
+                log.address.toLowerCase() === SPENDER_ADDRESS_SCROLL.toLowerCase() &&
                 log.topics[0] === eventSignature
             );
         });
@@ -1120,7 +1346,49 @@ export const useWeb3 = () => {
                 console.log(`💰 USDC Balance on Base: ${balance}`);
 
                 return { balance: balance.toFixed(2) };
-            }else {
+            }else if(network === "scroll"){
+                const userAddress = walletClient.account.address;
+
+                if (!process.env.NEXT_PUBLIC_SCROLL_RPC) { throw new Error("No Scroll RPC URL") }
+                // Initialize Web3 with Scroll RPC
+                const web3 = new Web3(
+                    new Web3.providers.HttpProvider(process.env.NEXT_PUBLIC_SCROLL_RPC)
+                );
+
+                if (tokenSymbol.toLowerCase() == "usdc") {
+                    // Create contract instance
+                    const usdcContract = new web3.eth.Contract(BASE_ERC20_ABI, SCROLL_USDC_ADDRESS);
+
+                    // Fetch balance
+                    const balanceRaw = await usdcContract.methods
+                        .balanceOf(userAddress)
+                        .call();
+
+                    const balance = Number(balanceRaw) / 10 ** 6;
+                    console.log(`💰 USDC Balance on Scroll: ${balance}`);
+
+                    return { balance: balance.toFixed(2) };
+
+                } else if (tokenSymbol.toLowerCase() == "usdt") {
+                    // Create contract instance
+                    const usdtContract = new web3.eth.Contract(BASE_ERC20_ABI, SCROLL_USDT_ADDRESS);
+
+                    // Fetch balance
+                    const balanceRaw = await usdtContract.methods
+                        .balanceOf(userAddress)
+                        .call();
+
+                    const balance = Number(balanceRaw) / 10 ** 6;
+                    console.log(`💰 USDT Balance on Scroll: ${balance}`);
+
+                    return { balance: balance.toFixed(2) };
+                }else {
+                    throw new Error('Token not supported on Scroll network!')
+                }
+
+
+            }
+            else {
                 throw new Error(`Unsupported network: ${network}`);
             }
 
@@ -1143,7 +1411,11 @@ export const useWeb3 = () => {
         };
         base: {
             USDCBalance: string;
-        }
+        };
+        scroll: {
+            USDTBalance: string;
+            USDCBalance: string;
+        };
     }> => {
         try {
             if (!walletClient) throw new Error("Wallet not connected");
@@ -1193,19 +1465,50 @@ export const useWeb3 = () => {
         const baseUSDCContract = new baseWeb3.eth.Contract(StableTokenABI.abi, '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
         const baseUSDCBalanceInWei = await baseUSDCContract.methods.balanceOf(userAddress).call();
 
+        // ---------- Scroll ----------
+        const scrollWeb3 = new Web3(process.env.NEXT_PUBLIC_SCROLL_RPC)
+
+        const scroll_USDC_Contract  = new scrollWeb3.eth.Contract(StableTokenABI.abi, '0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4');
+        const scroll_USDC_BalanceInWei = await scroll_USDC_Contract.methods.balanceOf(userAddress).call();
+
+        const scroll_USDT_Contract  = new scrollWeb3.eth.Contract(StableTokenABI.abi, '0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df');
+        const scroll_USDT_BalanceInWei = await scroll_USDT_Contract.methods.balanceOf(userAddress).call();
+
+
+
             return {
+                // celo: {
+                //     cUSDBalance: (Number(cUSDBalanceInWei) / 10 ** 18).toString(),
+                //     USDTBalance: (Number(USDTBalanceInWei) / 10 ** 6).toString(),
+                //     USDCBalance: (Number(USDCBalanceInWei) / 10 ** 6).toString()
+                // },
+                // solana: {
+                //     USDTBalance: solUSDTBalance,
+                //     USDCBalance: solUSDCBalance,
+                // },
+                // base: {
+                //     USDCBalance: (Number(baseUSDCBalanceInWei) / 10 ** 6).toString()
+                // },
+                // scroll: {
+                //     USDTBalance: (Number(scroll_USDT_BalanceInWei) / 10 ** 6).toString(),
+                //     USDCBalance: (Number(scroll_USDC_BalanceInWei) / 10 ** 6).toString()
+                // }
                 celo: {
-                    cUSDBalance: (Number(cUSDBalanceInWei) / 10 ** 18).toString(),
-                    USDTBalance: (Number(USDTBalanceInWei) / 10 ** 6).toString(),
-                    USDCBalance: (Number(USDCBalanceInWei) / 10 ** 6).toString()
+                    cUSDBalance: "0",
+                    USDTBalance: "0", 
+                    USDCBalance: "0"
                 },
                 solana: {
-                    USDTBalance: solUSDTBalance,
-                    USDCBalance: solUSDCBalance,
+                    USDTBalance: 0,
+                    USDCBalance: 0,
                 },
                 base: {
-                    USDCBalance: (Number(baseUSDCBalanceInWei) / 10 ** 6).toString()
-            }
+                    USDCBalance: "0"
+                },
+                scroll: {
+                    USDTBalance: (Number(scroll_USDT_BalanceInWei) / 10 ** 6).toString(),
+                    USDCBalance: (Number(scroll_USDC_BalanceInWei) / 10 ** 6).toString()
+                }
             };
         } catch (error: any) {
             console.error('❌ Error checking combined token balances:', error);
@@ -1698,6 +2001,52 @@ const prefillGas_v2_base = async (gasEstimate: bigint) => {
         throw error;
     }
 };
+const prefillGas_v2_scroll = async (gasEstimate: bigint) => {
+    try {
+        // 1. Initialize web3 for Base mainnet
+        const SCROLL_RPC = process.env.NEXT_PUBLIC_SCROLL_RPC; // or your Alchemy/Infura endpoint
+        if(!SCROLL_RPC) throw new Error('SCROLL RPC missing!')
+        const web3Scroll = new Web3(new Web3.providers.HttpProvider(SCROLL_RPC));
+
+        // 2. Get current gas price
+        const gasPriceWei = await web3Scroll.eth.getGasPrice();
+        const gasPrice = BigInt(gasPriceWei);
+
+        console.log('Current gas price (wei):', gasPrice.toString());
+        console.log('Gas estimate units:', gasEstimate.toString());
+
+        // 3. Compute raw gas cost
+        const rawCost = gasEstimate * gasPrice;
+
+        // 4. Convert from wei → ETH (1e18 wei = 1 ETH)
+        const estimatedCostETH = Number(rawCost) / 1e18;
+        console.log('Estimated ETH cost on Scroll:', estimatedCostETH);
+
+        // 5. Notify backend with estimated gas cost
+        const gasResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fees/gas-estimate-scroll`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                function: 'approveUSDCOnScroll', // or any descriptive label
+                estimatedCostEth: estimatedCostETH,
+                timestamp: new Date().toISOString(),
+            }),
+        });
+
+        const { txHash } = await gasResponse.json();
+
+        // 6. Wait for transaction receipt
+        const receipt = await waitForReceipt_scroll(txHash);
+
+        console.log('✅ Scroll gas refill confirmed:', receipt.transactionHash);
+        return true;
+
+    } catch (error) {
+        console.error('❌ Error adding gas on Scroll:', error);
+        throw error;
+    }
+};
 
     // Helper function to poll for transaction receipt
     const waitForReceipt = async (txHash: string, interval = 1000, maxTries = 60): Promise<any> => {
@@ -1721,6 +2070,21 @@ const waitForReceipt_base = async (txHash: string, interval = 1000, maxTries = 6
         
         while (tries < maxTries) {
             const receipt = await baseWeb3.eth.getTransactionReceipt(txHash);
+            if (receipt) return receipt;
+            await new Promise(res => setTimeout(res, interval));
+            tries++;
+        }
+
+        throw new Error(`Timeout waiting for transaction receipt: ${txHash}`);
+    };
+    const waitForReceipt_scroll = async (txHash: string, interval = 1000, maxTries = 60): Promise<any> => {
+        let tries = 0;
+
+        // Create Web3 instance for Scroll
+        const scrollWeb3 = new Web3(process.env.NEXT_PUBLIC_SCROLL_RPC); 
+        
+        while (tries < maxTries) {
+            const receipt = await scrollWeb3.eth.getTransactionReceipt(txHash);
             if (receipt) return receipt;
             await new Promise(res => setTimeout(res, interval));
             tries++;
@@ -1772,6 +2136,8 @@ const waitForReceipt_base = async (txHash: string, interval = 1000, maxTries = 6
         withdrawFundsOnchain,
         confirmMpesaNames,
         withdrawFundsToMpesa,
-        createQuest_base
+        createQuest_base,
+        approveSpendingScrollNetwork,
+        createQuest_scroll
     };
 };
