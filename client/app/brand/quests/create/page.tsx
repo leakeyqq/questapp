@@ -54,7 +54,7 @@ const { address, isConnected } = useAccount();
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Inside your CreateQuestPage component
-const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, approveSpendingBaseNetwork, createQuest, createQuest_base, checkCombinedTokenBalances, depositToEscrowOnSolana } = useWeb3();
+const { sendCUSD, checkCUSDBalance, getUserAddress, approveSpending, approveSpendingBaseNetwork, approveSpendingScrollNetwork, createQuest, createQuest_base, createQuest_scroll, checkCombinedTokenBalances, depositToEscrowOnSolana } = useWeb3();
 const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Form state
@@ -291,7 +291,8 @@ const handlePaymentAndSubmit  = async (e: React.FormEvent) => {
 const {
   celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
   solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
-  base: { USDCBalance: baseUSDCBalance}
+  base: { USDCBalance: baseUSDCBalance},
+  scroll: {USDTBalance: scrollUSDTBalance, USDCBalance: scrollUSDCBalance}
 } = await checkCombinedTokenBalances();
 
       // Check across all tokens (priority order)
@@ -307,7 +308,12 @@ if (Number(cUSDBalance) >= Number(prizePool)) {
   await completeQuestCreation("usdc", 'solana');
 }else if(Number(baseUSDCBalance) >= Number(prizePool)){
     await completeQuestCreation("usdc", 'base');
-}else{
+}else if(Number(scrollUSDTBalance) >= Number(prizePool)){
+    await completeQuestCreation("usdt", 'scroll');
+}else if(Number(scrollUSDCBalance) >= Number(prizePool)){
+    await completeQuestCreation("usdc", 'scroll');
+}
+else{
         // If user show them a warning and a deep link to go and deposit funds
         // If user in on a different wallet then pop up the deposit modal
         if (typeof window !== "undefined" && window.ethereum?.isMiniPay) {
@@ -347,6 +353,11 @@ const completeQuestCreation = async (tokenForPayment: string, network: string | 
       }else if(network == 'base'){
         await approveSpendingBaseNetwork(prizePool, tokenForPayment)
         onchainQuestId = await createQuest_base(prizePool, tokenForPayment)
+      }else if(network == 'scroll'){
+        approveSpendingScrollNetwork
+        await approveSpendingScrollNetwork(prizePool, tokenForPayment)
+        onchainQuestId = await createQuest_scroll(prizePool, tokenForPayment)
+        // throw new Error(`Successful: Onchain quest ID is ${onchainQuestId}`)
 
       }
 

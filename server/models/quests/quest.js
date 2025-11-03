@@ -268,7 +268,7 @@ const questSchema = new mongoose.Schema({
     },
     network: {
         type: String,
-        enum: ['celo', 'solana', 'base'],
+        enum: ['celo', 'solana', 'base', 'scroll'],
         default: false
     },
     questType: {

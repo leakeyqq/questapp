@@ -4,11 +4,15 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { CopyButton } from "@/components/copyButton";
 
 interface QuestQRCodeProps {
+  questId: string;
   className?: string;
 }
 
-export default function QuestQRCode({ className = "" }: QuestQRCodeProps) {
+export default function QuestQRCode({questId,  className = "" }: QuestQRCodeProps) {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const questUrl = `https://www.questpanda.xyz/quests/${questId}`;
+
 
   return (
     <div className={`bg-gradient-to-br from-white to-brand-purple/5 rounded-xl p-6 border border-brand-purple/20 shadow-sm ${className}`}>
@@ -17,7 +21,7 @@ export default function QuestQRCode({ className = "" }: QuestQRCodeProps) {
         <div className="p-1 bg-gradient-to-r from-brand-purple to-brand-pink rounded-lg">
           <div className="bg-white p-3 rounded-md">
             <QRCodeCanvas 
-              value={currentUrl} 
+              value={questUrl} 
               size={150}
               level="M"
               includeMargin={true}
@@ -35,7 +39,7 @@ export default function QuestQRCode({ className = "" }: QuestQRCodeProps) {
             Invite more people by sharing this QR code - <span className="text-brand-pink font-semibold">Scan to join instantly</span>
           </p>
           
-          <CopyButton text={currentUrl} />
+          <CopyButton text={questUrl} />
         </div>
       </div>
     </div>

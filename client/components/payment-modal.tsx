@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Wallet, Smartphone, Building2, CheckCircle, Copy, ArrowLeft } from "lucide-react"
+import { Wallet, Smartphone, Building2, CheckCircle, Copy, ArrowLeft, Scroll } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import React from 'react';
 import QRCodeComponent from '@/components/QRCodeComponent';
@@ -386,6 +386,9 @@ const startPolling = (orderId: string) => {
       const {
           celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
           solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+          base: { USDCBalance: baseUSDCBalance},
+          scroll: {USDCBalance: scrollUSDCBalance, USDTBalance: scrollUSDTBalance}
+
         } = await checkCombinedTokenBalances();
 
       let isBalanceSufficient;
@@ -400,7 +403,13 @@ const startPolling = (orderId: string) => {
         isBalanceSufficient = true
       }else if(Number(solUSDCBalance) >= Number(prizePool)){
         isBalanceSufficient = true
-      }else{
+      }else if(Number(baseUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(scrollUSDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(scrollUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      } else{
         isBalanceSufficient = false
       }
 
@@ -425,6 +434,9 @@ const startPolling = (orderId: string) => {
       const {
           celo: { cUSDBalance, USDTBalance: celoUSDTBalance, USDCBalance: celoUSDCBalance },
           solana: { USDTBalance: solUSDTBalance, USDCBalance: solUSDCBalance },
+           base: { USDCBalance: baseUSDCBalance},
+           scroll: {USDCBalance: scrollUSDCBalance, USDTBalance: scrollUSDTBalance}
+
         } = await checkCombinedTokenBalances();
 
       let isBalanceSufficient;
@@ -439,7 +451,13 @@ const startPolling = (orderId: string) => {
         isBalanceSufficient = true
       }else if(Number(solUSDCBalance) >= Number(prizePool)){
         isBalanceSufficient = true
-      }else{
+      }else if(Number(baseUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(scrollUSDCBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      }else if(Number(scrollUSDTBalance) >= Number(prizePool)){
+        isBalanceSufficient = true
+      } else{
         isBalanceSufficient = false
       }
 
@@ -576,6 +594,16 @@ useEffect(() => {
           </Button>
           ) }
 
+           <Button
+            variant="outline"
+            onClick={() => setSelectedNetwork("scroll")}
+            className="flex items-center gap-2"
+          >
+            <img src="/scroll.png" alt="Celo" className="w-5 h-5" />
+            Scroll
+          </Button>
+
+
         </div>
       </div>
     )}
@@ -586,9 +614,9 @@ useEffect(() => {
       <>
         <div className="bg-brand-light p-2 rounded border border-gray-200">
           <Label className="flex items-center gap-2 text-xs font-medium text-brand-dark">
-            Send to wallet address on {selectedMethod === "cUSD" ? "Celo" : selectedNetwork === "celo" ? "Celo" : "Base"}
+            Send to wallet address on {selectedMethod === "cUSD" ? "Celo" : selectedNetwork === "celo" ? "Celo" : selectedNetwork === "base" ? "Base" : "Scroll"}
             <img 
-              src={selectedMethod === "cUSD" || selectedNetwork === "celo" ? "/crypto/celo.png" : "/crypto/base.png"} 
+              src={selectedMethod === "cUSD" || selectedNetwork === "celo" ? "/crypto/celo.png" : selectedNetwork === "base" ? "/crypto/base.png" : "/scroll.png"} 
               className="w-5 h-5" 
             />
           </Label>

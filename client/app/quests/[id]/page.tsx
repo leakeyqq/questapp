@@ -757,7 +757,7 @@ const getMinFollowersForPlatform = (quest: Quest, platform: string) => {
           </div>
         </div>
       
-      <QuestQRCode className="mt-12 mb-4" />
+      <QuestQRCode questId={awaitedParams.id} className="mt-12 mb-4" />
       
       </div>
     </div>
