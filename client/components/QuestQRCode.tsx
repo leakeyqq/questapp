@@ -36,7 +36,7 @@ export default function QuestQRCode({questId,  className = "" }: QuestQRCodeProp
           </h3>
           
           <p className="text-gray-700 mb-4">
-            Invite more people by sharing this QR code - <span className="text-brand-pink font-semibold">Scan to join instantly</span>
+            Invite people by sharing this QR code - <span className="text-brand-pink font-semibold">Scan to join instantly</span>
           </p>
           
           <CopyButton text={questUrl} />
