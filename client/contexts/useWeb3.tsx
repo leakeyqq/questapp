@@ -1477,38 +1477,23 @@ export const useWeb3 = () => {
 
 
             return {
-                // celo: {
-                //     cUSDBalance: (Number(cUSDBalanceInWei) / 10 ** 18).toString(),
-                //     USDTBalance: (Number(USDTBalanceInWei) / 10 ** 6).toString(),
-                //     USDCBalance: (Number(USDCBalanceInWei) / 10 ** 6).toString()
-                // },
-                // solana: {
-                //     USDTBalance: solUSDTBalance,
-                //     USDCBalance: solUSDCBalance,
-                // },
-                // base: {
-                //     USDCBalance: (Number(baseUSDCBalanceInWei) / 10 ** 6).toString()
-                // },
-                // scroll: {
-                //     USDTBalance: (Number(scroll_USDT_BalanceInWei) / 10 ** 6).toString(),
-                //     USDCBalance: (Number(scroll_USDC_BalanceInWei) / 10 ** 6).toString()
-                // }
                 celo: {
-                    cUSDBalance: "0",
-                    USDTBalance: "0", 
-                    USDCBalance: "0"
+                    cUSDBalance: (Number(cUSDBalanceInWei) / 10 ** 18).toString(),
+                    USDTBalance: (Number(USDTBalanceInWei) / 10 ** 6).toString(),
+                    USDCBalance: (Number(USDCBalanceInWei) / 10 ** 6).toString()
                 },
                 solana: {
-                    USDTBalance: 0,
-                    USDCBalance: 0,
+                    USDTBalance: solUSDTBalance,
+                    USDCBalance: solUSDCBalance,
                 },
                 base: {
-                    USDCBalance: "0"
+                    USDCBalance: (Number(baseUSDCBalanceInWei) / 10 ** 6).toString()
                 },
                 scroll: {
                     USDTBalance: (Number(scroll_USDT_BalanceInWei) / 10 ** 6).toString(),
                     USDCBalance: (Number(scroll_USDC_BalanceInWei) / 10 ** 6).toString()
                 }
+
             };
         } catch (error: any) {
             console.error('❌ Error checking combined token balances:', error);
