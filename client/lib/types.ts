@@ -42,6 +42,10 @@ export interface Quest {
       allowedOnCampaign: boolean
       minFollowers: number
     }
+    farcaster?: {
+      allowedOnCampaign: boolean
+      minFollowers: number
+    }
   }
   applicants: {
     userWalletAddress: string
