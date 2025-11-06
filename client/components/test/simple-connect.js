@@ -28,6 +28,7 @@ export default function ConnectWalletButton() {
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false); // 👈 Add this state
+  const [web3AuthUser, setWeb3AuthUser] = useState(null); // 👈 Store Web3Auth user data
 
 
   const pathname = usePathname();
@@ -129,6 +130,25 @@ export default function ConnectWalletButton() {
     }
   }, [mounted, connect]);
 
+  // Get Web3Auth user data when connected
+  useEffect(() => {
+    const fetchWeb3AuthUser = async () => {
+      try {
+        const web3auth = getWeb3AuthInstance();
+        if (web3auth.connected) {
+          const user = await web3auth.getUserInfo();
+          setWeb3AuthUser(user);
+        }
+      } catch (error) {
+        console.error("Error fetching Web3Auth user data:", error);
+      }
+    };
+
+    if (isConnected && address) {
+      fetchWeb3AuthUser();
+    }
+  }, [isConnected, address]);
+
 
   // 🔐 Backend auth after connecting
   useEffect(() => {
@@ -140,7 +160,16 @@ export default function ConnectWalletButton() {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ address }),
+              body: JSON.stringify({ 
+                address,
+                ...(web3AuthUser && {
+                  names: web3AuthUser.typeOfLogin === 'email_passwordless' ? null : (web3AuthUser.name || null),
+                  emailAddress: web3AuthUser.email,
+                  profilePhoto: web3AuthUser.profileImage || null,
+                  aggregateVerifier: web3AuthUser.aggregateVerifier,
+                  loginMethod: web3AuthUser.typeOfLogin
+                })
+              }),
               credentials: "include",
             }
           );
@@ -168,7 +197,7 @@ export default function ConnectWalletButton() {
 
       login();
     }
-  }, [isConnected, address, refreshPage]);
+  }, [isConnected, address, refreshPage, web3AuthUser]);
 
 
   // ✅ Separate useEffect to fetch Solana Address (after Web3Auth is ready)
