@@ -194,8 +194,8 @@ export default function SubmissionForm({
         return
       }
 
-      const confirmSubmission = await showConfirm('Please be aware that you can only submit once for a single quest. Do you wish to proceed?🙂')
-      if (!confirmSubmission) return 
+      // const confirmSubmission = await showConfirm('Please be aware that you can only submit once for a single quest. Do you wish to proceed?🙂')
+      // if (!confirmSubmission) return 
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/submitQuest/${questId}`, {
         method: "POST",
