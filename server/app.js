@@ -34,7 +34,6 @@ app.use(cors({
       "https://www.questpanda.xyz",
       "https://questpanda.xyz",
       "https://api.questpanda.xyz",
-      "https://app.questpanda.xyz"
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {

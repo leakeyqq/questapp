@@ -67,7 +67,10 @@ interface LeaderboardItem {
     const fetchLeaderboardData = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator/creatorsBoard`)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/creator/creatorsBoard`, {
+              method: 'GET',
+              credentials: "include"
+        })
         if (!response.ok) {
           throw new Error(`Failed to fetch leaderboard data: ${response.status}`)
         }

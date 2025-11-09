@@ -28,6 +28,7 @@ export default function ThreeQuests(){
         const fetchQuests = async () => {
           try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/quest/get3QuestsOnly`, {
+              method: 'GET',
               credentials: "include"
             })
             // const res = await fetch("http://localhost:5000/api/quest/allQuests")
