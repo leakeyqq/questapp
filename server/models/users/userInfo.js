@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
     {
         walletAddress: {
             type: String,
-            // unique: true,
+            unique: true,
             lowercase: true,
             trim: true,
             required: true
@@ -18,7 +18,31 @@ const userSchema = new mongoose.Schema(
                 type: String,
                 required: false
             }
+        },
+        web3auth: {
+            emailAddress: {
+                type: String,
+                required: false
+            },
+            names: {
+                type: String,
+                required: false
+            },
+
+            profilePhoto: {
+                type: String,
+                required: false
+            },
+            aggregateVerifier: {
+                type: String,
+                required: false
+            },
+            loginMethod: {
+                type: String,
+                enum: ['google', 'manual']
+            }
         }
+
     },{timestamps: true}
 )
 

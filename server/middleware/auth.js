@@ -7,7 +7,7 @@ export const requireAuth = (req, res, next) => {
 
 
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "(Unauthorized)...Please Logout and Login again" });
   }
 
   try {
