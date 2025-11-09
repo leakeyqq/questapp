@@ -11,7 +11,7 @@ interface QuestQRCodeProps {
 export default function QuestQRCode({questId,  className = "" }: QuestQRCodeProps) {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
-  const questUrl = `https://www.questpanda.xyz/quests/${questId}`;
+  const questUrl = `https://app.questpanda.xyz/quests/${questId}`;
 
 
   return (

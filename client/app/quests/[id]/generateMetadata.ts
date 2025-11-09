@@ -16,7 +16,7 @@ export async function generateMetadata({
     // Dynamic Frame metadata for Warpcast
     const frameEmbed = {
       version: "next",
-      imageUrl: quest.brandImageUrl || "https://www.questpanda.xyz/icon.png", // Use quest image or fallback
+      imageUrl: quest.brandImageUrl || "https://app.questpanda.xyz/icon.png", // Use quest image or fallback
       button: {
         // title: `🎯 Join Quest (${quest.prizePoolUsd})`, // Customize button text
         title: `🎯 Do quest -  ${quest.pricePerVideo} USD reward`, // Customize button text
@@ -24,8 +24,8 @@ export async function generateMetadata({
         action: {
           type: "launch_frame",
           name: "Questpanda",
-          url: `https://www.questpanda.xyz/quests/${awaitedParams.id}`, // Deep link to the quest
-          splashImageUrl: "https://www.questpanda.xyz/icon.png",
+          url: `https://app.questpanda.xyz/quests/${awaitedParams.id}`, // Deep link to the quest
+          splashImageUrl: "https://app.questpanda.xyz/icon.png",
           splashBackgroundColor: "#ffffff",
         },
       },
